@@ -233,7 +233,7 @@ public class ServerList extends ConnectedListActivity {
 
 	private Dialog createDeleteServerDialog() {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage("Are you sure you want to delete this server?").setCancelable(
+		builder.setMessage(R.string.sureDeleteServer).setCancelable(
 			false).setPositiveButton(
 			"Yes",
 			new DialogInterface.OnClickListener() {

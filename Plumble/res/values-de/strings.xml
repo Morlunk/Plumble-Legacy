@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="channels">Räume</string>
+    <string name="userJoin">Raum betreten</string>
+    <string name="userSpeak">Sprechen</string>
+    <string name="noServers">keine Server hinzugefügt</string>
+    <string name="noChannels">Raumliste ist leer</string>
+    <string name="noUsers">keine Benutzer</string>
+    <string name="serverAdd">Server hinzufügen</string>
+    <string name="serverChange">Server wechseln</string>
+    <string name="serverPassword">Passwort (Optional)</string>
+    <string name="serverUsername">Benutzername</string>
+    <string name="serverPort">Port</string>
+    <string name="serverHost">Adresse</string>
+    <string name="serverName">Beschriftung (Optional)</string>
+    <string name="sendText">Senden</string>
+    <string name="app_name">Plumble</string>
+    <string name="server_deleted">Server gelöscht</string>
+    <string name="chat_message">Chat Nachricht</string>
+    <string name="chatReceiverLabel">Empfänger</string>
+    <string name="chatReceiverPrompt">Empfänger wählen</string>
+    <string name="connectionProgressTitle">Verbindungsaufbau</string>
+    <string name="connectionProgressConnectingMessage">Verbinde mit Mumble</string>
+    <string name="connectionProgressSynchronizingMessage">Synchronisiere Daten mit Mumble</string>
+    <string name="connectionProgressDisconnectingMessage">Trennen…</string>
+    <string name="defaultServerPort">64738</string>
+    <string name="title_section2">Chat</string>
+    <string name="title_section1">Raum</string>
+    <string name="hello_world">Hallo Welt!</string>
+    <string name="menu_settings">Einstellungen</string>
+    <string name="title_activity_channel">Raum</string>
+    <string name="pressKey">Drücke eine Hardwaretaste für die Sprachaktivierung (PTT).</string>
+    <string name="pressKeyInfo">Hinweis: Aufgrund der Limitierungen von Android muss die App geöffnet sein, um eine Hardwaretaste für die Sprachaktivierung (PTT) zu nutzen.</string>
+    <string name="ptt">Sprechen</string>
+    <string name="mute">Stumm stellen</string>
+    <string name="deafen">Taub stellen</string>
+    <string name="disconnect">Trennen</string>
+    <string name="disconnectSure">Bist du dir sicher, dass du die Verbindung zu Mumble trennen möchtest?</string>
+    <string name="save">Speichern</string>
+    <string name="add">Hinzufügen</string>
+    <string name="preferences">Einstellungen</string>
+    <string name="togglelocalmute">lokale Stummschaltung wechseln</string>
+    <string name="chat">Chat</string>
+    <string name="permDenied">Zugriff verboten!</string>
+    <string name="connectionRefused">Verbindung abgelehnt</string>
+    <string name="sureDeleteServer">Bist du dir sicher, dass du diesen Server löschen möchtest?</string>
+
+</resources>

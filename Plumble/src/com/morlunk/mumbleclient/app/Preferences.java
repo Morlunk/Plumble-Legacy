@@ -7,6 +7,7 @@ import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.ListPreference;
@@ -20,12 +21,15 @@ public class Preferences extends SherlockPreferenceActivity {
 	private static final String CERTIFICATE_PATH_KEY = "certificatePath";
 	private static final String CERTIFICATE_FOLDER = "Plumble";
 	private static final String CERTIFICATE_EXTENSION = "p12";
+
+	private static Context context;
 	
 	@SuppressLint("NewApi")
 	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Preferences.context = getApplicationContext();
 		
 		if(android.os.Build.VERSION.SDK_INT >= 11) {
 			getFragmentManager().beginTransaction().replace(android.R.id.content, new PreferencesFragment()).commit();
@@ -36,6 +40,10 @@ public class Preferences extends SherlockPreferenceActivity {
 			ListPreference certificatePathPreference = (ListPreference) findPreference(CERTIFICATE_PATH_KEY);
 			updateCertificatePath(certificatePathPreference);
 		}
+	}
+
+	public static Context getAppContext() {
+		return Preferences.context;
 	}
 	
 	/**
@@ -68,7 +76,7 @@ public class Preferences extends SherlockPreferenceActivity {
 		for(int x=0;x<certificateFiles.size();x++) {
 			certificateNames[x] = certificateFiles.get(x).getName();
 		}
-		certificateNames[certificateNames.length-1] = "No Certificate";
+		certificateNames[certificateNames.length-1] = getAppContext().getResources().getString(R.string.noCert);
 		
 		preference.setEntries(certificateNames);
 		preference.setEntryValues(certificatePaths);

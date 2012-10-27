@@ -1,5 +1,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_mute_button" android:title="Mute" android:showAsAction="ifRoom" android:icon="@drawable/microphone"></item><item android:id="@+id/menu_deafen_button" android:title="Deafen" android:showAsAction="ifRoom" android:icon="@drawable/ic_headphones"></item><item android:id="@+id/menu_disconnect_item" android:showAsAction="never" android:icon="@drawable/disconnect" android:title="Disconnect"></item>
+    <item android:id="@+id/menu_mute_button" android:title="@string/mute" android:showAsAction="ifRoom" android:icon="@drawable/microphone"></item><item android:id="@+id/menu_deafen_button" android:title="@string/deafen" android:showAsAction="ifRoom" android:icon="@drawable/ic_headphones"></item><item android:id="@+id/menu_disconnect_item" android:showAsAction="never" android:icon="@drawable/disconnect" android:title="@string/disconnect"></item>
     
     
 </menu>

@@ -282,8 +282,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	public boolean onKeyDown(final int keyCode, final KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
 			final AlertDialog.Builder b = new AlertDialog.Builder(this);
-			b.setTitle("Disconnect");
-			b.setMessage("Are you sure you want to disconnect from Mumble?");
+			b.setTitle(R.string.disconnect);
+			b.setMessage(R.string.disconnectSure);
 			b.setPositiveButton(android.R.string.yes, onDisconnectConfirm);
 			b.setNegativeButton(android.R.string.no, null);
 			b.show();
@@ -487,7 +487,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	 * @param valueOf
 	 */
 	private void permissionDenied(String reason, DenyType denyType) {
-		Toast.makeText(getApplicationContext(), "Permission denied!", Toast.LENGTH_SHORT).show();
+		Toast.makeText(getApplicationContext(), R.string.permDenied, Toast.LENGTH_SHORT).show();
 	}
 	
 	// Voice call mode sensors

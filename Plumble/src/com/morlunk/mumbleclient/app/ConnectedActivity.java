@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.ConnectedActivityLogic.Host;
 import com.morlunk.mumbleclient.service.IServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
@@ -110,7 +111,7 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 		final String error = mService.getError();
 		if (error != null) {
 			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-			alertBuilder.setTitle("Connection Refused");
+			alertBuilder.setTitle(R.string.connectionRefused);
 			
 			alertBuilder.setPositiveButton("Ok", new OnClickListener() {
 				@Override

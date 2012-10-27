@@ -33,4 +33,25 @@
 	    <item>speakerphone</item>
 	    <item>voice</item>
 	</string-array>
+
+	<string name="authentication">Authentication</string>
+	<string name="certificateFile">Certificate File</string>
+	<string name="certificateFileSum">The path of the P12 certificate you wish to use, placed in the \"Plumble\" folder on external storage.</string>
+	<string name="certificatePassword">Certificate Password</string>
+	<string name="certificatePasswordSum">The password for your PKCS12 certificate. (optional)</string>
+	<string name="audioInput">Audio Input</string>
+	<string name="audioInputMethodSum">The way audio is sent to the server.</string>
+	<string name="audioInputMethod">Input Method</string>
+	<string name="callMode">Call Mode</string>
+	<string name="callModeSum">The call mode of Plumble, whether to act as a voice call or speakerphone.</string>
+	<string name="detectionThreshold">Detection Threshold</string>
+	<string name="detectionThresholdSum">The minimum amplitude required for voice to be detected (only applicable for voice activity).</string>
+	<string name="pttKey">Push to Talk Key</string>
+	<string name="pttKeySum">A hardware key to bind to Push to Talk. (optional)</string>
+	<string name="appearance">Appearance</string>
+	<string name="themeSum">The theme of the app\'s channel view.</string>
+	<string name="theme">Theme</string>
+	<string name="advancedAudio">Advanced Audio</string>
+	<string name="audioQuality">Audio quality</string>
+	<string name="noCert">No Certificate</string>
 </resources>

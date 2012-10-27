@@ -22,8 +22,8 @@
         android:id="@+id/pushtotalk"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:textOn="Push to Talk"
-        android:textOff="Push to Talk"
+        android:textOn="@string/ptt"
+        android:textOff="@string/ptt"
         android:layout_alignParentBottom="true"
         android:visibility="gone"/>
 

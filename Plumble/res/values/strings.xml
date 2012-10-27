@@ -32,5 +32,18 @@
     <string name="title_activity_channel">Channel</string>
     <string name="pressKey">Press a hardware key to bind to push-to-talk.</string>
     <string name="pressKeyInfo">Note: due to limitations in Android, the app must be open to use hardware key push to talk.</string>
+    <string name="ptt">Push to Talk</string>
+    <string name="mute">Mute</string>
+    <string name="deafen">Deafen</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="disconnectSure">Are you sure you want to disconnect from Mumble?</string>
+    <string name="save">Save</string>
+    <string name="add">Add</string>
+    <string name="preferences">Preferences</string>
+    <string name="togglelocalmute">Toggle Local Mute</string>
+    <string name="chat">Chat</string>
+    <string name="permDenied">Permission denied!</string>
+    <string name="connectionRefused">Connection Refused</string>
+    <string name="sureDeleteServer">Are you sure you want to delete this server?</string>
 
 </resources>
