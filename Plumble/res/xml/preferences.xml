@@ -1,27 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PreferenceScreen
-	xmlns:android="http://schemas.android.com/apk/res/android">
-	<PreferenceCategory android:title="@string/authentication">
-		<ListPreference android:key="certificatePath" android:title="@string/certificateFile" android:summary='@string/certificateFileSum'/>
-		<EditTextPreference android:title="@string/certificatePassword" android:summary="@string/certificatePasswordSum" android:key="certificatePassword"/>
-	</PreferenceCategory><PreferenceCategory android:title="@string/audioInput">
-		<ListPreference android:entries="@array/audioInputNames" android:entryValues="@array/audioInputValues" android:key="audioInputMethod" android:summary="@string/audioInputMethodSum" android:title="@string/audioInputMethod" android:defaultValue="voiceActivity"/><ListPreference android:dialogTitle="@string/callMode" android:entries="@array/callModeNames" android:entryValues="@array/callModeValues" android:key="callMode" android:summary="@string/callModeSum" android:title="@string/callMode" android:defaultValue="speakerphone"/>
-		<com.morlunk.mumbleclient.preference.SeekBarDialogPreference android:key="detectionThreshold" android:title="@string/detectionThreshold" android:summary="@string/detectionThresholdSum" android:defaultValue="14" android:max="28" multiplier="100"/>
-		<com.morlunk.mumbleclient.preference.KeySelectDialogPreference android:key="talkKey" android:title="@string/pttKey" android:summary="@string/pttKeySum"/>
-		
-	</PreferenceCategory>
-	<PreferenceCategory android:title="@string/appearance">
-		<ListPreference android:entries="@array/themeNames" android:entryValues="@array/themeValues" android:key="theme" android:summary="@string/themeSum" android:title="@string/theme" android:defaultValue="lightDark"/>
-	</PreferenceCategory>
-	<PreferenceCategory
-		android:title="@string/advancedAudio">
-		<EditTextPreference
-			android:title="@string/audioQuality"
-			android:defaultValue="60000"
-			android:key="quality"
-			android:inputType="number" />
-	</PreferenceCategory>
-	
-	
-	
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/authentication" >
+        <ListPreference
+            android:key="certificatePath"
+            android:summary="@string/certificateFileSum"
+            android:title="@string/certificateFile" />
+
+        <EditTextPreference
+            android:key="certificatePassword"
+            android:summary="@string/certificatePasswordSum"
+            android:title="@string/certificatePassword" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/audioInput" >
+        <ListPreference
+            android:defaultValue="voiceActivity"
+            android:entries="@array/audioInputNames"
+            android:entryValues="@array/audioInputValues"
+            android:key="audioInputMethod"
+            android:summary="@string/audioInputMethodSum"
+            android:title="@string/audioInputMethod" />
+        <ListPreference
+            android:defaultValue="speakerphone"
+            android:dialogTitle="@string/callMode"
+            android:entries="@array/callModeNames"
+            android:entryValues="@array/callModeValues"
+            android:key="callMode"
+            android:summary="@string/callModeSum"
+            android:title="@string/callMode" />
+
+        <com.morlunk.mumbleclient.preference.SeekBarDialogPreference
+            multiplier="100"
+            android:defaultValue="14"
+            android:key="detectionThreshold"
+            android:max="28"
+            android:summary="@string/detectionThresholdSum"
+            android:title="@string/detectionThreshold" />
+
+        <com.morlunk.mumbleclient.preference.KeySelectDialogPreference
+            android:key="talkKey"
+            android:summary="@string/pttKeySum"
+            android:title="@string/pttKey" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/appearance" >
+        <ListPreference
+            android:defaultValue="lightDark"
+            android:entries="@array/themeNames"
+            android:entryValues="@array/themeValues"
+            android:key="theme"
+            android:summary="@string/themeSum"
+            android:title="@string/theme" />
+        <ListPreference
+            android:defaultValue="35"
+            android:entries="@array/rowheightText"
+            android:entryValues="@array/rowheightValues"
+            android:key="channellistrowheight"
+            android:summary="@string/rowheightSum"
+            android:title="@string/rowheight" />
+        <ListPreference
+            android:defaultValue="false"
+            android:entries="@array/colorizeText"
+            android:entryValues="@array/colorizeValues"
+            android:key="colorizechannellist"
+            android:summary="@string/colorizechannelsSum"
+            android:title="@string/colorizechannels" />
+
+        <EditTextPreference
+            android:defaultValue="5"
+            android:inputType="number"
+            android:key="colorthresholdnumusers"
+            android:summary="@string/colorthresholdSum"
+            android:title="@string/colorthreshold" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/advancedAudio" >
+        <EditTextPreference
+            android:defaultValue="60000"
+            android:inputType="number"
+            android:key="quality"
+            android:title="@string/audioQuality" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

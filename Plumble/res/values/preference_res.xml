@@ -34,6 +34,28 @@
 	    <item>voice</item>
 	</string-array>
 
+	<string-array name="rowheightText">
+		<item>Slim</item>
+		<item>Medium</item>
+		<item>Larger</item>
+		<item>Very Large</item>
+	</string-array>
+	<string-array name="rowheightValues">
+		<item>30</item>
+		<item>35</item>
+		<item>40</item>
+		<item>50</item>
+	</string-array>
+
+	<string-array name="colorizeText">
+		<item>Enable Colors</item>
+		<item>Disable Colors</item>
+	</string-array>
+	<string-array name="colorizeValues">
+		<item>true</item>
+		<item>false</item>
+	</string-array>
+
 	<string name="authentication">Authentication</string>
 	<string name="certificateFile">Certificate File</string>
 	<string name="certificateFileSum">The path of the P12 certificate you wish to use, placed in the \"Plumble\" folder on external storage.</string>
@@ -54,4 +76,10 @@
 	<string name="advancedAudio">Advanced Audio</string>
 	<string name="audioQuality">Audio quality</string>
 	<string name="noCert">No Certificate</string>
+	<string name="rowheight">Channellist row height</string>
+	<string name="rowheightSum">The height of a row in Channel selection.</string>
+	<string name="colorizechannels">Colorize channels</string>
+	<string name="colorizechannelsSum">Use colors to highlite root channels and used channels.</string>
+	<string name="colorthreshold">Threshold 2nd color</string>
+	<string name="colorthresholdSum">If this number of users is reached in a channel the channelname appears red.</string>
 </resources>

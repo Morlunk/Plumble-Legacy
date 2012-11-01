@@ -34,6 +34,28 @@
 	    <item>voice</item>
 	</string-array>
 
+	<string-array name="rowheightText">
+		<item>Niedrig</item>
+		<item>Mittel</item>
+		<item>Höher</item>
+		<item>Sehr hoch</item>
+	</string-array>
+	<string-array name="rowheightValues">
+		<item>30</item>
+		<item>35</item>
+		<item>40</item>
+		<item>50</item>
+	</string-array>
+
+	<string-array name="colorizeText">
+		<item>Farben einschalten</item>
+		<item>Farben ausschalten</item>
+	</string-array>
+	<string-array name="colorizeValues">
+		<item>true</item>
+		<item>false</item>
+	</string-array>
+
 	<string name="authentication">Authentifizierung</string>
 	<string name="certificateFile">Zertifikatsdatei</string>
 	<string name="certificateFileSum">Das gewünschte P12 Zertifikats aus dem \"Plumble\" Verzeichnis auf dem externen Speicher.</string>
@@ -54,4 +76,10 @@
 	<string name="advancedAudio">Erweiterte Audioeigenschaften</string>
 	<string name="audioQuality">Audio Qualität</string>
 	<string name="noCert">Kein Zertifikat</string>
+	<string name="rowheight">Zeilenhöhe in Kanalauswahl</string>
+	<string name="rowheightSum">Legt die Höhe einer Zeile in der Kanalauswahl fest.</string>
+	<string name="colorizechannels">Kanäle in der Auswahl einfärben</string>
+	<string name="colorizechannelsSum">Hauptkanäle werden gelb, benutzte Kanäle cyan und stark genutzte Kanäle in Rot dargestellt.</string>
+	<string name="colorthreshold">Limit für zweite Farbe</string>
+	<string name="colorthresholdSum">Wenn diese Anzahl Benutzer erreicht ist, wird der Kanal in der Kanalauswahl Rot dargestellt.</string>
 </resources>

@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.database.DataSetObserver;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -721,39 +722,123 @@ class ChannelSpinnerAdapter implements SpinnerAdapter {
 		public View getDropDownView(int position, View convertView,
 				ViewGroup parent) {
 			View view = convertView;
-			if(convertView == null) {
-				view = getLayoutInflater().inflate(R.layout.nested_dropdown_item, parent, false);
-			}
-			
-			DisplayMetrics metrics = getResources().getDisplayMetrics();
-			
+
 			Channel channel = getItem(position);
-			
-			ImageView returnImage = (ImageView) view.findViewById(R.id.return_image);
-			
-			// Show 'return' arrow and pad the view depending on channel's nested level.
+
+			int rowheight = settings.getChannelListRowHeight(); // load from
+																// settings
+			Boolean bSlimUsed = rowheight < 35;
+
+			DisplayMetrics metrics = getResources().getDisplayMetrics();
+
+			if (convertView == null) {
+
+				TextView text;
+				ImageView img;
+
+				if (bSlimUsed == true) {
+					// take slim layout
+					view = getLayoutInflater().inflate(
+							R.layout.nested_dropdown_item_slim, parent, false);
+					text = (TextView) view.findViewById(R.id.channel_name_s);
+					img = (ImageView) view.findViewById(R.id.return_image_s);
+					bSlimUsed = true;
+				} else {
+					// take legacy layout
+					view = getLayoutInflater().inflate(
+							R.layout.nested_dropdown_item, parent, false);
+					text = (TextView) view.findViewById(R.id.channel_name);
+					img = (ImageView) view.findViewById(R.id.return_image);
+				}
+
+				// calculate the dp value
+				rowheight = (int) (rowheight * metrics.density + 0.5f);
+
+				// set the height to layout, image and textview
+				android.view.ViewGroup.LayoutParams v_params = view
+						.getLayoutParams();
+				v_params.height = rowheight;
+				view.setLayoutParams(v_params);
+
+				android.view.ViewGroup.LayoutParams t_params = text
+						.getLayoutParams();
+				t_params.height = rowheight;
+				text.setLayoutParams(t_params);
+
+				android.view.ViewGroup.LayoutParams i_params = img
+						.getLayoutParams();
+				i_params.height = rowheight;
+				img.setLayoutParams(i_params);
+			}
+
+			ImageView returnImage;
+			if (bSlimUsed == true) {
+				returnImage = (ImageView) view
+						.findViewById(R.id.return_image_s);
+			} else {
+				returnImage = (ImageView) view.findViewById(R.id.return_image);
+			}
+
+			// Show 'return' arrow and pad the view depending on channel's
+			// nested level.
 			// Width of return arrow is 50dp, convert that to px.
-			if(channel.parent != -1) {
+			if (channel.parent != -1) {
 				returnImage.setVisibility(View.VISIBLE);
-				view.setPadding((int)(getNestedLevel(channel)*TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 25, metrics)), 
-						0, 
-						(int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 15, metrics), 
-						0);
+				view.setPadding((int) (getNestedLevel(channel) * TypedValue
+						.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 25,
+								metrics)), 0, (int) TypedValue.applyDimension(
+						TypedValue.COMPLEX_UNIT_DIP, 15, metrics), 0);
 			} else {
 				returnImage.setVisibility(View.GONE);
-				view.setPadding((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 15, metrics), 
-						0, 
-						(int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 15, metrics), 
-						0);
+				view.setPadding((int) TypedValue.applyDimension(
+						TypedValue.COMPLEX_UNIT_DIP, 15, metrics), 0,
+						(int) TypedValue.applyDimension(
+								TypedValue.COMPLEX_UNIT_DIP, 15, metrics), 0);
 			}
-			
-			TextView spinnerTitle = (TextView) view.findViewById(R.id.channel_name);
-			spinnerTitle.setText(channel.name);
-			
-			TextView spinnerCount = (TextView) view.findViewById(R.id.channel_count);
-			spinnerCount.setText("("+channel.userCount+")");
-			spinnerCount.setTextColor(getResources().getColor(channel.userCount > 0 ? R.color.abs__holo_blue_light : R.color.abs__primary_text_holo_dark));
-			
+
+			TextView spinnerTitle;
+			if (bSlimUsed == true) {
+				spinnerTitle = (TextView) view
+						.findViewById(R.id.channel_name_s);
+			} else {
+				spinnerTitle = (TextView) view.findViewById(R.id.channel_name);
+			}
+
+			// colorize root elements, channels with users, channels with many
+			// users
+			if (settings.getChannellistColorized() == true) {
+				if (channel.parent == 0) {
+					spinnerTitle.setTextColor(Color.YELLOW);
+				} else if (channel.userCount > 0
+						&& channel.userCount < settings.getColorizeThreshold()) {
+					spinnerTitle.setTextColor(Color.CYAN);
+				} else if (channel.userCount >= settings.getColorizeThreshold()) {
+					spinnerTitle.setTextColor(Color.RED);
+				} else {
+					spinnerTitle.setTextColor(Color.WHITE);
+				}
+			}
+
+			if (channel.userCount > 0) {
+				if (bSlimUsed == true) {
+					// if slim layout put usercount in front of channelname
+					spinnerTitle.setText("(" + channel.userCount + ") "
+							+ channel.name);
+				} else {
+					TextView spinnerCount = (TextView) view
+							.findViewById(R.id.channel_count);
+					spinnerCount.setText("(" + channel.userCount + ")");
+					spinnerCount
+							.setTextColor(getResources()
+									.getColor(
+											channel.userCount > 0 ? R.color.abs__holo_blue_light
+													: R.color.abs__primary_text_holo_dark));
+				}
+			} else {
+				// if no users on this channel suppress superflous info "(0)"
+				spinnerTitle.setText(channel.name);
+			}
+
 			return view;
 		}
 		
