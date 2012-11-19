@@ -61,6 +61,7 @@
     <string name="noFavorites">No favorited channels.</string>
     <string name="accessTokens">Access Tokens</string>
     <string name="accessAdd">Add Access Token</string>
+    <string name="pressTwiceToExit">Press \"back\" twice to exit</string>
     
 
 </resources>

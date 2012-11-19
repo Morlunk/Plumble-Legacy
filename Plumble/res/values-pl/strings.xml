@@ -31,7 +31,7 @@
     <string name="menu_settings">Ustawienia</string>
     <string name="title_activity_channel">Kanał</string>
     <string name="pressKey">Naciśnij sprzętowy przycisk by go wybrać.</string>
-    <string name="pressKeyInfo">Uwaga: Ze względu na ograniczenia w systemie Android, aplikacja musi być otwarta aby można było używać przycisku.</string>
+    <string name="pressKeyInfo">Uwaga: Ze względu na ograniczenia w systemie Android aplikacja musi być otwarta, aby można było używać przycisku.</string>
     <string name="ptt">Aktywacja przyciskiem</string>
     <string name="mute">Wycisz</string>
     <string name="deafen">Ogłusz</string>
@@ -62,6 +62,7 @@
     <string name="noFavorites">Nie masz ulubionych kanałów</string>
     <string name="accessTokens">Hasła dostępu</string>
     <string name="accessAdd">Dodaj hasło dostępu</string>
+    <string name="pressTwiceToExit">Naciśnij ponownie \"wstecz\", aby zamknąć</string>
     
 
 </resources>

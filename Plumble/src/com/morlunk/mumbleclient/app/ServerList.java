@@ -373,6 +373,9 @@ public class ServerList extends ConnectedListActivity {
 	/* (non-Javadoc)
 	 * @see com.morlunk.mumbleclient.app.ConnectedListActivity#onResume()
 	 */
+	
+	private boolean doubleBackToExitPressedOnce = false;
+	
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -381,6 +384,18 @@ public class ServerList extends ConnectedListActivity {
 			// If already connected, just jump to channel list.
 			startActivity(new Intent(this, ChannelActivity.class));
 		}
+		
+		this.doubleBackToExitPressedOnce = false;
+	}
+	
+	@Override
+	public void onBackPressed() {
+	    if (doubleBackToExitPressedOnce) {
+	        super.onBackPressed();
+	        return;
+	    }
+	    this.doubleBackToExitPressedOnce = true;
+	    Toast.makeText(this, R.string.pressTwiceToExit, Toast.LENGTH_SHORT).show();
 	}
 
 	@Override
