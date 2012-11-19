@@ -62,6 +62,7 @@
     <string name="noFavorites">Nie masz ulubionych kanałów</string>
     <string name="accessTokens">Hasła dostępu</string>
     <string name="accessAdd">Dodaj hasło dostępu</string>
+    <string name="pressTwiceToExit">Naciśnij ponownie \"wstecz\" aby zamknąć</string>
     
 
 </resources>
