@@ -9,6 +9,7 @@
 
         <EditTextPreference
             android:key="certificatePassword"
+            android:password="true"
             android:summary="@string/certificatePasswordSum"
             android:title="@string/certificatePassword" />
     </PreferenceCategory>
