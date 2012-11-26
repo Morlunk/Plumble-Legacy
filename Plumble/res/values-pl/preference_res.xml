@@ -56,7 +56,7 @@
 	<string name="certificatePasswordSum">Hasło do twojego certyfikatu PKCS12. (Opcjonalne)</string>
 	<string name="audioInput">Wejście Dźwięku</string>
 	<string name="audioInputMethodSum">Wybór między trybami aktywacji.</string>
-	<string name="audioInputMethod">Sposób transmisji głosu</string>
+	<string name="audioInputMethod">Tryb aktywacji</string>
 	<string name="callMode">Tryb wyjścia dźwięku</string>
 	<string name="callModeSum">Wybór między głośnikiem a słuchawką.</string>
 	<string name="detectionThreshold">Próg detekcji</string>
@@ -75,4 +75,6 @@
 	<string name="colorizechannelsSum">Włącza i wyłącza kolorowanie wyróżniające główne oraz aktywne kanały.</string>
 	<string name="colorthreshold">Próg alternatywnego koloru</string>
 	<string name="colorthresholdSum">Jeżeli liczba użytkowników przekroczy ustaloną wartość, kanał zostanie oznaczony kolorem czerwonym.</string>
+	<string name="chatNotifications">Powiadomienia Czatu</string>
+	<string name="chatNotificationsSum">Wyświetlaj powiadomienia, gdy ktoś napisze wiadomość.</string>
 </resources>
