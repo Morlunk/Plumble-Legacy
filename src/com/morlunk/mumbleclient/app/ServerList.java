@@ -325,7 +325,11 @@ public class ServerList extends ConnectedListActivity {
 		} else {
 			Log.i(Globals.LOG_TAG, "Crittercism disabled in debug build.");
 		}
-		Log.i(Globals.LOG_TAG, "JNI test: "+NativeAudio.opusDecoderCreate(48000, 1));
+		
+		// OPUS TEST CRAP
+		long decoder = NativeAudio.opusDecoderCreate(48000, 1);
+		Log.i(Globals.LOG_TAG, "Decoder pointer: "+decoder);
+		NativeAudio.opusDecoderDestroy(decoder);
 		
 		setContentView(R.layout.main);
 		
