@@ -31,6 +31,7 @@ import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
+import com.morlunk.mumbleclient.jni.NativeAudio;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
 
@@ -324,6 +325,7 @@ public class ServerList extends ConnectedListActivity {
 		} else {
 			Log.i(Globals.LOG_TAG, "Crittercism disabled in debug build.");
 		}
+		Log.i(Globals.LOG_TAG, "JNI test: "+NativeAudio.opusDecoderCreate(48000, 1));
 		
 		setContentView(R.layout.main);
 		

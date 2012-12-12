@@ -1,14 +1,17 @@
 package com.morlunk.mumbleclient.app;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.EditText;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
+import com.morlunk.mumbleclient.jni.NativeAudio;
 
 public class ServerInfo extends SherlockActivity {
 	
@@ -52,7 +55,6 @@ public class ServerInfo extends SherlockActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.server_add);
 		
-
 		final long serverId = this.getIntent().getLongExtra("serverId", -1);
 		if (serverId != -1) {
 			final EditText nameEdit = (EditText) findViewById(R.id.serverNameEdit);
