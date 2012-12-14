@@ -518,6 +518,7 @@ public class MumbleConnection implements Runnable {
 		a.setUsername(username);
 		a.setPassword(password);
 		a.addCeltVersions(Globals.CELT_VERSION);
+		a.setOpus(true); // TODO actually implement it, and make checks
 		
 		sendTcpMessage(MessageType.Version, v);
 		sendTcpMessage(MessageType.Authenticate, a);

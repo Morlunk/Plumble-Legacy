@@ -42,7 +42,7 @@ public class MumbleProtocol {
 	public static final int CODEC_NOCODEC = -1;
 	public static final int CODEC_ALPHA = UDPMESSAGETYPE_UDPVOICECELTALPHA;
 	public static final int CODEC_BETA = UDPMESSAGETYPE_UDPVOICECELTBETA;
-
+	
 	public static final int SAMPLE_RATE = 48000;
 	public static final int FRAME_SIZE = SAMPLE_RATE / 100;
 
@@ -134,6 +134,7 @@ public class MumbleProtocol {
 					   codecVersion.getBeta() == Globals.CELT_VERSION) {
 				codec = CODEC_BETA;
 			}
+			
 			canSpeak = canSpeak && (codec != CODEC_NOCODEC);
 
 			if (canSpeak != oldCanSpeak) {
