@@ -13,7 +13,7 @@ import org.fusesource.hawtjni.runtime.JniMethod;
 @JniClass
 public class Native {
 	static {
-		System.loadLibrary("native");
+		System.loadLibrary("NativeAudio");
 	}
 
 	@JniClass(flags = {STRUCT, TYPEDEF})

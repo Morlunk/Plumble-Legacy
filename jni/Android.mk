@@ -181,9 +181,9 @@ LOCAL_CFLAGS		:= -I$(LOCAL_PATH) -DOPUS_BUILD -DVAR_ARRAYS -Wno-traditional # -D
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE			:= libplumble
+LOCAL_MODULE			:= libPlumble
 LOCAL_PATH				:= $(ROOT)
-LOCAL_SRC_FILES			:= audio.c
+LOCAL_SRC_FILES			:= Plumble.cpp
 LOCAL_STATIC_LIBRARIES	:= libopus
 
 include $(BUILD_SHARED_LIBRARY)
@@ -219,7 +219,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_PATH				:= $(ROOT)/new
-LOCAL_MODULE			:= libnative
+LOCAL_MODULE			:= libNativeAudio
 LOCAL_SRC_FILES			:= hawtjni.c hawtjni_native.c hawtjni_native_stats.c hawtjni_native_structs.c
 LOCAL_CFLAGS			:= -I$(ROOT)/celt/libcelt -fvisibility=hidden
 LOCAL_STATIC_LIBRARIES	:= libcelt libspeex
