@@ -15,6 +15,7 @@ import com.morlunk.mumbleclient.jni.Native;
 import com.morlunk.mumbleclient.jni.celtConstants;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.MumbleService;
+import com.morlunk.mumbleclient.service.MumbleService.SettingsListener;
 import com.morlunk.mumbleclient.service.PacketDataStream;
 
 /**
@@ -23,9 +24,10 @@ import com.morlunk.mumbleclient.service.PacketDataStream;
  * @author pcgod
  *
  */
-public class RecordThread implements Runnable {
+public class RecordThread implements Runnable, SettingsListener {
 	
-	private final int audioQuality;
+	private float volumeMultiplier;
+	private int audioQuality;
 	private static int frameSize;
 	private static int recordingSampleRate;
 	private static final int TARGET_SAMPLE_RATE = MumbleProtocol.SAMPLE_RATE;
@@ -49,13 +51,11 @@ public class RecordThread implements Runnable {
 
 	public RecordThread(final MumbleService service, final boolean voiceActivity) {
 		mService = service;
-		audioQuality = new Settings(mService.getApplicationContext()).getAudioQuality();
 		this.voiceActivity = voiceActivity;
 
-		Settings settings = new Settings(service);
-		// Get detection threshold
-		detectionThreshold = settings.getDetectionThreshold();
-		callMode = settings.getCallMode();
+		Settings settings = new Settings(mService);
+		settingsUpdated(settings);
+		mService.registerSettingsListener(this);
 
 		for (final int s : new int[] { 48000, 44100, 22050, 11025, 8000 }) {
 			bufferSize = AudioRecord.getMinBufferSize(
@@ -154,16 +154,19 @@ public class RecordThread implements Runnable {
 					out = buffer;
 				}
 				
+				long totalAmplitude = 0;
+				
+				// Boost amplitude, if applicable- also, record avg. amplitude.
+				for(int x=0;x<out.length;x++) {
+					totalAmplitude += Math.abs(out[x]);
+					out[x] += volumeMultiplier*out[x];
+				}
+				totalAmplitude /= out.length;
+				
 				if(voiceActivity &&
 						mService != null &&
 						mService.isConnected() &&
-						mService.getCurrentUser() != null) {
-					long totalAmplitude = 0;
-					for(short s : buffer) {
-						totalAmplitude +=Math.abs(s);
-					}
-					totalAmplitude /= buffer.length;
-					
+						mService.getCurrentUser() != null) {					
 					if(totalAmplitude >= detectionThreshold) {
 						lastDetection = System.currentTimeMillis();
 					}
@@ -239,5 +242,16 @@ public class RecordThread implements Runnable {
 		}
 		Native.celt_encoder_destroy(celtEncoder);
 		Native.celt_mode_destroy(celtMode);
+		
+		if(mService != null)
+			mService.unregisterSettingsListener(this);
 	}	
+
+	@Override
+	public void settingsUpdated(Settings settings) {
+		volumeMultiplier = settings.getAmplitudeBoostMultiplier();
+		detectionThreshold = settings.getDetectionThreshold();
+		callMode = settings.getCallMode();
+		audioQuality = settings.getAudioQuality();
+	}
 }

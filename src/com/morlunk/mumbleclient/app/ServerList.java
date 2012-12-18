@@ -80,14 +80,14 @@ public class ServerList extends ConnectedListActivity {
 			if(v == null) {
 				LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				view = inflater.inflate(
-					android.R.layout.simple_list_item_2,
+					R.layout.server_list_row,
 					null);
 			}
 			
 			Server server = getItem(position);
 
-			TextView nameText = (TextView) view.findViewById(android.R.id.text1);
-			TextView userText = (TextView) view.findViewById(android.R.id.text2);
+			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
+			TextView userText = (TextView) view.findViewById(R.id.server_row_user);
 
 			if(server.getName().equals("")) {
 				nameText.setText(server.getHost() + ":" + server.getPort());

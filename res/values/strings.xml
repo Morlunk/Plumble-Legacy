@@ -71,6 +71,8 @@
     <string name="search">Search</string>
     <string name="searchHint">Channel search</string>
     <string name="undocumentedWakeLock">Unfortunately, it doesn\'t look like we can provide proximity sensor wake lock support for your device. Please change the call mode to speakerphone.</string>
+    <string name="amplifier">Amplifier</string>
+    <string name="recordingVolume">Recording Volume Boost</string>
     
 
 </resources>

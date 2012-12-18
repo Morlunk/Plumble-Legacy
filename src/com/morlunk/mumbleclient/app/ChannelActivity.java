@@ -480,6 +480,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 				dialogFragment.show(getSupportFragmentManager(), "tokens");
 			//}
 			return true;
+		case R.id.menu_amplifier:
+			AmplifierDialogFragment amplifierDialogFragment = AmplifierDialogFragment.newInstance();
+			amplifierDialogFragment.show(getSupportFragmentManager(), "amplifier");
+			return true;
 		case R.id.menu_disconnect_item:
 			new Thread(new Runnable() {
 				

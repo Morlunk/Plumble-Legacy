@@ -16,12 +16,20 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.Vibrator;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.google.protobuf.Message.Builder;
 import com.morlunk.mumbleclient.Globals;
@@ -44,6 +52,10 @@ import com.morlunk.mumbleclient.service.model.User;
  * @author Rantanen
  */
 public class MumbleService extends Service {
+	
+	public interface SettingsListener {
+		public void settingsUpdated(Settings settings);
+	}
 	
 	public class LocalBinder extends Binder {
 		public MumbleService getService() {
@@ -160,9 +172,15 @@ public class MumbleService extends Service {
 
 					// Handle foreground stuff
 					if (state == MumbleConnectionHost.STATE_CONNECTED) {
-						showNotification();					
+						// Create PTT overlay
+						if(settings.isPushToTalk() &&
+								!settings.getHotCorner().equals(Settings.ARRAY_HOT_CORNER_NONE)) {
+							createPTTOverlay();
+						}
+						showNotification();	
 						updateConnectionState();						
 					} else if (state == MumbleConnectionHost.STATE_DISCONNECTED) {
+						dismissPTTOverlay();
 						doConnectionDisconnect();
 					} else {
 						updateConnectionState();
@@ -481,13 +499,16 @@ public class MumbleService extends Service {
 	private MumbleProtocol mProtocol;
 
 	private Settings settings;
+	private List<SettingsListener> settingsListeners;
 	private int serverId;
 	
 	private Thread mClientThread;
-	private Thread mRecordThread;
+	private RecordThread mRecordThread;
+	private Thread mRecordThreadInstance;
 
 	private Notification mStatusNotification;
 	private NotificationCompat.Builder mStatusNotificationBuilder;
+	private View overlayView; // Hot corner overlay view
 
 	private final LocalBinder mBinder = new LocalBinder();
 	final Handler handler = new Handler();
@@ -631,7 +652,7 @@ public class MumbleService extends Service {
 	}
 
 	public boolean isRecording() {
-		return (mRecordThread != null);
+		return (mRecordThreadInstance != null);
 	}
 	
 	public boolean isDeafened() {
@@ -664,6 +685,7 @@ public class MumbleService extends Service {
 		hideNotification();
 		
 		settings = new Settings(this);
+		settingsListeners = new ArrayList<SettingsListener>();
 		
 		Log.i(Globals.LOG_TAG, "MumbleService: Created");
 		serviceState = CONNECTION_STATE_DISCONNECTED;
@@ -725,8 +747,9 @@ public class MumbleService extends Service {
 		if (state) {
 			// start record
 			// TODO check initialized
-			mRecordThread = new Thread(new RecordThread(this, settings.isVoiceActivity()), "record");
-			mRecordThread.start();
+			mRecordThread = new RecordThread(this, settings.isVoiceActivity());
+			mRecordThreadInstance = new Thread(mRecordThread, "record");
+			mRecordThreadInstance.start();
 			
 			if(settings.isPushToTalk()) {
 				// Continuously talk if using PTT.
@@ -734,14 +757,34 @@ public class MumbleService extends Service {
 						mProtocol.currentUser,
 						AudioOutputHost.STATE_TALKING);
 			}
-		} else if (mRecordThread != null && !state) {
+		} else if (mRecordThreadInstance != null && !state) {
 			// stop record
-			mRecordThread.interrupt();
+			mRecordThreadInstance.interrupt();
+			mRecordThreadInstance = null;
 			mRecordThread = null;
 			mAudioHost.setTalkState(
 				mProtocol.currentUser,
 				AudioOutputHost.STATE_PASSIVE);
 		}
+	}
+	
+	/**
+	 * Updates all registered settings listeners within the service.
+	 */
+	public void updateSettings() {
+		for(SettingsListener listener : settingsListeners) {
+			listener.settingsUpdated(settings);
+		}
+	}
+	
+	public void registerSettingsListener(SettingsListener settingsListener) {
+		if(!settingsListeners.contains(settingsListener))
+			settingsListeners.add(settingsListener);
+	}
+	
+	public void unregisterSettingsListener(SettingsListener settingsListener) {
+		if(settingsListeners.contains(settingsListener))
+			settingsListeners.remove(settingsListener);
 	}
 	
 	public void setMuted(final boolean state) {
@@ -965,6 +1008,63 @@ public class MumbleService extends Service {
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		
 		notificationManager.notify(STATUS_NOTIFICATION_ID, notificationCompat);
+	}
+	
+	/**
+	 * Creates a system overlay that allows the user to touch the corner of the screen to push to talk.
+	 */
+	public void createPTTOverlay() {
+		WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+				WindowManager.LayoutParams.WRAP_CONTENT,
+				WindowManager.LayoutParams.WRAP_CONTENT,
+				WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+						| WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+						| WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+				PixelFormat.TRANSLUCENT);
+		String hotCorner = settings.getHotCorner();
+		if(hotCorner.equals(Settings.ARRAY_HOT_CORNER_TOP_LEFT)) {
+			params.gravity = Gravity.LEFT | Gravity.TOP;
+		} else if(hotCorner.equals(Settings.ARRAY_HOT_CORNER_BOTTOM_LEFT)) {
+			params.gravity = Gravity.LEFT | Gravity.BOTTOM;
+		} else if(hotCorner.equals(Settings.ARRAY_HOT_CORNER_TOP_RIGHT)) {
+			params.gravity = Gravity.RIGHT | Gravity.TOP;
+		} else if(hotCorner.equals(Settings.ARRAY_HOT_CORNER_BOTTOM_RIGHT)) {
+			params.gravity = Gravity.RIGHT | Gravity.BOTTOM;
+		}
+		WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+		LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+		overlayView = inflater.inflate(R.layout.overlay, null);
+		final Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+		overlayView.setOnTouchListener(new View.OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				if(event.getAction() == MotionEvent.ACTION_DOWN) {
+					setRecording(true);
+					// Vibrate to provide haptic feedback
+					vibrator.vibrate(10);
+					overlayView.setBackgroundColor(Color.RED);
+				} else if(event.getAction() == MotionEvent.ACTION_UP) {
+					setRecording(false);
+					overlayView.setBackgroundColor(0);
+				}
+				return false;
+			}
+		});
+
+		// Add layout to window manager
+		wm.addView(overlayView, params);
+	}
+	
+	/**
+	 * Removes the system overlay for PTT.
+	 */
+	public void dismissPTTOverlay() {
+		if(overlayView != null) {
+			WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+			wm.removeView(overlayView);
+		}
 	}
 
 	void updateConnectionState() {

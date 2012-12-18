@@ -45,6 +45,7 @@
             android:key="talkKey"
             android:summary="@string/pttKeySum"
             android:title="@string/pttKey" />
+        <ListPreference android:entries="@array/hotCornerNames" android:entryValues="@array/hotCornerValues" android:key="hotCorner" android:summary="@string/hotCornerSum" android:title="@string/hotCorner" android:defaultValue="none"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/appearance" >
         <ListPreference
