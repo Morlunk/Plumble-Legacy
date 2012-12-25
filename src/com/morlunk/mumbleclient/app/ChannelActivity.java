@@ -330,7 +330,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	getSupportFragmentManager().putFragment(outState, ChannelListFragment.class.getName(), listFragment);
     	getSupportFragmentManager().putFragment(outState, ChannelChatFragment.class.getName(), chatFragment);
 		outState.putParcelable(SAVED_STATE_VISIBLE_CHANNEL, visibleChannel);
-		outState.putParcelable(SAVED_STATE_CHAT_TARGET, chatTarget);
+		
+		if(chatTarget != null)
+			outState.putParcelable(SAVED_STATE_CHAT_TARGET, chatTarget);
     }
     
     /* (non-Javadoc)
