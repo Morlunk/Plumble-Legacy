@@ -449,8 +449,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	if(mutedButton == null || deafenedButton == null)
     		return;
 
-    	mutedButton.setIcon(!muted ? R.drawable.microphone : R.drawable.ic_action_microphone_muted);
-    	deafenedButton.setIcon(!deafened ? R.drawable.ic_headphones : R.drawable.ic_action_headphones_deafened);
+    	mutedButton.setIcon(!muted ? R.drawable.ic_action_microphone : R.drawable.ic_action_microphone_muted);
+    	deafenedButton.setIcon(!deafened ? R.drawable.ic_action_headphones : R.drawable.ic_action_headphones_deafened);
     }
     
     /* (non-Javadoc)

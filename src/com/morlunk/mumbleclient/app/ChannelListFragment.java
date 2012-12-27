@@ -12,6 +12,7 @@ import net.sf.mumble.MumbleProto.RequestBlob;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -32,6 +33,7 @@ import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.morlunk.mumbleclient.R;
+import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
@@ -216,6 +218,8 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 
 		private final Runnable visibleUsersChangedCallback;
 
+		private final Drawable chatDrawable; // Changes depending on theme.
+		
 		int totalViews = 0;
 
 		public UserListAdapter(
@@ -223,6 +227,10 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			final Runnable visibleUsersChangedCallback) {
 			this.context = context;
 			this.visibleUsersChangedCallback = visibleUsersChangedCallback;
+			
+			// Fetch theme dependent icon
+			Settings settings = new Settings(context);
+			chatDrawable = getResources().getDrawable(settings.getTheme().equals(Settings.ARRAY_THEME_LIGHTDARK) ? R.drawable.ic_action_chat_light : R.drawable.ic_action_chat_dark);
 		}
 
 		@Override
@@ -415,16 +423,16 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 
 			switch (user.userState) {
 			case User.USERSTATE_DEAFENED:
-				state.setImageResource(R.drawable.deafened);
+				state.setImageResource(R.drawable.ic_deafened);
 				break;
 			case User.USERSTATE_MUTED:
-				state.setImageResource(R.drawable.muted);
+				state.setImageResource(R.drawable.ic_muted);
 				break;
 			default:
 				if (user.talkingState == AudioOutputHost.STATE_TALKING) {
-					state.setImageResource(R.drawable.talking_on);
+					state.setImageResource(R.drawable.ic_talking_on);
 				} else {
-					state.setImageResource(R.drawable.talking_off);
+					state.setImageResource(R.drawable.ic_talking_off);
 				}
 			}
 			
@@ -474,6 +482,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 				}
 			});
 			
+			chatActive.setImageDrawable(chatDrawable);
 			chatActive.setVisibility(user.equals(selectedUser) ? View.VISIBLE : View.GONE);
 			
 			view.invalidate();

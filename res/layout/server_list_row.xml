@@ -42,7 +42,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginRight="5dp"
-                android:src="@drawable/ic_icon_user_light" />
+                android:src="@drawable/ic_user_light" />
 
             <TextView
                 android:id="@+id/server_row_user"
@@ -61,7 +61,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginRight="5dp"
-                android:src="@drawable/ic_icon_server_light" />
+                android:src="@drawable/ic_server_light" />
 
             <TextView
                 android:id="@+id/server_row_address"
