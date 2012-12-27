@@ -73,6 +73,14 @@ public class ChannelChatFragment extends SherlockFragment {
 		chatText = (TextView) view.findViewById(R.id.chatText);
 		chatTextEdit = (EditText) view.findViewById(R.id.chatTextEdit);
 		
+		chatTextEdit.setOnEditorActionListener(new OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				sendMessage(v);
+				return true;
+			}
+		});
+		
 		ImageButton sendButton = (ImageButton) view.findViewById(R.id.chatTextSend);
 		sendButton.setOnClickListener(new OnClickListener() {
 			@Override

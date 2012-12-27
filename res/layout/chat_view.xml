@@ -37,7 +37,8 @@
 		    android:layout_weight="1"
 		    android:minHeight="40dp"
 		    android:hint="@string/messageToChannel"
-		    android:inputType="textAutoCorrect" 
+		    android:inputType="textAutoCorrect"
+		    android:imeOptions="actionSend"
 	    	android:layout_marginLeft="10dp"
 	    	android:layout_marginRight="10dp" >
 		</EditText>
