@@ -11,8 +11,10 @@ import android.text.style.ForegroundColorSpan;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
@@ -30,19 +32,6 @@ public class ChannelChatFragment extends SherlockFragment {
 	private EditText chatTextEdit;
 
 	private User chatTarget;
-	
-	private final OnEditorActionListener chatTextEditActionEvent = new OnEditorActionListener() {
-		@Override
-		public boolean onEditorAction(
-			final TextView v,
-			final int actionId,
-			final KeyEvent event) {
-			if (v != null) {
-				sendMessage(v);
-			}
-			return true;
-		}
-	};
 	
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
@@ -83,7 +72,15 @@ public class ChannelChatFragment extends SherlockFragment {
 		chatScroll = (ScrollView) view.findViewById(R.id.chatScroll);
 		chatText = (TextView) view.findViewById(R.id.chatText);
 		chatTextEdit = (EditText) view.findViewById(R.id.chatTextEdit);
-		chatTextEdit.setOnEditorActionListener(chatTextEditActionEvent);
+		
+		ImageButton sendButton = (ImageButton) view.findViewById(R.id.chatTextSend);
+		sendButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				sendMessage(chatTextEdit);
+			}
+		});
+		
 		updateText();
 		updateChatTargetText();
 		return view;

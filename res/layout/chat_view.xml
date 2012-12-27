@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
 	android:orientation="vertical"
 	android:layout_height="fill_parent"
-	android:layout_width="fill_parent">
+	android:layout_width="fill_parent"
+    tools:ignore="NewApi" 
+    android:divider="?android:attr/dividerVertical"
+    android:showDividers="middle" >
 	<ScrollView
 	    android:id="@+id/chatScroll"
 	    android:layout_width="match_parent"
@@ -19,12 +23,31 @@
 		android:layout_marginLeft="10dp"
 		android:layout_marginRight="10dp"/>
 	</ScrollView>
+
+	<LinearLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+    	android:divider="?android:attr/dividerHorizontal"
+    	android:showDividers="middle">
+
 		<EditText
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:id="@+id/chatTextEdit"
-			android:imeOptions="actionSend"
-            android:inputType="textNoSuggestions"
-			android:hint="@string/messageToChannel"> <!-- Hide suggestions. Makes things a bit inconsistent. -->
+		    android:id="@+id/chatTextEdit"
+		    android:layout_width="0dp"
+		    android:layout_height="match_parent"
+		    android:layout_weight="1"
+		    android:minHeight="40dp"
+		    android:hint="@string/messageToChannel"
+		    android:inputType="textAutoCorrect" 
+	    	android:layout_marginLeft="10dp"
+	    	android:layout_marginRight="10dp" >
 		</EditText>
+
+		<ImageButton
+		    android:id="@+id/chatTextSend"
+            style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
+		    android:layout_width="50dp"
+		    android:layout_height="50dp"
+		    android:src="@drawable/ic_action_send" />
+
+	</LinearLayout>
 </LinearLayout>
