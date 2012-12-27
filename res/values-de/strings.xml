@@ -35,7 +35,7 @@
     <string name="ptt">Sprechen</string>
     <string name="mute">Stumm stellen</string>
     <string name="deafen">Taub stellen</string>
-    <string name="disconnect">Trennen</string>
+    <string name="disconnect">Verbindung trennen</string>
     <string name="disconnectSure">Bist du dir sicher, dass du die Verbindung zu Mumble trennen möchtest?</string>
     <string name="save">Speichern</string>
     <string name="add">Hinzufügen</string>
@@ -45,5 +45,41 @@
     <string name="permDenied">Zugriff verboten!</string>
     <string name="connectionRefused">Verbindung abgelehnt</string>
     <string name="sureDeleteServer">Bist du dir sicher, dass du diesen Server löschen möchtest?</string>
-
+    <string name="disconnected">Getrennt</string>
+    <string name="kickedMessage">Kicked vom Server. Grund: %s</string>
+    <string name="loading">Lade...</string>
+    <string name="reset_key">Keine Hardware Taste</string>
+    <string name="externalStorageUnavailable">Externer Speicher nicht verfügbar, kann Zertifikat nicht laden</string>
+    <string name="audioQualitySum">Die Audio Bitrate die Plumble zu nutzen versuchen wird.</string>
+    <string name="forceTcp">Erzwinge TCP</string>
+    <string name="forceTcpSum">Es wird ausschließlich TCP benutzt und UDP wird abgeschaltet.</string>
+    <string name="addFavorite">Favorit hinzufügen</string>
+    <string name="removeFavorite">Favorit entfernen</string><string name="viewFavorites">View Favorites</string>
+    <string name="favorites">Favoriten</string>
+    <string name="viewFavorites">Favoriten anzeigen</string>
+    <string name="favoriteRemoved">Favorit entfernt.</string>
+    <string name="favoriteAdded">Favorit zugefügt.</string>
+    <string name="noFavorites">Keine Favoriten gespeichert.</string>
+    <string name="accessTokens">Access Tokens</string>
+    <string name="accessAdd">Access Token hinzufügen</string>
+    <string name="pushToTalkHint">(checkbox setzen zum einrasten der Taste)</string>
+    <string name="messageReceived">Neue Mitteilung</string>
+    <string name="general">General</string>
+    <string name="generateCert">Zertifikat erzeugen</string>
+    <string name="generateCertSuccess">Dein Zertifikat wurde gesetzt und gespeichert unter %s!</string>
+    <string name="generateCertFailure">Zertifikat konnte nicht erzeugt werden.</string>
+    <string name="generateCertProgress">Erzeuge Zertifikat...</string>
+    <string name="search">Suche Kanal</string>
+    <string name="searchHint">Kanalsuche</string>
+    <string name="undocumentedWakeLock">Leider kann auf deinem Gerät der Proximity Sensor nicht genutzt werden um den Standby zu verhindern. Bitte ändere den Modus zu \'Freisprechen\'.</string>
+    <string name="amplifier">Verstärker</string>
+    <string name="recordingVolume">Aufnahmelautstärke Boost</string>
+    <string name="quickConnect">Schnelle Verbindung</string>
+    <string name="connect">Verbinden</string>
+    <string name="connectToServer">Verbindung zum Server</string>
+    <string name="edit">Bearbeiten</string>
+    <string name="delete">Löschen</string>
+    <string name="retry">Erneut versuchen</string>
+    <string name="messageToUser">Schreibe Mitteilung an \'%s\'</string>
+    <string name="messageToChannel">Schreibe Mitteilung an Kanal</string>
 </resources>
