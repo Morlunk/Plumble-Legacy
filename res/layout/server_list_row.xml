@@ -20,17 +20,29 @@
         android:paddingTop="10dp"
         android:paddingBottom="5dp">
 
-        <TextView
-            android:id="@+id/server_row_name"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="left|center_vertical"
-            android:paddingBottom="4dp"
-            android:text="@string/serverHost"
-            android:textColor="#808080"
-            android:fontFamily="sans-serif-light"
-            android:textSize="24sp" >
-        </TextView>
+            android:layout_height="wrap_content" >
+            <TextView
+                android:id="@+id/server_row_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:gravity="left|center_vertical"
+                android:paddingBottom="4dp"
+                android:text="@string/serverHost"
+                android:textColor="#808080"
+                android:textSize="24sp"
+                android:layout_weight="1"/>
+
+            <ImageButton
+                android:id="@+id/server_row_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_action_delete_light" 
+                android:background="@null"/>
+
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

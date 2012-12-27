@@ -15,6 +15,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -115,6 +116,15 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 					editServer(server.getId());
 				}
 			});
+			
+			ImageButton deleteButton = (ImageButton) view.findViewById(R.id.server_row_delete);
+			deleteButton.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					deleteServer(server.getId());
+				}
+			});
 
 			return view;
 		}
@@ -196,6 +206,14 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		args.putLong("serverId", id);
 		infoDialog.setArguments(args);
 		infoDialog.show(getSupportFragmentManager(), "serverInfo");
+	}
+	
+	private void deleteServer(long id) {
+		DbAdapter adapter = new DbAdapter(this);
+		adapter.open();
+		adapter.deleteServer(id);
+		adapter.close();
+		fillList();
 	}
 	
 	private void registerConnectionReceiver() {
