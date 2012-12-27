@@ -617,7 +617,7 @@ public class MumbleService extends Service {
 	}
 
 	public User getCurrentUser() {
-		if(!isConnected() && mProtocol != null) 
+		if(!isConnected() || mProtocol == null) 
 			return null;
 		return mProtocol.currentUser;
 	}
