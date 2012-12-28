@@ -118,7 +118,7 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 		
 		if(reject != null) {
 			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-			if(reject.getType() == RejectType.WrongServerPW) {		
+			if(reject.getType() == RejectType.WrongUserPW || reject.getType() == RejectType.WrongServerPW) {		
 				// Allow password entry
 				final EditText passwordField = new EditText(this);
 				passwordField.setHint(R.string.serverPassword);
