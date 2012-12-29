@@ -10,7 +10,7 @@
     <string name="serverAdd">Dodaj serwer</string>
     <string name="serverChange">Zmień serwer</string>
     <string name="serverPassword">Hasło (Opcjonalne)</string>
-    <string name="serverUsername">Nazwa urzytkownika</string>
+    <string name="serverUsername">Nazwa użytkownika</string>
     <string name="serverPort">Port</string>
     <string name="serverHost">Adres (IP lub domena)</string>
     <string name="serverName">Etykieta (Opcjonalna)</string>
