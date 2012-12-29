@@ -1,10 +1,12 @@
 package com.morlunk.mumbleclient;
 
+import java.util.Observable;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-public class Settings {
+public class Settings extends Observable {
 	public static final String PREF_CALL_MODE = "callMode";
 	public static final String ARRAY_CALL_MODE_SPEAKER = "speakerphone";
 	public static final String ARRAY_CALL_MODE_VOICE = "voice";
@@ -65,7 +67,15 @@ public class Settings {
 	
 	private final SharedPreferences preferences;
 
-	public Settings(final Context ctx) {
+	private static Settings settings;
+	
+	public static Settings getInstance(Context context) {
+		if(settings == null)
+			settings = new Settings(context);
+		return settings;
+	}
+	
+	private Settings(final Context ctx) {
 		preferences = PreferenceManager.getDefaultSharedPreferences(ctx);
 	}
 	
@@ -89,6 +99,7 @@ public class Settings {
 	
 	public void setAmplitudeBoostMultiplier(Float multiplier) {
 		preferences.edit().putFloat(PREF_AMPLITUDE_BOOST, multiplier).commit();
+		notifyObservers();
 	}
 	
 	public int getDetectionThreshold() {
@@ -113,6 +124,7 @@ public class Settings {
 	
 	public void setCertificatePath(String path) {
 		preferences.edit().putString(PREF_CERT, path).commit();
+		notifyObservers();
 	}
 	
 	public String getCertificatePassword() {
@@ -138,6 +150,7 @@ public class Settings {
 	public void setLastChannel(int serverId, int channelId) {
 		preferences.edit()
 		.putInt(String.format("%s%d", LAST_CHANNEL_PREFIX, serverId), channelId).commit();
+		notifyObservers();
 	}
 
 	public int getChannelListRowHeight() {

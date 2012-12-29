@@ -187,7 +187,7 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 				try {
 					X509Certificate certificate = PlumbleCertificateManager.createCertificate(certificatePath);
 					
-					Settings settings = new Settings(context);
+					Settings settings = Settings.getInstance(getContext());
 					settings.setCertificatePath(certificatePath.getAbsolutePath());
 					return certificate;
 				} catch (Exception e) {

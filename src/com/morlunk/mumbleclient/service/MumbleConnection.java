@@ -28,7 +28,6 @@ import net.sf.mumble.MumbleProto.Version;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.params.BasicHttpParams;
 
-import android.content.pm.PackageInfo;
 import android.util.Log;
 
 import com.google.protobuf.MessageLite;

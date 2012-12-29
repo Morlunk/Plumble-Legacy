@@ -151,7 +151,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
-		settings = new Settings(this);
+		settings = Settings.getInstance(this);
 		
 		// Use theme from settings
 		int theme = 0;
@@ -287,30 +287,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			listFragment.setChatTarget(chatTarget);
 			chatFragment.setChatTarget(chatTarget);
         }
-
-        /*
-         * Removed tab code as you are unable to have both tabs and list navigation modes. Use pager only for now.
-        // For each of the sections in the app, add a tab to the action bar.
-        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
-            // Create a tab with text corresponding to the page title defined by the adapter.
-            // Also specify this Activity object, which implements the TabListener interface, as the
-            // listener for when this tab is selected.
-            actionBar.addTab(
-                    actionBar.newTab()
-                            .setText(mSectionsPagerAdapter.getPageTitle(i))
-                            .setTabListener(this));
-        }
-        // When swiping between different sections, select the corresponding tab.
-        // We can also use ActionBar.Tab#select() to do this if we have a reference to the
-        // Tab.
-        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-                actionBar.setSelectedNavigationItem(position);
-            }
-        });
-        
-        */
     }
     
     public void setPushToTalk(final boolean talking) {

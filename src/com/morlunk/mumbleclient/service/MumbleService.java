@@ -58,10 +58,6 @@ import com.morlunk.mumbleclient.service.model.User;
  */
 public class MumbleService extends Service {
 	
-	public interface SettingsListener {
-		public void settingsUpdated(Settings settings);
-	}
-	
 	public class LocalBinder extends Binder {
 		public MumbleService getService() {
 			return MumbleService.this;
@@ -498,7 +494,6 @@ public class MumbleService extends Service {
 	private MumbleProtocol mProtocol;
 
 	private Settings settings;
-	private List<SettingsListener> settingsListeners;
 	private Server connectedServer;
 	
 	private Thread mClientThread;
@@ -686,8 +681,7 @@ public class MumbleService extends Service {
 		// Make sure our notification is gone.
 		hideNotification();
 		
-		settings = new Settings(this);
-		settingsListeners = new ArrayList<SettingsListener>();
+		settings = Settings.getInstance(this);
 		
 		PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
 		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "plumbleLock");
@@ -775,25 +769,6 @@ public class MumbleService extends Service {
 				mProtocol.currentUser,
 				AudioOutputHost.STATE_PASSIVE);
 		}
-	}
-	
-	/**
-	 * Updates all registered settings listeners within the service.
-	 */
-	public void updateSettings() {
-		for(SettingsListener listener : settingsListeners) {
-			listener.settingsUpdated(settings);
-		}
-	}
-	
-	public void registerSettingsListener(SettingsListener settingsListener) {
-		if(!settingsListeners.contains(settingsListener))
-			settingsListeners.add(settingsListener);
-	}
-	
-	public void unregisterSettingsListener(SettingsListener settingsListener) {
-		if(settingsListeners.contains(settingsListener))
-			settingsListeners.remove(settingsListener);
 	}
 	
 	public void setMuted(final boolean state) {

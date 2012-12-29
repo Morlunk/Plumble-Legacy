@@ -1,6 +1,8 @@
 package com.morlunk.mumbleclient.service.audio;
 
 import java.util.LinkedList;
+import java.util.Observable;
+import java.util.Observer;
 
 import android.annotation.TargetApi;
 import android.media.AudioFormat;
@@ -15,7 +17,6 @@ import com.morlunk.mumbleclient.jni.Native;
 import com.morlunk.mumbleclient.jni.celtConstants;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.MumbleService;
-import com.morlunk.mumbleclient.service.MumbleService.SettingsListener;
 import com.morlunk.mumbleclient.service.PacketDataStream;
 
 /**
@@ -24,7 +25,7 @@ import com.morlunk.mumbleclient.service.PacketDataStream;
  * @author pcgod
  *
  */
-public class RecordThread implements Runnable, SettingsListener {
+public class RecordThread implements Runnable, Observer {
 	
 	private float volumeMultiplier;
 	private int audioQuality;
@@ -53,9 +54,9 @@ public class RecordThread implements Runnable, SettingsListener {
 		mService = service;
 		this.voiceActivity = voiceActivity;
 
-		Settings settings = new Settings(mService);
-		settingsUpdated(settings);
-		mService.registerSettingsListener(this);
+		Settings settings = Settings.getInstance(service);
+		settings.addObserver(this);
+		update(settings, null);
 
 		for (final int s : new int[] { 48000, 44100, 22050, 11025, 8000 }) {
 			bufferSize = AudioRecord.getMinBufferSize(
@@ -242,13 +243,11 @@ public class RecordThread implements Runnable, SettingsListener {
 		}
 		Native.celt_encoder_destroy(celtEncoder);
 		Native.celt_mode_destroy(celtMode);
-		
-		if(mService != null)
-			mService.unregisterSettingsListener(this);
-	}	
-
+	}
+	
 	@Override
-	public void settingsUpdated(Settings settings) {
+	public void update(Observable observable, Object data) {
+		Settings settings = (Settings) observable;
 		volumeMultiplier = settings.getAmplitudeBoostMultiplier();
 		detectionThreshold = settings.getDetectionThreshold();
 		callMode = settings.getCallMode();

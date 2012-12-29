@@ -229,7 +229,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			this.visibleUsersChangedCallback = visibleUsersChangedCallback;
 			
 			// Fetch theme dependent icon
-			Settings settings = new Settings(context);
+			Settings settings = Settings.getInstance(context);
 			chatDrawable = getResources().getDrawable(settings.getTheme().equals(Settings.ARRAY_THEME_LIGHTDARK) ? R.drawable.ic_action_chat_light : R.drawable.ic_action_chat_dark);
 		}
 

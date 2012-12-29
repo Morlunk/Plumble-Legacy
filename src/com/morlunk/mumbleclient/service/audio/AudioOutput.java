@@ -64,7 +64,7 @@ public class AudioOutput implements Runnable {
 	private final AudioOutputHost host;
 
 	public AudioOutput(final Context ctx, final AudioOutputHost host) {
-		this.settings = new Settings(ctx);
+		this.settings = Settings.getInstance(ctx);
 		this.host = host;
 		
 		PlumbleCallMode callMode = settings.getCallMode();
