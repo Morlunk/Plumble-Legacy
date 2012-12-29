@@ -17,6 +17,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Binder;
@@ -871,6 +872,12 @@ public class MumbleService extends Service {
 	public void connectToServer(Server server) {
 		this.connectedServer = server;
 		
+		String plumbleVersion;
+		try {
+			plumbleVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+		} catch (NameNotFoundException e) {
+			plumbleVersion = "???";
+		}
 		final String certificatePath = settings.getCertificatePath();
 		final String certificatePassword = settings.getCertificatePassword();
 
@@ -882,6 +889,7 @@ public class MumbleService extends Service {
 
 		mClient = new MumbleConnection(
 			mConnectionHost,
+			plumbleVersion,
 			connectedServer.getHost(),
 			connectedServer.getPort(),
 			connectedServer.getUsername(),

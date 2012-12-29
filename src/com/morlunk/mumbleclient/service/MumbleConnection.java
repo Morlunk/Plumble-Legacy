@@ -28,6 +28,7 @@ import net.sf.mumble.MumbleProto.Version;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.params.BasicHttpParams;
 
+import android.content.pm.PackageInfo;
 import android.util.Log;
 
 import com.google.protobuf.MessageLite;
@@ -165,6 +166,8 @@ public class MumbleConnection implements Runnable {
 	 */
 	private volatile boolean suppressErrors = false;
 
+	private final String plumbleVersion;
+	
 	private InetAddress hostAddress;
 	private final String host;
 	private final int port;
@@ -201,6 +204,7 @@ public class MumbleConnection implements Runnable {
 	 */
 	public MumbleConnection(
 		final MumbleConnectionHost connectionHost,
+		final String plumbleVersion,
 		final String host,
 		final int port,
 		final String username,
@@ -209,6 +213,7 @@ public class MumbleConnection implements Runnable {
 		final String certificatePassword,
 		final Boolean forceTcp) {
 		this.connectionHost = connectionHost;
+		this.plumbleVersion = plumbleVersion;
 		this.host = host;
 		this.port = port;
 		this.username = username;
@@ -509,7 +514,7 @@ public class MumbleConnection implements Runnable {
 		in = new DataInputStream(tcpSocket.getInputStream());
 
 		final Version.Builder v = Version.newBuilder();
-		v.setRelease("Plumble");
+		v.setRelease("Plumble "+plumbleVersion);
 		v.setVersion(Globals.PROTOCOL_VERSION);
 		v.setOs("Android");
 		v.setOsVersion(android.os.Build.VERSION.RELEASE);
