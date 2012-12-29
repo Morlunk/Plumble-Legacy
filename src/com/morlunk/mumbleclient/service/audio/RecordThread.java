@@ -242,6 +242,8 @@ public class RecordThread implements Runnable, Observer {
 		}
 		Native.celt_encoder_destroy(celtEncoder);
 		Native.celt_mode_destroy(celtMode);
+		
+		Settings.getInstance(mService).deleteObserver(this);
 	}
 	
 	@Override
