@@ -29,11 +29,10 @@ public class AudioUser {
 	private final long celtMode;
 	private final long celtDecoder;
 	
-	private final long opusMode;
 	private final long opusDecoder;
 	
 	private final Queue<byte[]> dataArrayPool = new ConcurrentLinkedQueue<byte[]>();
-	float[] lastFrame = new float[MumbleProtocol.FRAME_SIZE];
+	float[] lastFrame = new float[MumbleProtocol.FRAME_SIZE*12];
 	private final User user;
 
 	private int missedFrames = 0;
@@ -46,8 +45,7 @@ public class AudioUser {
 			MumbleProtocol.FRAME_SIZE);
 		celtDecoder = Native.celt_decoder_create(celtMode, 1);
 		
-		opusMode = 0;
-		opusDecoder = 0;
+		opusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
 		
 		normalBuffer = new ConcurrentLinkedQueue<Native.JitterBufferPacket>();
 
@@ -130,8 +128,10 @@ public class AudioUser {
 			missedFrames++;
 		}
 
-		Native.celt_decode_float(celtDecoder, data, dataLength, lastFrame);
-
+		//Native.celt_decode_float(celtDecoder, data, dataLength, lastFrame);
+		int result = NativeAudio.opusDecodeFloat(opusDecoder, data, dataLength, lastFrame, MumbleProtocol.FRAME_SIZE*12, 0);
+		Log.i(Globals.LOG_TAG, "Result code: "+result);
+		
 		if (data != null) {
 			freeDataArray(data);
 		}
@@ -153,5 +153,6 @@ public class AudioUser {
 	protected final void finalize() {
 		Native.celt_decoder_destroy(celtDecoder);
 		Native.celt_mode_destroy(celtMode);
+		NativeAudio.opusDecoderDestroy(opusDecoder);
 	}
 }

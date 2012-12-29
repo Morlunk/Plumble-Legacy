@@ -43,6 +43,7 @@ public class MumbleProtocol {
 	public static final int CODEC_NOCODEC = -1;
 	public static final int CODEC_ALPHA = UDPMESSAGETYPE_UDPVOICECELTALPHA;
 	public static final int CODEC_BETA = UDPMESSAGETYPE_UDPVOICECELTBETA;
+	public static final int CODEC_OPUS = UDPMESSAGETYPE_UDPVOICEOPUS;
 	
 	public static final int SAMPLE_RATE = 48000;
 	public static final int FRAME_SIZE = SAMPLE_RATE / 100;
@@ -134,6 +135,9 @@ public class MumbleProtocol {
 			} else if (codecVersion.hasBeta() &&
 					   codecVersion.getBeta() == Globals.CELT_VERSION) {
 				codec = CODEC_BETA;
+			} else if(codecVersion.hasOpus() &&
+					  codecVersion.getOpus()) {
+				codec = CODEC_OPUS;
 			}
 			
 			canSpeak = canSpeak && (codec != CODEC_NOCODEC);
@@ -443,14 +447,17 @@ public class MumbleProtocol {
 
 		// There is no speex support...
 		if (type != UDPMESSAGETYPE_UDPVOICECELTALPHA &&
-			type != UDPMESSAGETYPE_UDPVOICECELTBETA) {
+			type != UDPMESSAGETYPE_UDPVOICECELTBETA &&
+			type != UDPMESSAGETYPE_UDPVOICEOPUS) {
 			return;
 		}
 
 		// Don't try to decode the unsupported codec version.
-		if (type != codec) {
-			return;
-		}
+		//if (type != codec) {
+		//	return;
+		//}
+		
+		Log.i(Globals.LOG_TAG, "Got voice packet");
 
 		final PacketDataStream pds = new PacketDataStream(buffer);
 		// skip type / flags
