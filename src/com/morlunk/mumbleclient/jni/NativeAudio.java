@@ -10,4 +10,5 @@ public class NativeAudio {
 	public static native void opusDecoderDestroy(long decoder);
 	public static native int opusPacketGetFrames(byte[] data, int length);
 	public static native int opusPacketGetSamplesPerFrame(byte[] data, int sampleRate);
+	public static native int opusPacketGetChannels(byte[] data);
 }

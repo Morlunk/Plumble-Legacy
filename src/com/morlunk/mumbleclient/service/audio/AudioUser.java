@@ -63,6 +63,10 @@ public class AudioUser {
 	public boolean addFrameToBuffer(
 		final PacketDataStream pds,
 		final PacketReadyHandler readyHandler) {
+		
+		if(pds.capacity() < 2) {
+			return false;
+		}
 
 		final int packetHeader = pds.next();
 
@@ -96,6 +100,8 @@ public class AudioUser {
 			int frames = NativeAudio.opusPacketGetFrames(data, size);
 			samples = frames * NativeAudio.opusPacketGetSamplesPerFrame(data, MumbleProtocol.SAMPLE_RATE);
 			
+			//Log.i(Globals.LOG_TAG, "Frames: "+frames+", Samples: "+samples);
+			
 			if(samples % MumbleProtocol.FRAME_SIZE != 0)
 				return false; // All samples must be divisible by the frame size.
 			
@@ -104,6 +110,8 @@ public class AudioUser {
 				jbp.data = data;
 				jbp.len = data.length;
 				jbp.span = samples;
+				
+				Log.i(Globals.LOG_TAG, "Span: "+samples);
 				
 				normalBuffer.add(jbp);
 				readyHandler.packetReady(this);
@@ -162,9 +170,13 @@ public class AudioUser {
 
 		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
 			Native.celt_decode_float(celtDecoder, data, dataLength, lastFrame);
-		} else if(codec == MumbleProtocol.CODEC_OPUS) {			
-			int opusResult = NativeAudio.opusDecodeFloat(opusDecoder, data, dataLength, lastFrame, MumbleProtocol.FRAME_SIZE*12, 0);
-			Log.i(Globals.LOG_TAG, "Packets/error: "+opusResult);
+		} else if(codec == MumbleProtocol.CODEC_OPUS) {
+			int opusResult = NativeAudio.opusDecodeFloat(opusDecoder,
+									data == null ? null : data,
+									data == null ? 0 : dataLength, 
+									lastFrame, 
+									MumbleProtocol.FRAME_SIZE*12, 0);
+			//Log.i(Globals.LOG_TAG, "Packets/error: "+opusResult);
 		}
 		
 		if (data != null) {

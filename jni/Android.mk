@@ -19,7 +19,7 @@ ROOT := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_PATH			:= $(ROOT)/opus
 LOCAL_MODULE		:= libopus
-LOCAL_C_INCLUDES	:= $(ROOT)/opus/include $(ROOT)/opus/celt $(ROOT)/opus/silk $(ROOT)/opus/silk/float $(ROOT)/opus/silk/fixed
+LOCAL_C_INCLUDES	:= $(ROOT)/opus/include $(ROOT)/opus/celt $(ROOT)/opus/silk $(ROOT)/opus/silk/fixed
 LOCAL_SRC_FILES		:= src/opus.c \
 src/opus_decoder.c \
 src/opus_encoder.c \
@@ -145,39 +145,8 @@ silk/fixed/pitch_analysis_core_FIX.c \
 silk/fixed/vector_ops_FIX.c \
 silk/fixed/schur64_FIX.c \
 silk/fixed/schur_FIX.c \
-silk/float/apply_sine_window_FLP.c \
-silk/float/corrMatrix_FLP.c \
-silk/float/encode_frame_FLP.c \
-silk/float/find_LPC_FLP.c \
-silk/float/find_LTP_FLP.c \
-silk/float/find_pitch_lags_FLP.c \
-silk/float/find_pred_coefs_FLP.c \
-silk/float/LPC_analysis_filter_FLP.c \
-silk/float/LTP_analysis_filter_FLP.c \
-silk/float/LTP_scale_ctrl_FLP.c \
-silk/float/noise_shape_analysis_FLP.c \
-silk/float/prefilter_FLP.c \
-silk/float/process_gains_FLP.c \
-silk/float/regularize_correlations_FLP.c \
-silk/float/residual_energy_FLP.c \
-silk/float/solve_LS_FLP.c \
-silk/float/warped_autocorrelation_FLP.c \
-silk/float/wrappers_FLP.c \
-silk/float/autocorrelation_FLP.c \
-silk/float/burg_modified_FLP.c \
-silk/float/bwexpander_FLP.c \
-silk/float/energy_FLP.c \
-silk/float/inner_product_FLP.c \
-silk/float/k2a_FLP.c \
-silk/float/levinsondurbin_FLP.c \
-silk/float/LPC_inv_pred_gain_FLP.c \
-silk/float/pitch_analysis_core_FLP.c \
-silk/float/scale_copy_vector_FLP.c \
-silk/float/scale_vector_FLP.c \
-silk/float/schur_FLP.c \
-silk/float/sort_FLP.c \
 src/repacketizer.c
-LOCAL_CFLAGS		:= -I$(LOCAL_PATH) -DOPUS_BUILD -DVAR_ARRAYS -Wno-traditional # -DFIXED_POINT
+LOCAL_CFLAGS		:= -I$(LOCAL_PATH) -DOPUS_BUILD -DVAR_ARRAYS -Wno-traditional -DFIXED_POINT
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
