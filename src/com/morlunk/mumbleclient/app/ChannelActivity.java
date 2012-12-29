@@ -30,6 +30,7 @@ import android.os.RemoteException;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -42,6 +43,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -237,6 +239,23 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
             mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
             // Set up the ViewPager with the sections adapter.
             mViewPager.setAdapter(mSectionsPagerAdapter);
+            mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
+				
+				@Override
+				public void onPageSelected(int arg0) {
+					// Hide keyboard if moving to channel list.
+					if(arg0 == 0) {
+						InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			            imm.hideSoftInputFromWindow(mViewPager.getApplicationWindowToken(), 0);
+					}
+				}
+				
+				@Override
+				public void onPageScrolled(int arg0, float arg1, int arg2) { }
+				
+				@Override
+				public void onPageScrollStateChanged(int arg0) { }
+			});
         	
             if(savedInstanceState != null &&
             		savedInstanceState.containsKey(ChannelListFragment.class.getName()) &&

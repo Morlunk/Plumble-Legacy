@@ -3,9 +3,11 @@ package com.morlunk.mumbleclient.app;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.text.style.ForegroundColorSpan;
 import android.view.KeyEvent;
@@ -30,6 +32,7 @@ public class ChannelChatFragment extends SherlockFragment {
 	private ScrollView chatScroll;
 	private TextView chatText;
 	private EditText chatTextEdit;
+	private ImageButton sendButton;
 
 	private User chatTarget;
 	
@@ -73,6 +76,14 @@ public class ChannelChatFragment extends SherlockFragment {
 		chatText = (TextView) view.findViewById(R.id.chatText);
 		chatTextEdit = (EditText) view.findViewById(R.id.chatTextEdit);
 		
+		sendButton = (ImageButton) view.findViewById(R.id.chatTextSend);
+		sendButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				sendMessage(chatTextEdit);
+			}
+		});
+		
 		chatTextEdit.setOnEditorActionListener(new OnEditorActionListener() {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -81,12 +92,18 @@ public class ChannelChatFragment extends SherlockFragment {
 			}
 		});
 		
-		ImageButton sendButton = (ImageButton) view.findViewById(R.id.chatTextSend);
-		sendButton.setOnClickListener(new OnClickListener() {
+		chatTextEdit.addTextChangedListener(new TextWatcher() {
+			
 			@Override
-			public void onClick(View v) {
-				sendMessage(chatTextEdit);
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				sendButton.setEnabled(chatTextEdit.getText().length() != 0);
 			}
+			
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) { }
+			@Override
+			public void afterTextChanged(Editable s) { }
 		});
 		
 		updateText();
