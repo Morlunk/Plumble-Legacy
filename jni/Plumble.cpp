@@ -26,6 +26,20 @@ jint Java_com_morlunk_mumbleclient_jni_NativeAudio_opusDecodeFloat(JNIEnv *env, 
 	return result;
 }
 
+jint Java_com_morlunk_mumbleclient_jni_NativeAudio_opusPacketGetFrames(JNIEnv *env, jobject object, jbyteArray data, jint length) {
+	const unsigned char *dataBytes = (const unsigned char*)env->GetByteArrayElements(data, NULL);
+	jint result = (jint)opus_packet_get_nb_frames(dataBytes, (opus_int32)length);
+	env->ReleaseByteArrayElements(data, (signed char*)dataBytes, NULL);
+	return result;
+}
+
+jint Java_com_morlunk_mumbleclient_jni_NativeAudio_opusPacketGetSamplesPerFrame(JNIEnv *env, jobject object, jbyteArray data, jint sampleRate) {
+	const unsigned char *dataBytes = (const unsigned char*)env->GetByteArrayElements(data, NULL);
+	jint result = (jint)opus_packet_get_samples_per_frame(dataBytes, (opus_int32)sampleRate);
+	env->ReleaseByteArrayElements(data, (signed char*)dataBytes, NULL);
+	return result;
+}
+
 #ifdef __cplusplus
 }
 #endif

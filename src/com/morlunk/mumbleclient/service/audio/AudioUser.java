@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.jni.Native;
 import com.morlunk.mumbleclient.jni.NativeAudio;
+import com.morlunk.mumbleclient.jni.Native.JitterBufferPacket;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.PacketDataStream;
 import com.morlunk.mumbleclient.service.model.User;
@@ -80,31 +81,55 @@ public class AudioUser {
 
 		/* long session = */pds.readLong();
 		/* final long sequence = */ pds.readLong();
-
-		int dataHeader;
-		//int frameCount = 0;
+		
+		int samples = 0;
 
 		byte[] data = null;
-		
-		do {
-			dataHeader = pds.next();
-			final int dataLength = dataHeader & 0x7f;
-			if (dataLength > 0) {
-				data = acquireDataArray();
 
-				pds.dataBlock(data, dataLength);
-
-				final Native.JitterBufferPacket jbp = new Native.JitterBufferPacket();
+		if(codec == MumbleProtocol.CODEC_OPUS) {
+			int size;
+			size = pds.next();
+			size &= 0x1fff;
+			
+			data = new byte[size];
+			pds.dataBlock(data, size);
+			int frames = NativeAudio.opusPacketGetFrames(data, size);
+			samples = frames * NativeAudio.opusPacketGetSamplesPerFrame(data, MumbleProtocol.SAMPLE_RATE);
+			
+			if(samples % MumbleProtocol.FRAME_SIZE != 0)
+				return false; // All samples must be divisible by the frame size.
+			
+			if(pds.isValid()) {
+				JitterBufferPacket jbp = new JitterBufferPacket();
 				jbp.data = data;
-				jbp.len = dataLength;
+				jbp.len = data.length;
+				jbp.span = samples;
 				
 				normalBuffer.add(jbp);
-
 				readyHandler.packetReady(this);
-				//frameCount++;
-
 			}
-		} while ((dataHeader & 0x80) > 0 && pds.isValid());
+		} else {
+			int dataHeader = 0;
+			do {			
+				dataHeader = pds.next();
+				int dataLength = dataHeader & 0x7f;
+				if (dataLength > 0) {
+					data = acquireDataArray();
+
+					pds.dataBlock(data, dataLength);
+
+					final Native.JitterBufferPacket jbp = new Native.JitterBufferPacket();
+					jbp.data = data;
+					jbp.len = dataLength;
+					
+					normalBuffer.add(jbp);
+
+					readyHandler.packetReady(this);
+					//frameCount++;
+
+				}
+			} while ((dataHeader & 0x80) > 0 && pds.isValid());
+		}
 		
 		return true;
 	}
@@ -137,8 +162,9 @@ public class AudioUser {
 
 		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
 			Native.celt_decode_float(celtDecoder, data, dataLength, lastFrame);
-		} else if(codec == MumbleProtocol.CODEC_OPUS) {
-			NativeAudio.opusDecodeFloat(opusDecoder, data, dataLength, lastFrame, MumbleProtocol.FRAME_SIZE*12, 0);
+		} else if(codec == MumbleProtocol.CODEC_OPUS) {			
+			int opusResult = NativeAudio.opusDecodeFloat(opusDecoder, data, dataLength, lastFrame, MumbleProtocol.FRAME_SIZE*12, 0);
+			Log.i(Globals.LOG_TAG, "Packets/error: "+opusResult);
 		}
 		
 		if (data != null) {
