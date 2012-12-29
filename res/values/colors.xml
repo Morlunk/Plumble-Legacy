@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="pushToTalkSeparator">#929292</color>
+    <color name="cardOutline">#d4d4d4</color>
     
 </resources>

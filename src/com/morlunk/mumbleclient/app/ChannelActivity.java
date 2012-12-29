@@ -30,6 +30,7 @@ import android.os.RemoteException;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -42,6 +43,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -61,7 +63,6 @@ import com.actionbarsherlock.view.MenuItem;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
-import com.morlunk.mumbleclient.Settings.PlumbleCallMode;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
@@ -79,7 +80,9 @@ import com.morlunk.mumbleclient.service.model.User;
 interface ChannelProvider {
 	public Channel getChannel();
 	public List<User> getChannelUsers();
+	public void setChatTarget(User chatTarget);
 	public void sendChannelMessage(String message);
+	public void sendUserMessage(String string, User chatTarget);
 }
 
 interface TokenDialogFragmentListener {
@@ -91,6 +94,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
 	public static final String JOIN_CHANNEL = "join_channel";
 	public static final String SAVED_STATE_VISIBLE_CHANNEL = "visible_channel";
+	public static final String SAVED_STATE_CHAT_TARGET = "chat_target";
 	public static final Integer PROXIMITY_SCREEN_OFF_WAKE_LOCK = 32; // Undocumented feature! This will allow us to enable the phone proximity sensor.
 
     /**
@@ -115,6 +119,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     
 	private Channel visibleChannel;
 	private ChannelSpinnerAdapter channelAdapter;
+	
+	private User chatTarget;
 
 	private ProgressDialog mProgressDialog;
 	private Button mTalkButton;
@@ -144,7 +150,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
-		settings = new Settings(this);
+		settings = Settings.getInstance(this);
 		
 		// Use theme from settings
 		int theme = 0;
@@ -160,11 +166,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         
         // Handle differences in CallMode
         
-        PlumbleCallMode callMode = settings.getCallMode();
+        String callMode = settings.getCallMode();
         
-        if(callMode == PlumbleCallMode.SPEAKERPHONE) {
+        if(callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
     		setVolumeControlStream(AudioManager.STREAM_MUSIC);
-        } else if(callMode == PlumbleCallMode.VOICE_CALL) {
+        } else if(callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
         	setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
         	
         	// Set up proximity sensor
@@ -179,6 +185,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         final ActionBar actionBar = getSupportActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);
         
         // Set up PTT button.
         if(settings.isPushToTalk()) {
@@ -222,17 +229,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			});
         }
         
-        if(savedInstanceState != null) {
-        	final Channel channel = (Channel) savedInstanceState.getParcelable(SAVED_STATE_VISIBLE_CHANNEL);
-
-			// Channel might be null if we for example caused screen rotation
-			// while still connecting.
-			if (channel != null) {
-				this.visibleChannel = channel;
-			}
-			
-        }
-        
         mViewPager = (ViewPager) findViewById(R.id.pager);
         
         // If view pager is present, configure phone UI.
@@ -242,6 +238,23 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
             mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
             // Set up the ViewPager with the sections adapter.
             mViewPager.setAdapter(mSectionsPagerAdapter);
+            mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
+				
+				@Override
+				public void onPageSelected(int arg0) {
+					// Hide keyboard if moving to channel list.
+					if(arg0 == 0) {
+						InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			            imm.hideSoftInputFromWindow(mViewPager.getApplicationWindowToken(), 0);
+					}
+				}
+				
+				@Override
+				public void onPageScrolled(int arg0, float arg1, int arg2) { }
+				
+				@Override
+				public void onPageScrollStateChanged(int arg0) { }
+			});
         	
             if(savedInstanceState != null &&
             		savedInstanceState.containsKey(ChannelListFragment.class.getName()) &&
@@ -259,30 +272,20 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	        listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
 	        chatFragment = (ChannelChatFragment) getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
         }
-
-        /*
-         * Removed tab code as you are unable to have both tabs and list navigation modes. Use pager only for now.
-        // For each of the sections in the app, add a tab to the action bar.
-        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
-            // Create a tab with text corresponding to the page title defined by the adapter.
-            // Also specify this Activity object, which implements the TabListener interface, as the
-            // listener for when this tab is selected.
-            actionBar.addTab(
-                    actionBar.newTab()
-                            .setText(mSectionsPagerAdapter.getPageTitle(i))
-                            .setTabListener(this));
-        }
-        // When swiping between different sections, select the corresponding tab.
-        // We can also use ActionBar.Tab#select() to do this if we have a reference to the
-        // Tab.
-        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-                actionBar.setSelectedNavigationItem(position);
-            }
-        });
         
-        */
+        if(savedInstanceState != null) {
+        	final Channel channel = (Channel) savedInstanceState.getParcelable(SAVED_STATE_VISIBLE_CHANNEL);
+
+			// Channel might be null if we for example caused screen rotation
+			// while still connecting.
+			if (channel != null) {
+				this.visibleChannel = channel;
+			}
+			
+			this.chatTarget = (User) savedInstanceState.getParcelable(SAVED_STATE_CHAT_TARGET);
+			listFragment.setChatTarget(chatTarget);
+			chatFragment.setChatTarget(chatTarget);
+        }
     }
     
     public void setPushToTalk(final boolean talking) {
@@ -321,6 +324,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	getSupportFragmentManager().putFragment(outState, ChannelListFragment.class.getName(), listFragment);
     	getSupportFragmentManager().putFragment(outState, ChannelChatFragment.class.getName(), chatFragment);
 		outState.putParcelable(SAVED_STATE_VISIBLE_CHANNEL, visibleChannel);
+		
+		if(chatTarget != null)
+			outState.putParcelable(SAVED_STATE_CHAT_TARGET, chatTarget);
     }
     
     /* (non-Javadoc)
@@ -330,7 +336,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     protected void onResume() {
     	super.onResume();
     	
-    	if(settings.getCallMode() == PlumbleCallMode.VOICE_CALL)
+    	if(settings.getCallMode().equals(Settings.ARRAY_CALL_MODE_VOICE))
     		setProximityEnabled(true);
     		
     	
@@ -348,7 +354,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     protected void onPause() {
     	super.onPause();
     	
-    	if(settings.getCallMode() == PlumbleCallMode.VOICE_CALL)
+    	if(settings.getCallMode().equals(Settings.ARRAY_CALL_MODE_VOICE))
     		setProximityEnabled(false);
     	
     	if(mService != null)
@@ -408,7 +414,36 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		}
     }
     
-    
+    /**
+     * Creates the channel list spinner with the channel list provided by the service.
+     */
+	public void loadChannelSpinner() {		
+		List<Channel> channelList = mService.getSortedChannelList();
+		channelAdapter = new ChannelSpinnerAdapter(channelList);
+		getSupportActionBar().setListNavigationCallbacks(channelAdapter, new OnNavigationListener() {
+			@Override
+			public boolean onNavigationItemSelected(final int itemPosition, long itemId) {
+				
+				new AsyncTask<Channel, Void, Void>() {
+					
+					@Override
+					protected Void doInBackground(Channel... params) {
+						if(visibleChannel == null || !visibleChannel.equals(params[0]))
+							mService.joinChannel(params[0].id);
+						
+						return null;
+					}
+					
+				}.execute(channelAdapter.getItem(itemPosition));
+				return true;
+			}
+		});
+		
+		// Re-select visible channel.
+		if(visibleChannel != null)
+			setVisibleChannel(visibleChannel);
+	}
+	
     /**
      * Updates the icon and title of the 'favourites' menu icon to represent the channel's favourited status.
      */
@@ -437,8 +472,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	if(mutedButton == null || deafenedButton == null)
     		return;
 
-    	mutedButton.setIcon(!muted ? R.drawable.microphone : R.drawable.ic_action_microphone_muted);
-    	deafenedButton.setIcon(!deafened ? R.drawable.ic_headphones : R.drawable.ic_action_headphones_deafened);
+    	mutedButton.setIcon(!muted ? R.drawable.ic_action_microphone : R.drawable.ic_action_microphone_muted);
+    	deafenedButton.setIcon(!deafened ? R.drawable.ic_action_headphones : R.drawable.ic_action_headphones_deafened);
     }
     
     /* (non-Javadoc)
@@ -567,31 +602,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         // Load favourites
         favourites = loadFavourites();
         
-		List<Channel> channelList = mService.getSortedChannelList();
-		channelAdapter = new ChannelSpinnerAdapter(channelList);
-		getSupportActionBar().setListNavigationCallbacks(channelAdapter, new OnNavigationListener() {
-			@Override
-			public boolean onNavigationItemSelected(final int itemPosition, long itemId) {
-				
-				new AsyncTask<Channel, Void, Void>() {
-					
-					@Override
-					protected Void doInBackground(Channel... params) {
-						if(visibleChannel == null || !visibleChannel.equals(params[0]))
-							mService.joinChannel(params[0].id);
-						
-						return null;
-					}
-					
-				}.execute(channelAdapter.getItem(itemPosition));
-				return true;
-			}
-		});
+		// Load channel spinner
+        loadChannelSpinner();
 		
 		// If we don't have visible channel selected, get the last stored channel from preferences.
 		// Setting channel also synchronizes the UI so we don't need to do it manually.
 		if (visibleChannel == null) {
-			int lastChannelId = settings.getLastChannel(mService.getServerId());
+			int lastChannelId = settings.getLastChannel(mService.getConnectedServer().getId());
 			
 			Channel lastChannel = findChannelById(lastChannelId);
 			
@@ -611,7 +628,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		} else {
 			// Re-select visible channel. Necessary after a rotation is
 			// performed or the app is suspended.
-			if (channelList.contains(visibleChannel)) {
+			if (mService.getChannelList().contains(visibleChannel)) {
 				setVisibleChannel(visibleChannel);
 			}
 		}
@@ -638,7 +655,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			protected Void doInBackground(DbAdapter... params) {
 				DbAdapter adapter = params[0];
 				adapter.open();
-				List<String> tokens = adapter.fetchAllTokens(mService.getServerId());
+				List<String> tokens = adapter.fetchAllTokens(mService.getConnectedServer().getId());
 				adapter.close();
 				mService.sendAccessTokens(tokens);
 				return null;
@@ -732,7 +749,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 				dbAdapter.open();
 
 				if (channelFavourite == null)
-					dbAdapter.createFavourite(mService.getServerId(),
+					dbAdapter.createFavourite(mService.getConnectedServer().getId(),
 							channel.id);
 				else
 					dbAdapter.deleteFavourite(channelFavourite.getId());
@@ -775,7 +792,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	public List<Favourite> loadFavourites() {
         DbAdapter dbAdapter = new DbAdapter(this);
         dbAdapter.open();
-        List<Favourite> favouriteResult = dbAdapter.fetchAllFavourites(mService.getServerId());
+        List<Favourite> favouriteResult = dbAdapter.fetchAllFavourites(mService.getConnectedServer().getId());
         dbAdapter.close();
         return favouriteResult;
 	}
@@ -839,8 +856,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		// Update last channel in settings
 		int channelId = channel.id;
-		if(settings.getLastChannel(mService.getServerId()) != channelId) {
-			settings.setLastChannel(mService.getServerId(), channel.id); // Cache the last channel
+		if(settings.getLastChannel(mService.getConnectedServer().getId()) != channelId) {
+			settings.setLastChannel(mService.getConnectedServer().getId(), channel.id); // Cache the last channel
 		}
 	}
 	
@@ -879,8 +896,18 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	@Override
 	public void sendChannelMessage(String message) {
 		mService.sendChannelTextMessage(
-				message,
-				visibleChannel);
+				message, visibleChannel);
+	}
+	
+	@Override
+	public void sendUserMessage(String string, User chatTarget) {
+		mService.sendUserTextMessage(string, chatTarget);
+	}
+
+	@Override
+	public void setChatTarget(User chatTarget) {
+		this.chatTarget = chatTarget;
+		chatFragment.setChatTarget(chatTarget);
 	}
 	
 	/**
@@ -946,6 +973,21 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 				setVisibleChannel(userChannel);
 			}
 		}
+		
+		@Override
+		public void onChannelAdded(Channel channel) throws RemoteException {
+			loadChannelSpinner();
+		}
+		
+		@Override
+		public void onChannelRemoved(Channel channel) throws RemoteException {
+			loadChannelSpinner();
+		}
+		
+		@Override
+		public void onChannelUpdated(Channel channel) throws RemoteException {
+			loadChannelSpinner();
+		}
 
 		@Override
 		public void onCurrentUserUpdated() throws RemoteException {
@@ -961,7 +1003,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		public void onUserRemoved(final User user, String reason) throws RemoteException {
 			if(user.equals(mService.getCurrentUser())) {
 				Log.i(Globals.LOG_TAG, String.format("Kicked: \"%s\"", reason));
-				mService.setError(getString(R.string.kickedMessage, reason));
+				//mService.setError(getString(R.string.kickedMessage, reason));
 			}
 			listFragment.removeUser(user);
 		}

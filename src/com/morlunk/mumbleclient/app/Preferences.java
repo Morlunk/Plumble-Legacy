@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceFragment;
 import android.widget.Toast;
@@ -26,12 +27,25 @@ import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.service.PlumbleCertificateManager;
 
-public class Preferences extends SherlockPreferenceActivity {
+/**
+ * Hackish interface so we can reuse code between PreferenceActivity and PreferenceFragment.
+ * All we need is findPreference.
+ * @author morlunk
+ */
+interface PreferenceProvider {
+	public Preference findPreference(CharSequence key);
+}
+
+public class Preferences extends SherlockPreferenceActivity implements PreferenceProvider {
 
 	private static final String CERTIFICATE_GENERATE_KEY = "certificateGenerate";
 	private static final String CERTIFICATE_PATH_KEY = "certificatePath";
 	private static final String CERTIFICATE_FOLDER = "Plumble";
 	private static final String CERTIFICATE_EXTENSION = "p12";
+	
+	private static final String AUDIO_INPUT_KEY = "audioInputMethod";
+	private static final String PTT_SETTINGS_KEY = "pttSettings";
+	private static final String VOICE_SETTINGS_KEY = "voiceActivitySettings";
 
 	private static Context context;
 	
@@ -46,25 +60,62 @@ public class Preferences extends SherlockPreferenceActivity {
 			getFragmentManager().beginTransaction().replace(android.R.id.content, new PreferencesFragment()).commit();
 		} else {
 			addPreferencesFromResource(R.xml.preferences);
-			
-			// Set certificate preference
-			final ListPreference certificatePathPreference = (ListPreference) findPreference(CERTIFICATE_PATH_KEY);
-			if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
-				updateCertificatePath(certificatePathPreference);
-			
-			Preference certificateGeneratePreference = findPreference(CERTIFICATE_GENERATE_KEY);
-			certificateGeneratePreference.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-				@Override
-				public boolean onPreferenceClick(Preference preference) {
-					generateCertificate(certificatePathPreference);
-					return true;
-				}
-			});
+			configurePreferences(this);
 		}
 	}
 
 	public static Context getContext() {
 		return Preferences.context;
+	}
+	
+	/**
+	 * Sets up all necessary programmatic preference modifications.
+	 * @param preferenceProvider
+	 */
+	private static void configurePreferences(final PreferenceProvider preferenceProvider) {
+		final Preference certificateGeneratePreference = preferenceProvider.findPreference(CERTIFICATE_GENERATE_KEY);
+		final ListPreference certificatePathPreference = (ListPreference) preferenceProvider.findPreference(CERTIFICATE_PATH_KEY);
+		
+		certificateGeneratePreference.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+			@Override
+			public boolean onPreferenceClick(Preference preference) {
+				generateCertificate(certificatePathPreference);
+				return true;
+			}
+		});
+
+		final ListPreference inputPreference = (ListPreference) preferenceProvider.findPreference(AUDIO_INPUT_KEY);
+		updateAudioInput(preferenceProvider, inputPreference.getValue());
+		inputPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				updateAudioInput(preferenceProvider, (String) newValue);
+				return true;
+			}
+		});
+		
+		// Make sure media is mounted, otherwise do not allow certificate loading.
+		if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+			try {
+				updateCertificatePath(certificatePathPreference);
+			} catch(NullPointerException exception) {
+				certificatePathPreference.setEnabled(false);
+				certificatePathPreference.setSummary(R.string.externalStorageUnavailable);
+			}
+		} else {
+			certificatePathPreference.setEnabled(false);
+			certificatePathPreference.setSummary(R.string.externalStorageUnavailable);
+		}
+	}
+	
+	private static void updateAudioInput(PreferenceProvider preferenceProvider, String newValue) {		
+		Preference pttSettingsPreference = preferenceProvider.findPreference(PTT_SETTINGS_KEY);
+		Preference voiceSettingsPreference = preferenceProvider.findPreference(VOICE_SETTINGS_KEY);
+
+		boolean pushToTalk = newValue.equals(Settings.ARRAY_METHOD_PTT);
+		pttSettingsPreference.setEnabled(pushToTalk);
+		voiceSettingsPreference.setEnabled(!pushToTalk);
 	}
 	
 	/**
@@ -136,7 +187,7 @@ public class Preferences extends SherlockPreferenceActivity {
 				try {
 					X509Certificate certificate = PlumbleCertificateManager.createCertificate(certificatePath);
 					
-					Settings settings = new Settings(context);
+					Settings settings = Settings.getInstance(getContext());
 					settings.setCertificatePath(certificatePath.getAbsolutePath());
 					return certificate;
 				} catch (Exception e) {
@@ -173,7 +224,7 @@ public class Preferences extends SherlockPreferenceActivity {
 	}
 	
 	@TargetApi(11)
-	public static class PreferencesFragment extends PreferenceFragment {
+	public static class PreferencesFragment extends PreferenceFragment implements PreferenceProvider {
 		
 		/* (non-Javadoc)
 		 * @see android.support.v4.app.Fragment#onCreate(android.os.Bundle)
@@ -184,29 +235,7 @@ public class Preferences extends SherlockPreferenceActivity {
 			
 			addPreferencesFromResource(R.xml.preferences);
 			
-			final Preference certificateGeneratePreference = findPreference(CERTIFICATE_GENERATE_KEY);
-			final ListPreference certificatePathPreference = (ListPreference) findPreference(CERTIFICATE_PATH_KEY);
-			
-			certificateGeneratePreference.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-				@Override
-				public boolean onPreferenceClick(Preference preference) {
-					generateCertificate(certificatePathPreference);
-					return true;
-				}
-			});
-			
-			// Make sure media is mounted, otherwise do not allow certificate loading.
-			if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-				try {
-					updateCertificatePath(certificatePathPreference);
-				} catch(NullPointerException exception) {
-					certificatePathPreference.setEnabled(false);
-					certificatePathPreference.setSummary(R.string.externalStorageUnavailable);
-				}
-			} else {
-				certificatePathPreference.setEnabled(false);
-				certificatePathPreference.setSummary(R.string.externalStorageUnavailable);
-			}
+			configurePreferences(this);
 		}
 	}
 }

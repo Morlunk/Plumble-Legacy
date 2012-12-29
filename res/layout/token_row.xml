@@ -22,7 +22,7 @@
         android:id="@+id/tokenItemDelete"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/delete_light"
+        android:src="@drawable/ic_action_delete_light"
         style="@android:style/Widget.Holo.Light.Button.Borderless.Small"/>
 
 </LinearLayout>

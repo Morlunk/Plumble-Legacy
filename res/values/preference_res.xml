@@ -95,4 +95,9 @@
 	<string name="chatNotificationsSum">Show notifications when a user posts in chat.</string>
 	<string name="certificateGenerate">Generate Certificate</string>
 	<string name="certificateGenerateSum">Generates a new self-signed Plumble certificate. Recommended for beginners.</string>
+	<string name="pttSettings">Push to Talk Settings</string>
+	<string name="pttSettingsSum">Configure Push to Talk if it is enabled.</string>
+	<string name="voiceActivitySettings">Voice Activity Settings</string>
+	<string name="voiceActivitySettingsSum">Configure Voice Activity if it is enabled.</string>
+	<string name="audioOutput">Audio Output</string>
 </resources>

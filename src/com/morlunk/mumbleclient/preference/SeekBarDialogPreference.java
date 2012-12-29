@@ -65,7 +65,7 @@ public class SeekBarDialogPreference extends DialogPreference implements SeekBar
     layout.addView(mSeekBar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
     if (shouldPersist())
-      mValue = getPersistedInt(mDefault)/mMultiplier;
+      mValue = getPersistedInt(-1) != -1 ? getPersistedInt(mDefault)/mMultiplier : getPersistedInt(mDefault);
 
     mSeekBar.setMax(mMax);
     mSeekBar.setProgress(mValue);

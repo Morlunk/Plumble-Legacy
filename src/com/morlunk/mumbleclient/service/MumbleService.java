@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import junit.framework.Assert;
+import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.UserState;
 import android.annotation.TargetApi;
 import android.app.Notification;
@@ -16,11 +17,14 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
 import android.os.Vibrator;
 import android.support.v4.app.NotificationCompat;
@@ -36,6 +40,7 @@ import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.ChannelActivity;
+import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
 import com.morlunk.mumbleclient.service.audio.RecordThread;
@@ -52,10 +57,6 @@ import com.morlunk.mumbleclient.service.model.User;
  * @author Rantanen
  */
 public class MumbleService extends Service {
-	
-	public interface SettingsListener {
-		public void settingsUpdated(Settings settings);
-	}
 	
 	public class LocalBinder extends Binder {
 		public MumbleService getService() {
@@ -194,11 +195,11 @@ public class MumbleService extends Service {
 		}
 
 		@Override
-		public void setError(final String error) {
+		public void setError(final Reject reject) {
 			handler.post(new Runnable() {
 				@Override
 				public void run() {
-					errorString = error;
+					rejectResponse = reject;
 				}
 			});
 		}
@@ -358,7 +359,7 @@ public class MumbleService extends Service {
 
 
 		@Override
-		public void setError(final String error) {
+		public void setError(final Reject reject) {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				protected void broadcast(final IServiceObserver observer) {
@@ -366,7 +367,7 @@ public class MumbleService extends Service {
 
 				@Override
 				protected void process() {
-					errorString = error;
+					rejectResponse = reject;
 				}
 			});
 		}
@@ -468,7 +469,6 @@ public class MumbleService extends Service {
 				}
 			});
 		}
-
 	}
 
 	public static final int CONNECTION_STATE_DISCONNECTED = 0;
@@ -484,12 +484,7 @@ public class MumbleService extends Service {
 
 	public static final String EXTRA_MESSAGE = "mumbleclient.extra.MESSAGE";
 	public static final String EXTRA_CONNECTION_STATE = "mumbleclient.extra.CONNECTION_STATE";
-	public static final String EXTRA_HOST = "mumbleclient.extra.HOST";
-	public static final String EXTRA_PORT = "mumbleclient.extra.PORT";
-	public static final String EXTRA_USERNAME = "mumbleclient.extra.USERNAME";
-	public static final String EXTRA_PASSWORD = "mumbleclient.extra.PASSWORD";
-	public static final String EXTRA_USER = "mumbleclient.extra.USER";
-	public static final String EXTRA_SERVER_ID = "mumbleclient.extra.SERVER_ID";
+	public static final String EXTRA_SERVER = "mumbleclient.extra.SERVER";
 	
 	public static final Integer STATUS_NOTIFICATION_ID = 1;
 	
@@ -499,8 +494,7 @@ public class MumbleService extends Service {
 	private MumbleProtocol mProtocol;
 
 	private Settings settings;
-	private List<SettingsListener> settingsListeners;
-	private int serverId;
+	private Server connectedServer;
 	
 	private Thread mClientThread;
 	private RecordThread mRecordThread;
@@ -509,6 +503,8 @@ public class MumbleService extends Service {
 	private Notification mStatusNotification;
 	private NotificationCompat.Builder mStatusNotificationBuilder;
 	private View overlayView; // Hot corner overlay view
+	
+	private WakeLock wakeLock;
 
 	private final LocalBinder mBinder = new LocalBinder();
 	final Handler handler = new Handler();
@@ -521,7 +517,7 @@ public class MumbleService extends Service {
 	int state;
 	boolean synced;
 	int serviceState;
-	String errorString;
+	Reject rejectResponse;
 	final List<Message> messages = new LinkedList<Message>();
 	final List<Message> unreadMessages = new LinkedList<Message>();
 	final List<Channel> channels = new ArrayList<Channel>();
@@ -542,8 +538,8 @@ public class MumbleService extends Service {
 		return currentService;
 	}
 	
-	public int getServerId() {
-		return serverId;
+	public Server getConnectedServer() {
+		return connectedServer;
 	}
 
 	public boolean canSpeak() {
@@ -554,6 +550,7 @@ public class MumbleService extends Service {
 		// Call disconnect on the connection.
 		// It'll notify us with DISCONNECTED when it's done.
 		this.setRecording(false);
+		connectedServer = null;
 		if (mClient != null) {
 			mClient.disconnect();
 		}
@@ -616,19 +613,19 @@ public class MumbleService extends Service {
 	}
 
 	public User getCurrentUser() {
-		if(!isConnected()) 
+		if(!isConnected() || mProtocol == null) 
 			return null;
 		return mProtocol.currentUser;
 	}
 	
-	public void setError(String error) {
-		errorString = error;
+	public void setError(Reject reject) {
+		rejectResponse = reject;
 	}
 
-	public String getError() {
-		final String r = errorString;
-		errorString = null;
-		return r;
+	public Reject getError() {
+		Reject error = rejectResponse;
+		rejectResponse = null; // Clear error
+		return error;
 	}
 
 	public boolean isActivityVisible() {
@@ -684,8 +681,10 @@ public class MumbleService extends Service {
 		// Make sure our notification is gone.
 		hideNotification();
 		
-		settings = new Settings(this);
-		settingsListeners = new ArrayList<SettingsListener>();
+		settings = Settings.getInstance(this);
+		
+		PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "plumbleLock");
 		
 		Log.i(Globals.LOG_TAG, "MumbleService: Created");
 		serviceState = CONNECTION_STATE_DISCONNECTED;
@@ -722,6 +721,10 @@ public class MumbleService extends Service {
 
 	public void sendChannelTextMessage(final String message, final Channel channel) {
 		mProtocol.sendChannelTextMessage(message, channel);
+	}
+
+	public void sendUserTextMessage(String string, User chatTarget) {
+		mProtocol.sendUserTestMessage(string, chatTarget);
 	}
 
 	public void sendUdpMessage(final byte[] buffer, final int length) {
@@ -768,25 +771,6 @@ public class MumbleService extends Service {
 		}
 	}
 	
-	/**
-	 * Updates all registered settings listeners within the service.
-	 */
-	public void updateSettings() {
-		for(SettingsListener listener : settingsListeners) {
-			listener.settingsUpdated(settings);
-		}
-	}
-	
-	public void registerSettingsListener(SettingsListener settingsListener) {
-		if(!settingsListeners.contains(settingsListener))
-			settingsListeners.add(settingsListener);
-	}
-	
-	public void unregisterSettingsListener(SettingsListener settingsListener) {
-		if(settingsListeners.contains(settingsListener))
-			settingsListeners.remove(settingsListener);
-	}
-	
 	public void setMuted(final boolean state) {
 		if(mAudioHost != null && mProtocol != null && mProtocol.currentUser != null) {
 			mAudioHost.setMuted(mProtocol.currentUser, state);
@@ -812,6 +796,7 @@ public class MumbleService extends Service {
 
 		mStatusNotificationBuilder.setTicker(status);
 		mStatusNotificationBuilder.setContentInfo(status);
+		mStatusNotificationBuilder.setSmallIcon(user.talkingState == User.TALKINGSTATE_TALKING ? R.drawable.ic_stat_notify_active : R.drawable.ic_stat_notify);
 
 		mStatusNotification = mStatusNotificationBuilder.build();
 		NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
@@ -850,19 +835,26 @@ public class MumbleService extends Service {
 
 		Log.i(Globals.LOG_TAG, "MumbleService: Starting service");
 		
-		this.serverId = intent.getIntExtra(EXTRA_SERVER_ID, -1);
-		final String host = intent.getStringExtra(EXTRA_HOST);
-		final int port = intent.getIntExtra(EXTRA_PORT, -1);
-		final String username = intent.getStringExtra(EXTRA_USERNAME);
-		final String password = intent.getStringExtra(EXTRA_PASSWORD);
+		Server server = intent.getParcelableExtra(MumbleService.EXTRA_SERVER);
+		connectToServer(server);
+		
+		return START_NOT_STICKY;
+	}
+	
+	/**
+	 * Connects to the passed 'Server' object.
+	 */
+	public void connectToServer(Server server) {
+		this.connectedServer = server;
+		
+		String plumbleVersion;
+		try {
+			plumbleVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+		} catch (NameNotFoundException e) {
+			plumbleVersion = "???";
+		}
 		final String certificatePath = settings.getCertificatePath();
 		final String certificatePassword = settings.getCertificatePassword();
-		
-		if (mClient != null &&
-			state != MumbleConnectionHost.STATE_DISCONNECTED &&
-			mClient.isSameServer(host, port, username, password)) {
-			return START_NOT_STICKY;
-		}
 
 		doConnectionDisconnect();
 
@@ -872,10 +864,11 @@ public class MumbleService extends Service {
 
 		mClient = new MumbleConnection(
 			mConnectionHost,
-			host,
-			port,
-			username,
-			password,
+			plumbleVersion,
+			connectedServer.getHost(),
+			connectedServer.getPort(),
+			connectedServer.getUsername(),
+			connectedServer.getPassword(),
 			certificatePath,
 			certificatePassword,
 			settings.isTcpForced());
@@ -888,10 +881,11 @@ public class MumbleService extends Service {
 
 		mClientThread = mClient.start(mProtocol);
 		
-		return START_NOT_STICKY;
+		// Acquire wake lock
+		wakeLock.acquire();
 	}
 
-	void doConnectionDisconnect() {
+	private void doConnectionDisconnect() {
 		// First disable all hosts to prevent old callbacks from being processed.
 		if (mProtocolHost != null) {
 			mProtocolHost.disable();
@@ -934,7 +928,13 @@ public class MumbleService extends Service {
 
 		// Now observers shouldn't need these anymore.
 		users.clear();
+		messages.clear();
 		channels.clear();
+		
+		// Stop wakelock
+		if(wakeLock.isHeld()) {
+			wakeLock.release();
+		}
 	}
 
 	void hideNotification() {
@@ -959,8 +959,8 @@ public class MumbleService extends Service {
 		Intent deafenIntent = new Intent(this, MumbleNotificationService.class);
 		deafenIntent.putExtra(MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_KEY, MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_DEAFEN);
 		
-		builder.addAction(R.drawable.microphone, "Mute", PendingIntent.getService(this, 0, muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
-		builder.addAction(R.drawable.ic_headphones, "Deafen", PendingIntent.getService(this, 1, deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+		builder.addAction(R.drawable.ic_action_microphone, "Mute", PendingIntent.getService(this, 0, muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+		builder.addAction(R.drawable.ic_action_headphones, "Deafen", PendingIntent.getService(this, 1, deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
 		
 		Intent channelListIntent = new Intent(
 			MumbleService.this,
@@ -1000,6 +1000,9 @@ public class MumbleService extends Service {
 	}
 	
 	public void clearChatNotification() {
+		if(unreadMessages == null || mStatusNotificationBuilder == null)
+			return;
+		
 		unreadMessages.clear();
 		mStatusNotificationBuilder.setTicker(null);
 		mStatusNotificationBuilder.setStyle(null);
@@ -1061,9 +1064,14 @@ public class MumbleService extends Service {
 	 * Removes the system overlay for PTT.
 	 */
 	public void dismissPTTOverlay() {
+		WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
 		if(overlayView != null) {
-			WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-			wm.removeView(overlayView);
+			try {
+				wm.removeView(overlayView);
+			} catch (Exception e) {
+				// We do a catchall here because removing a view from a WindowManager can be unreliable.
+				// http://stackoverflow.com/questions/6515004/keeping-track-of-view-added-to-windowmanager-no-findviewbyid-function
+			}
 		}
 	}
 

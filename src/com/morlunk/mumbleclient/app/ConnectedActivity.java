@@ -1,5 +1,7 @@
 package com.morlunk.mumbleclient.app;
 
+import net.sf.mumble.MumbleProto.Reject;
+import net.sf.mumble.MumbleProto.Reject.RejectType;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -7,10 +9,13 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.widget.EditText;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.ConnectedActivityLogic.Host;
+import com.morlunk.mumbleclient.app.db.DbAdapter;
+import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.IServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
 
@@ -108,27 +113,56 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 	}
 
 	protected void onDisconnected() {
-		final String error = mService.getError();
+		final Reject reject = mService.getError();
+		final Server server = mService.getConnectedServer();
 		
-		if(error != null) {
+		if(reject != null) {
 			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-			alertBuilder.setTitle(R.string.disconnected);
-			
-			alertBuilder.setPositiveButton("Ok", new OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					finish();
-				}
-			});
-			alertBuilder.setOnCancelListener(new OnCancelListener() {
-				@Override
-				public void onCancel(DialogInterface dialog) {
-					finish();
-				}
-			});
-			alertBuilder.setMessage(error);
-			
+			if(reject.getType() == RejectType.WrongUserPW || reject.getType() == RejectType.WrongServerPW) {		
+				// Allow password entry
+				final EditText passwordField = new EditText(this);
+				passwordField.setHint(R.string.serverPassword);
+				alertBuilder.setView(passwordField);
+
+				alertBuilder.setTitle(reject.getReason());
+				
+				alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// Update server
+						
+						DbAdapter adapter = new DbAdapter(ConnectedActivity.this);
+						adapter.open();
+						adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
+						Server updatedServer = adapter.fetchServer(server.getId()); // Update server object again
+						adapter.close();
+						mService.connectToServer(updatedServer);
+					}
+				});
+				alertBuilder.setOnCancelListener(new OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						finish();
+					}
+				});
+			} else {
+				
+				alertBuilder.setPositiveButton("Ok", new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						finish();
+					}
+				});
+				alertBuilder.setOnCancelListener(new OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						finish();
+					}
+				});
+				alertBuilder.setMessage(reject.getReason());
+			}
 			alertBuilder.show();
+			
 		} else {
 			finish();
 		}

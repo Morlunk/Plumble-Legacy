@@ -24,29 +24,20 @@
             android:key="audioInputMethod"
             android:summary="@string/audioInputMethodSum"
             android:title="@string/audioInputMethod" />
-        <ListPreference
-            android:defaultValue="speakerphone"
-            android:dialogTitle="@string/callMode"
-            android:entries="@array/callModeNames"
-            android:entryValues="@array/callModeValues"
-            android:key="callMode"
-            android:summary="@string/callModeSum"
-            android:title="@string/callMode" />
+        
 
-        <com.morlunk.mumbleclient.preference.SeekBarDialogPreference
-            multiplier="100"
-            android:defaultValue="14"
-            android:key="detectionThreshold"
-            android:max="28"
-            android:summary="@string/detectionThresholdSum"
-            android:title="@string/detectionThreshold" />
+        
 
-        <com.morlunk.mumbleclient.preference.KeySelectDialogPreference
-            android:key="talkKey"
-            android:summary="@string/pttKeySum"
-            android:title="@string/pttKey" />
-        <ListPreference android:entries="@array/hotCornerNames" android:entryValues="@array/hotCornerValues" android:key="hotCorner" android:summary="@string/hotCornerSum" android:title="@string/hotCorner" android:defaultValue="none"/>
-    </PreferenceCategory>
+        <PreferenceScreen android:title="@string/voiceActivitySettings" android:key="voiceActivitySettings">
+        <com.morlunk.mumbleclient.preference.SeekBarDialogPreference multiplier="100" android:defaultValue="14" android:key="detectionThreshold" android:max="28" android:summary="@string/detectionThresholdSum" android:title="@string/detectionThreshold" />
+        </PreferenceScreen>
+        <PreferenceScreen android:title="@string/pttSettings" android:key="pttSettings">
+            <com.morlunk.mumbleclient.preference.KeySelectDialogPreference android:key="talkKey" android:summary="@string/pttKeySum" android:title="@string/pttKey" />
+        	<ListPreference android:entries="@array/hotCornerNames" android:entryValues="@array/hotCornerValues" android:key="hotCorner" android:summary="@string/hotCornerSum" android:title="@string/hotCorner" android:defaultValue="none"/>
+        </PreferenceScreen>
+        
+        
+    </PreferenceCategory><PreferenceCategory android:title="@string/audioOutput"><ListPreference android:defaultValue="speakerphone" android:dialogTitle="@string/callMode" android:entries="@array/callModeNames" android:entryValues="@array/callModeValues" android:key="callMode" android:summary="@string/callModeSum" android:title="@string/callMode" /></PreferenceCategory>
     <PreferenceCategory android:title="@string/appearance" >
         <ListPreference
             android:defaultValue="lightDark"

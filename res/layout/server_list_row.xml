@@ -1,23 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_height="wrap_content"
-	android:layout_width="fill_parent"
-	android:paddingTop="4dp"
-	android:paddingBottom="4dp"
-	android:orientation="vertical">
-	<TextView
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_marginLeft="12dp"
-		android:layout_marginRight="12dp"
-		android:id="@+id/server_row_name"
-		android:textSize="20sp"></TextView>
-	<TextView
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_marginLeft="12dp"
-		android:layout_marginRight="12dp"
-		android:textStyle="italic"
-		android:id="@+id/server_row_user"></TextView>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    tools:ignore="NewApi" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/card_background"
+        android:orientation="vertical"
+        android:paddingLeft="18dp"
+        android:paddingRight="18dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="5dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <TextView
+                android:id="@+id/server_row_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:gravity="left|center_vertical"
+                android:paddingBottom="4dp"
+                android:text="@string/serverHost"
+                android:textColor="#808080"
+                android:textSize="24sp"
+                android:layout_weight="1"/>
+
+            <ImageButton
+                android:id="@+id/server_row_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_action_delete_light" 
+                android:background="@null"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left|center_vertical"
+            android:paddingBottom="4dp" >
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginRight="5dp"
+                android:src="@drawable/ic_user_light" />
+
+            <TextView
+                android:id="@+id/server_row_user"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/serverUsername"
+                android:textColor="#808080" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left|center_vertical" >
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginRight="5dp"
+                android:src="@drawable/ic_server_light" />
+
+            <TextView
+                android:id="@+id/server_row_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/serverHost"
+                android:textColor="#808080" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/cardOutline" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <Button
+                android:id="@+id/server_row_connect"
+                style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_toLeftOf="@+id/verticalSeparator"
+                android:text="@string/connect"
+                android:textColor="@color/abs__holo_blue_light"
+                android:textSize="14sp" />
+
+            <View
+                android:id="@+id/verticalSeparator"
+                android:layout_width="1dp"
+                android:layout_height="35dp"
+                android:layout_centerHorizontal="true"
+                android:background="@color/cardOutline"
+                android:layout_alignParentTop="true" />
+
+            <Button
+                android:id="@+id/server_row_edit"
+                style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_toRightOf="@+id/verticalSeparator"
+                android:text="@string/edit"
+                android:textColor="@color/abs__holo_blue_light"
+                android:textSize="14sp" />
+        </RelativeLayout>
+
+    </LinearLayout>
+
 </LinearLayout>

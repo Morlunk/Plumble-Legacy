@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockListActivity;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.morlunk.mumbleclient.app.ConnectedActivityLogic.Host;
 import com.morlunk.mumbleclient.service.IServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
@@ -18,7 +18,7 @@ import com.morlunk.mumbleclient.service.MumbleService;
  * @author Rantanen
  *
  */
-public class ConnectedListActivity extends SherlockListActivity {
+public class ConnectedListActivity extends SherlockFragmentActivity {
 	private final Host logicHost = new Host() {
 		@Override
 		public boolean bindService(
@@ -104,7 +104,7 @@ public class ConnectedListActivity extends SherlockListActivity {
 	}
 
 	protected void onDisconnected() {
-		final String error = mService.getError();
+		final String error = mService.getError().getReason();
 		if (error != null) {
 			Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
 		}

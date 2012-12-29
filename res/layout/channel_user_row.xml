@@ -40,13 +40,19 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true" >
 
+		<ImageView
+		    android:id="@+id/activeChatState"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:src="@drawable/ic_action_chat_light" />
+
         <ImageView
             android:id="@+id/localMuteState"
             android:layout_width="32dp"
             android:layout_height="32dp"
 			android:layout_marginLeft="10dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/muted_local"/>
+            android:src="@drawable/ic_muted_local"/>
 
         <ImageView
             android:id="@+id/commentState"
@@ -54,7 +60,7 @@
             android:layout_height="32dp"
 			android:layout_marginLeft="10dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/comment"/>
+            android:src="@drawable/ic_comment"/>
     </LinearLayout>
 
 </RelativeLayout>

@@ -9,11 +9,11 @@
     <string name="noUsers">no users</string>
     <string name="serverAdd">Add Server</string>
     <string name="serverChange">Change Server</string>
-    <string name="serverPassword">Password (Optional)</string>
+    <string name="serverPassword">Password</string>
     <string name="serverUsername">Username</string>
     <string name="serverPort">Port</string>
     <string name="serverHost">Address</string>
-    <string name="serverName">Label (Optional)</string>
+    <string name="serverName">Label</string>
     <string name="sendText">Send</string>
     <string name="app_name">Plumble</string>
     <string name="server_deleted">Server deleted</string>
@@ -73,6 +73,14 @@
     <string name="undocumentedWakeLock">Unfortunately, it doesn\'t look like we can provide proximity sensor wake lock support for your device. Please change the call mode to speakerphone.</string>
     <string name="amplifier">Amplifier</string>
     <string name="recordingVolume">Recording Volume Boost</string>
+    <string name="quickConnect">Quick Connect</string>
+    <string name="connect">Connect</string>
+    <string name="connectToServer">Connect to Server</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="retry">Retry</string>
+    <string name="messageToUser">Type message to user \'%s\'</string>
+    <string name="messageToChannel">Type message to channel here</string>
     
 
 </resources>

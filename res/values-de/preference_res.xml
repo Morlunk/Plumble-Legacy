@@ -33,6 +33,22 @@
 	    <item>speakerphone</item>
 	    <item>voice</item>
 	</string-array>
+	
+	<string-array name="hotCornerNames">
+	    <item>Keine</item>
+	    <item>Oben Links</item>
+	    <item>Unten Links</item>
+	    <item>Oben Rechts</item>
+	    <item>Unten Rechts</item>
+	</string-array>
+	
+	<string-array name="hotCornerValues">
+	    <item>none</item>
+	    <item>topLeft</item>
+	    <item>bottomLeft</item>
+	    <item>topRight</item>
+	    <item>bottomRight</item>
+	</string-array>
 
 	<string-array name="rowheightText">
 		<item>Niedrig</item>
@@ -40,6 +56,7 @@
 		<item>Höher</item>
 		<item>Sehr hoch</item>
 	</string-array>
+	
 	<string-array name="rowheightValues">
 		<item>30</item>
 		<item>35</item>
@@ -61,9 +78,11 @@
 	<string name="detectionThresholdSum">Der minimalste benötigte Ausschlag, um als Sprache erkannt zu werden (nur bei Sprachaktivierung).</string>
 	<string name="pttKey">Sprechtaste</string>
 	<string name="pttKeySum">Eine Hardwaretaste für die Sprachaktivierung. (optional)</string>
+	<string name="hotCorner">Bildschirmecke als Sprechtaste</string>
+	<string name="hotCornerSum">Eine festgelegte Ecke des Bildschirms die beim drücken als Sprechtaste genutzt wird.</string>
 	<string name="appearance">Aussehen</string>
-	<string name="themeSum">Das Theme der Kanalansicht.</string>
-	<string name="theme">Theme</string>
+	<string name="themeSum">Das Erscheinungsbild der Kanalansicht.</string>
+	<string name="theme">Erscheinungsbild</string>
 	<string name="advancedAudio">Erweiterte Audioeigenschaften</string>
 	<string name="audioQuality">Audio Qualität</string>
 	<string name="noCert">Kein Zertifikat</string>
@@ -73,4 +92,13 @@
 	<string name="colorizechannelsSum">Hauptkanäle werden gelb, benutzte Kanäle cyan und stark genutzte Kanäle in Rot dargestellt.</string>
 	<string name="colorthreshold">Limit für zweite Farbe</string>
 	<string name="colorthresholdSum">Wenn diese Anzahl Benutzer erreicht ist, wird der Kanal in der Kanalauswahl Rot dargestellt.</string>
+	<string name="chatNotifications">Chat Mitteilung</string>
+	<string name="chatNotificationsSum">Zeige eine Mitteilung wenn ein Benutzer im Chat schreibt.</string>
+	<string name="certificateGenerate">Zertifikat erzeugen</string>
+	<string name="certificateGenerateSum">Erzeugt ein self-signed Plumble Zertifikat. Empfohlen für unerfahrene Benutzer.</string>
+	<string name="pttSettings">Push to Talk Einstellungen</string>
+	<string name="pttSettingsSum">Konfigurieren von Push to Talk falls eingeschaltet.</string>
+	<string name="voiceActivitySettings">Einstellunge Sprachaktivierung</string>
+	<string name="voiceActivitySettingsSum">Konfiguration der Sprachaktivierung falls eingeschaltet.</string>
+	<string name="audioOutput">Audio Ausgabe</string>
 </resources>

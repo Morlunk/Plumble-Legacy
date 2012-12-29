@@ -32,12 +32,13 @@ public class MumbleProtocol {
 	public enum MessageType {
 		// TODO find out what 'Unknown' is. Without that extra enum value, servers will crash.
 		Version, UDPTunnel, Authenticate, Ping, Reject, ServerSync, ChannelRemove, ChannelState, UserRemove, UserState, BanList, TextMessage, PermissionDenied, ACL, QueryUsers, CryptSetup, ContextActionAdd, ContextAction, UserList, VoiceTarget, PermissionQuery, CodecVersion, UserStats, RequestBlob, SuggestConfig, Unknown
-	}
+	} 
 
 	public static final int UDPMESSAGETYPE_UDPVOICECELTALPHA = 0;
 	public static final int UDPMESSAGETYPE_UDPPING = 1;
 	public static final int UDPMESSAGETYPE_UDPVOICESPEEX = 2;
 	public static final int UDPMESSAGETYPE_UDPVOICECELTBETA = 3;
+	public static final int UDPMESSAGETYPE_UDPVOICEOPUS = 4;
 
 	public static final int CODEC_NOCODEC = -1;
 	public static final int CODEC_ALPHA = UDPMESSAGETYPE_UDPVOICECELTALPHA;
@@ -144,7 +145,7 @@ public class MumbleProtocol {
 			break;
 		case Reject:
 			final Reject reject = Reject.parseFrom(buffer);
-			host.setError(reject.getReason());
+			host.setError(reject);
 			Log.e(Globals.LOG_TAG, String.format(
 				"Received Reject message: %s",
 				reject.getReason()));
@@ -389,6 +390,20 @@ public class MumbleProtocol {
 		msg.timestamp = System.currentTimeMillis();
 		msg.message = message;
 		msg.channel = channel;
+		msg.direction = Message.DIRECTION_SENT;
+		host.messageSent(msg);
+	}
+
+	public void sendUserTestMessage(String message, User chatTarget) {
+		final TextMessage.Builder tmb = TextMessage.newBuilder();
+		tmb.addSession(chatTarget.session);
+		tmb.setMessage(message);
+		conn.sendTcpMessage(MessageType.TextMessage, tmb);
+
+		final Message msg = new Message();
+		msg.timestamp = System.currentTimeMillis();
+		msg.message = message;
+		msg.target = chatTarget;
 		msg.direction = Message.DIRECTION_SENT;
 		host.messageSent(msg);
 	}

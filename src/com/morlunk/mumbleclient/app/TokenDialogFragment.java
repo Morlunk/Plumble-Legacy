@@ -59,7 +59,7 @@ public class TokenDialogFragment extends DialogFragment {
 		
 		dbAdapter = new DbAdapter(activity);
 		dbAdapter.open();
-		tokens = dbAdapter.fetchAllTokens(MumbleService.getCurrentService().getServerId());
+		tokens = dbAdapter.fetchAllTokens(MumbleService.getCurrentService().getConnectedServer().getId());
 		dbAdapter.close();
 		
 		tokenAdapter = new TokenAdapter(activity, tokens);
@@ -136,7 +136,7 @@ public class TokenDialogFragment extends DialogFragment {
 		tokenAdapter.notifyDataSetChanged();
 		
 		dbAdapter.open();
-		dbAdapter.createToken(MumbleService.getCurrentService().getServerId(), tokenText);
+		dbAdapter.createToken(MumbleService.getCurrentService().getConnectedServer().getId(), tokenText);
 		dbAdapter.close();
 		
 		if(Build.VERSION.SDK_INT >= 8)
@@ -168,7 +168,7 @@ public class TokenDialogFragment extends DialogFragment {
 				@Override
 				public void onClick(View v) {
 					dbAdapter.open();
-					dbAdapter.deleteToken(token, MumbleService.getCurrentService().getServerId());
+					dbAdapter.deleteToken(token, MumbleService.getCurrentService().getConnectedServer().getId());
 					dbAdapter.close();
 					tokens.remove(position);
 					notifyDataSetChanged();

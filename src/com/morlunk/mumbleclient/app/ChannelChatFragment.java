@@ -3,63 +3,38 @@ package com.morlunk.mumbleclient.app;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextWatcher;
 import android.text.format.DateUtils;
-import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.service.model.Message;
+import com.morlunk.mumbleclient.service.model.User;
 
 public class ChannelChatFragment extends SherlockFragment {
 
 	private ChannelProvider channelProvider;
+	private ScrollView chatScroll;
 	private TextView chatText;
 	private EditText chatTextEdit;
+	private ImageButton sendButton;
 
-	private final OnEditorActionListener chatTextEditActionEvent = new OnEditorActionListener() {
-		@Override
-		public boolean onEditorAction(
-			final TextView v,
-			final int actionId,
-			final KeyEvent event) {
-			if (event != null && !event.isShiftPressed() && v != null) {
-				final View focus = v.focusSearch(View.FOCUS_RIGHT);
-				if (focus != null) {
-					focus.requestFocus();
-					return true;
-				}
-				return false;
-			}
-
-			if (actionId == EditorInfo.IME_ACTION_SEND) {
-				if (v != null) {
-					sendMessage(v);
-				}
-				return true;
-			}
-			return true;
-		}
-	};
-
-	private final OnClickListener sendOnClickEvent = new OnClickListener() {
-		@Override
-		public void onClick(final View v) {
-			sendMessage(chatTextEdit);
-		}
-	};
+	private User chatTarget;
 	
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
@@ -97,12 +72,42 @@ public class ChannelChatFragment extends SherlockFragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.chat_view, container, false);
+		chatScroll = (ScrollView) view.findViewById(R.id.chatScroll);
 		chatText = (TextView) view.findViewById(R.id.chatText);
-		chatText.setMovementMethod(LinkMovementMethod.getInstance());
 		chatTextEdit = (EditText) view.findViewById(R.id.chatTextEdit);
-		chatTextEdit.setOnEditorActionListener(chatTextEditActionEvent);
-		view.findViewById(R.id.send_button).setOnClickListener(sendOnClickEvent);
+		
+		sendButton = (ImageButton) view.findViewById(R.id.chatTextSend);
+		sendButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				sendMessage(chatTextEdit);
+			}
+		});
+		
+		chatTextEdit.setOnEditorActionListener(new OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				sendMessage(v);
+				return true;
+			}
+		});
+		
+		chatTextEdit.addTextChangedListener(new TextWatcher() {
+			
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				sendButton.setEnabled(chatTextEdit.getText().length() != 0);
+			}
+			
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) { }
+			@Override
+			public void afterTextChanged(Editable s) { }
+		});
+		
 		updateText();
+		updateChatTargetText();
 		return view;
 	}
 
@@ -116,9 +121,16 @@ public class ChannelChatFragment extends SherlockFragment {
 		sb.append("] ");
 
 		if (msg.direction == Message.DIRECTION_SENT) {
+			String targetString;
+			if(msg.target != null)
+				targetString = msg.target.name;
+			else if(msg.channel != null)
+				targetString = msg.channel.name;
+			else
+				targetString = "Unknown";
 			sb.append("To ");
-			sb.append(msg.channel.name);
-			sb.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.abs__holo_blue_light)), sb.length()-msg.channel.name.length(), sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			sb.append(targetString);
+			sb.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.abs__holo_blue_light)), sb.length()-targetString.length(), sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 		} else {
 			if (msg.channelIds > 0) {
 				sb.append("(C) ");
@@ -142,6 +154,14 @@ public class ChannelChatFragment extends SherlockFragment {
 		sb.append(Html.fromHtml("<br>"));
 		
 		chatText.append(sb);
+		
+		chatScroll.post(new Runnable() {
+			
+			@Override
+			public void run() {
+				chatScroll.smoothScrollTo(0, chatText.getHeight());
+			}
+		});
 	}
 
 	void sendMessage(final TextView v) {
@@ -151,9 +171,19 @@ public class ChannelChatFragment extends SherlockFragment {
 		}
 		
 		AsyncTask<String, Void, Void> messageTask = new AsyncTask<String, Void, Void>() {
+			
+			@Override
+			protected void onPreExecute() {
+				super.onPreExecute();
+			}
+			
 			@Override
 			protected Void doInBackground(String... params) {
-				channelProvider.sendChannelMessage(params[0]);
+				if(chatTarget == null) {
+					channelProvider.sendChannelMessage(params[0]);
+				} else {
+					channelProvider.sendUserMessage(params[0], chatTarget);
+				}
 				return null;
 			}
 			
@@ -167,7 +197,7 @@ public class ChannelChatFragment extends SherlockFragment {
 	}
 
 	void updateText() {
-		chatText.beginBatchEdit();
+//		chatText.beginBatchEdit();
 		chatText.setText("");
 //		for (final String s : ServerList.client.chatList) {
 //			chatText.append(s);
@@ -184,6 +214,24 @@ public class ChannelChatFragment extends SherlockFragment {
 	public void clear() {
 		if(chatText != null) {
 			updateText();
+		}
+	}
+	
+	public void setChatTarget(User user) {
+		chatTarget = user;
+		if(chatTextEdit != null) {
+			updateChatTargetText();
+		}
+	}
+	
+	/**
+	 * Updates hint displaying chat target.
+	 */
+	public void updateChatTargetText() {		
+		if(chatTarget == null) {
+			chatTextEdit.setHint(R.string.messageToChannel);
+		} else {
+			chatTextEdit.setHint(getString(R.string.messageToUser, chatTarget.name));
 		}
 	}
 }

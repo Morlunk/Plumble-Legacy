@@ -4,6 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical" 
     android:divider="?android:attr/dividerVertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="NewApi" 
     android:showDividers="middle" >
 
     <ListView

@@ -13,7 +13,6 @@ import android.widget.TextView;
 
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
-import com.morlunk.mumbleclient.service.MumbleService;
 
 public class AmplifierDialogFragment extends DialogFragment implements OnSeekBarChangeListener {
 	
@@ -29,7 +28,7 @@ public class AmplifierDialogFragment extends DialogFragment implements OnSeekBar
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 		
-		settings = new Settings(activity);
+		settings = Settings.getInstance(activity);
 	}
 	
 	@Override
@@ -59,10 +58,6 @@ public class AmplifierDialogFragment extends DialogFragment implements OnSeekBar
 			
 			settings.setAmplitudeBoostMultiplier(multiplier);
 			recordingMultiplierText.setText((int)(multiplier*100)+"%");
-			
-			// TODO maybe move this to onDismiss?
-			if(MumbleService.getCurrentService() != null)
-				MumbleService.getCurrentService().updateSettings();
 		}
 	}
 	

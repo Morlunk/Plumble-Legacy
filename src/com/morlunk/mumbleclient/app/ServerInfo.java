@@ -1,29 +1,104 @@
 package com.morlunk.mumbleclient.app;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
+import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.EditText;
 
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-import com.morlunk.mumbleclient.Globals;
+import com.actionbarsherlock.app.SherlockDialogFragment;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
-import com.morlunk.mumbleclient.jni.NativeAudio;
 
-public class ServerInfo extends SherlockActivity {
+public class ServerInfo extends SherlockDialogFragment {
+	private EditText nameEdit;
+	private EditText hostEdit;
+	private EditText portEdit;
+	private EditText usernameEdit;
+
+	private Server server;
+	
+	private ServerInfoListener serverListener;
+	
+	@Override
+	public void onAttach(Activity activity) {
+		super.onAttach(activity);
+		
+		if(getArguments() != null) {
+			long serverId = this.getArguments().getLong("serverId", -1);
+			if(serverId != -1) {
+				DbAdapter adapter = new DbAdapter(activity);
+				adapter.open();
+				server = adapter.fetchServer(serverId);
+				adapter.close();
+			}
+		}
+		
+		try {
+			serverListener = (ServerInfoListener)activity;
+		} catch(ClassCastException exception) {
+			throw new ClassCastException(activity.toString() + " must implement ServerInfoListener");
+		}
+	}
+	
+	@Override
+	public Dialog onCreateDialog(Bundle savedInstanceState) {
+		LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getActivity());
+
+		View view = inflater.inflate(R.layout.server_add, null, false);
+		alertBuilder.setView(view);
+		
+		nameEdit = (EditText) view.findViewById(R.id.serverNameEdit);
+		hostEdit = (EditText) view.findViewById(R.id.serverHostEdit);
+		portEdit = (EditText) view.findViewById(R.id.serverPortEdit);
+		usernameEdit = (EditText) view.findViewById(R.id.serverUsernameEdit);
+		if (server != null) {
+			nameEdit.setText(server.getName());
+			hostEdit.setText(server.getHost());
+			portEdit.setText(String.valueOf(server.getPort()));
+			usernameEdit.setText(server.getUsername());
+		}
+		
+		alertBuilder.setPositiveButton(server != null ? R.string.save : R.string.add, new OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				save();
+			}
+		});
+		
+		alertBuilder.setNegativeButton(android.R.string.cancel, new OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dismiss();
+			}
+		});
+		
+		alertBuilder.setOnCancelListener(new OnCancelListener() {
+			
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				dismiss();
+			}
+		});
+		
+		alertBuilder.setTitle(server != null ? R.string.serverChange : R.string.serverAdd);
+		return alertBuilder.create();
+	}
 	
 	public void save() {
-		final EditText nameEdit = (EditText) findViewById(R.id.serverNameEdit);
-		final EditText hostEdit = (EditText) findViewById(R.id.serverHostEdit);
-		final EditText portEdit = (EditText) findViewById(R.id.serverPortEdit);
-		final EditText usernameEdit = (EditText) findViewById(R.id.serverUsernameEdit);
-		final EditText passwordEdit = (EditText) findViewById(R.id.serverPasswordEdit);
 
-		final String name = (nameEdit).getText().toString().trim();
-		final String host = (hostEdit).getText().toString().trim();
+		String name = (nameEdit).getText().toString().trim();
+		String host = (hostEdit).getText().toString().trim();
 
 		int port;
 		try {
@@ -32,70 +107,19 @@ public class ServerInfo extends SherlockActivity {
 			port = 64738;
 		}
 
-		final String username = (usernameEdit).getText().toString().trim();
-		final String password = (passwordEdit).getText().toString();
+		String username = (usernameEdit).getText().toString().trim();
 
-		final DbAdapter db = new DbAdapter(this);
+		DbAdapter db = new DbAdapter(getActivity());
 
 		db.open();
-		final long serverId = ServerInfo.this.getIntent().getLongExtra(
-				"serverId", -1);
-		if (serverId != -1) {
-			db.updateServer(serverId, name, host, port, username, password);
+		if (server != null) {
+			db.updateServer(server.getId(), name, host, port, username, server.getPassword());
 		} else {
-			db.createServer(name, host, port, username, password);
+			db.createServer(name, host, port, username, "");
 		}
 		db.close();
 
-		finish();
-	}
-
-	@Override
-	protected final void onCreate(final Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.server_add);
-		
-		final long serverId = this.getIntent().getLongExtra("serverId", -1);
-		if (serverId != -1) {
-			final EditText nameEdit = (EditText) findViewById(R.id.serverNameEdit);
-			final EditText hostEdit = (EditText) findViewById(R.id.serverHostEdit);
-			final EditText portEdit = (EditText) findViewById(R.id.serverPortEdit);
-			final EditText usernameEdit = (EditText) findViewById(R.id.serverUsernameEdit);
-			final EditText passwordEdit = (EditText) findViewById(R.id.serverPasswordEdit);
-
-			final DbAdapter db = new DbAdapter(this);
-			db.open();
-			
-			Server server = db.fetchServer(serverId);
-			nameEdit.setText(server.getName());
-			hostEdit.setText(server.getHost());
-			portEdit.setText(String.valueOf(server.getPort()));
-			usernameEdit.setText(server.getUsername());
-			passwordEdit.setText(server.getPassword());
-			
-			db.close();
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see android.app.Activity#onMenuItemSelected(int, android.view.MenuItem)
-	 */
-	@Override
-	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.menu_save_button:
-			save();
-			return true;
-		}
-		return super.onMenuItemSelected(featureId, item);
-	}
-	
-	/* (non-Javadoc)
-	 * @see android.app.Activity#onCreateOptionsMenu(android.view.Menu)
-	 */
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getSupportMenuInflater().inflate(R.menu.activity_server_info, menu);
-		return true;
+		dismiss();
+		serverListener.serverInfoUpdated();
 	}
 }

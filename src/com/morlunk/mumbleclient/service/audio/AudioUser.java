@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.jni.Native;
+import com.morlunk.mumbleclient.jni.NativeAudio;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.PacketDataStream;
 import com.morlunk.mumbleclient.service.model.User;
@@ -27,6 +28,10 @@ public class AudioUser {
 
 	private final long celtMode;
 	private final long celtDecoder;
+	
+	private final long opusMode;
+	private final long opusDecoder;
+	
 	private final Queue<byte[]> dataArrayPool = new ConcurrentLinkedQueue<byte[]>();
 	float[] lastFrame = new float[MumbleProtocol.FRAME_SIZE];
 	private final User user;
@@ -40,6 +45,7 @@ public class AudioUser {
 			MumbleProtocol.SAMPLE_RATE,
 			MumbleProtocol.FRAME_SIZE);
 		celtDecoder = Native.celt_decoder_create(celtMode, 1);
+		
 
 		
 		normalBuffer = new ConcurrentLinkedQueue<Native.JitterBufferPacket>();
@@ -61,7 +67,8 @@ public class AudioUser {
 		// can be decoded.)
 		final int type = (packetHeader >> 5) & 0x7;
 		if (type != MumbleProtocol.UDPMESSAGETYPE_UDPVOICECELTALPHA &&
-			type != MumbleProtocol.UDPMESSAGETYPE_UDPVOICECELTBETA) {
+			type != MumbleProtocol.UDPMESSAGETYPE_UDPVOICECELTBETA &&
+			type != MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS) {
 			return false;
 		}
 

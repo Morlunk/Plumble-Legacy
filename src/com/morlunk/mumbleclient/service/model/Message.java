@@ -22,6 +22,7 @@ public class Message implements Parcelable {
 	public String message;
 	public String sender;
 	public User actor;
+	public User target;
 	public Channel channel;
 	public long timestamp;
 	public int channelIds;
@@ -47,6 +48,7 @@ public class Message implements Parcelable {
 		message = in.readString();
 		sender = in.readString();
 		actor = in.readParcelable(null);
+		target = in.readParcelable(null);
 		channel = in.readParcelable(null);
 		timestamp = in.readLong();
 		channelIds = in.readInt();
@@ -61,6 +63,7 @@ public class Message implements Parcelable {
 		dest.writeString(message);
 		dest.writeString(sender);
 		dest.writeParcelable(actor, 0);
+		dest.writeParcelable(target, 0);
 		dest.writeParcelable(channel, 0);
 		dest.writeLong(timestamp);
 		dest.writeInt(channelIds);

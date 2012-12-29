@@ -3,26 +3,21 @@ package com.morlunk.mumbleclient.app;
 import java.util.List;
 
 import junit.framework.Assert;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -36,6 +31,15 @@ import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
 
 /**
+ * Called whenever server info is changed.
+ * @author morlunk
+ *
+ */
+interface ServerInfoListener {
+	public void serverInfoUpdated();
+}
+
+/**
  * The main server list activity.
  *
  * Shows a list of servers and allows connecting to these. Also provides
@@ -44,7 +48,7 @@ import com.morlunk.mumbleclient.service.MumbleService;
  * @author pcgod
  *
  */
-public class ServerList extends ConnectedListActivity {
+public class ServerList extends ConnectedListActivity implements ServerInfoListener {
 	private class ServerAdapter extends ArrayAdapter<Server> {
 		private Context context;
 		private List<Server> servers;
@@ -84,19 +88,44 @@ public class ServerList extends ConnectedListActivity {
 					null);
 			}
 			
-			Server server = getItem(position);
+			final Server server = getItem(position);
 
 			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
 			TextView userText = (TextView) view.findViewById(R.id.server_row_user);
+			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
 
 			if(server.getName().equals("")) {
-				nameText.setText(server.getHost() + ":" + server.getPort());
-				userText.setText(server.getUsername());
+				nameText.setText(server.getHost());
 			} else {
 				nameText.setText(server.getName());
-				userText.setText(server.getUsername() + "@" + server.getHost() + ":" +
-								 server.getPort());
 			}
+			
+			userText.setText(server.getUsername());
+			addressText.setText(server.getHost()+":"+server.getPort());
+			
+			Button connectButton = (Button) view.findViewById(R.id.server_row_connect);
+			Button editButton = (Button) view.findViewById(R.id.server_row_edit);
+			connectButton.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					connectServer(server.getId());
+				}
+			});
+			editButton.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					editServer(server.getId());
+				}
+			});
+			
+			ImageButton deleteButton = (ImageButton) view.findViewById(R.id.server_row_delete);
+			deleteButton.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					deleteServer(server.getId());
+				}
+			});
 
 			return view;
 		}
@@ -109,70 +138,14 @@ public class ServerList extends ConnectedListActivity {
 			checkConnectionState();
 		}
 	}
-
-	long serverToDeleteId = -1;
-	DbAdapter dbAdapter;
-
-	private static final int ACTIVITY_ADD_SERVER = 0;
+	
 	private static final int ACTIVITY_CHANNEL_LIST = 1;
-
-	private static final int MENU_EDIT_SERVER = Menu.FIRST;
-	private static final int MENU_DELETE_SERVER = Menu.FIRST + 1;
-	private static final int MENU_CONNECT_SERVER = Menu.FIRST + 2;
 
 	private static final String STATE_WAIT_CONNECTION = "com.morlunk.mumbleclient.ServerList.WAIT_CONNECTION";
 
 	private ServerServiceObserver mServiceObserver;
+	private ListView listView;
 	
-	/* (non-Javadoc)
-	 * @see android.app.Activity#onContextItemSelected(android.view.MenuItem)
-	 */
-	@Override
-	public boolean onContextItemSelected(android.view.MenuItem item) {
-		final AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-		switch (item.getItemId()) {
-		case MENU_CONNECT_SERVER:
-			onListItemClick(
-				getListView(),
-				getCurrentFocus(),
-				info.position,
-				getListAdapter().getItemId(info.position));
-			return true;
-		case MENU_EDIT_SERVER:
-			editServer(getListAdapter().getItemId(info.position));
-			return true;
-		case MENU_DELETE_SERVER:
-			serverToDeleteId = info.id;
-			createDeleteServerDialog().show();
-			return true;
-		default:
-			return super.onContextItemSelected(item);
-		}
-	}
-
-	@Override
-	public final void onCreateContextMenu(
-		final ContextMenu menu,
-		final View v,
-		final ContextMenuInfo menuInfo) {
-		super.onCreateContextMenu(menu, v, menuInfo);
-
-		final int menuPosition = ((AdapterView.AdapterContextMenuInfo) menuInfo).position;
-		final int serverId = (int) getListView().getItemIdAtPosition(
-			menuPosition);
-		
-		Server server = dbAdapter.fetchServer(serverId);
-		
-		menu.setHeaderTitle(server.getName());
-
-		menu.add(0, MENU_CONNECT_SERVER, 1, "Connect").setIcon(
-			android.R.drawable.ic_menu_view);
-		menu.add(0, MENU_EDIT_SERVER, 1, "Edit").setIcon(
-			android.R.drawable.ic_menu_edit);
-		menu.add(0, MENU_DELETE_SERVER, 1, "Delete").setIcon(
-			android.R.drawable.ic_menu_delete);
-	}
-
 	@Override
 	public final boolean onCreateOptionsMenu(final Menu menu) {
 		super.onCreateOptionsMenu(menu);
@@ -197,8 +170,8 @@ public class ServerList extends ConnectedListActivity {
 	
 
 	private void addServer() {
-		final Intent i = new Intent(this, ServerInfo.class);
-		startActivityForResult(i, ACTIVITY_ADD_SERVER);
+		ServerInfo infoDialog = new ServerInfo();
+		infoDialog.show(getSupportFragmentManager(), "serverInfo");
 	}
 
 	/**
@@ -227,37 +200,21 @@ public class ServerList extends ConnectedListActivity {
 
 		return false;
 	}
-
-	private Dialog createDeleteServerDialog() {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage(R.string.sureDeleteServer).setCancelable(
-			false).setPositiveButton(
-			"Yes",
-			new DialogInterface.OnClickListener() {
-				public void onClick(final DialogInterface dialog, final int id) {
-					if (serverToDeleteId > 0) {
-						dbAdapter.deleteServer(serverToDeleteId);
-						serverToDeleteId = -1;
-						fillList();
-						Toast.makeText(
-							ServerList.this,
-							R.string.server_deleted,
-							Toast.LENGTH_SHORT).show();
-					}
-				}
-			}).setNegativeButton("No", new DialogInterface.OnClickListener() {
-			public void onClick(final DialogInterface dialog, final int id) {
-				dialog.cancel();
-			}
-		});
-
-		return builder.create();
+	
+	private void editServer(long id) {
+		ServerInfo infoDialog = new ServerInfo();
+		Bundle args = new Bundle();
+		args.putLong("serverId", id);
+		infoDialog.setArguments(args);
+		infoDialog.show(getSupportFragmentManager(), "serverInfo");
 	}
-
-	private void editServer(final long id) {
-		final Intent i = new Intent(this, ServerInfo.class);
-		i.putExtra("serverId", id);
-		startActivityForResult(i, ACTIVITY_ADD_SERVER);
+	
+	private void deleteServer(long id) {
+		DbAdapter adapter = new DbAdapter(this);
+		adapter.open();
+		adapter.deleteServer(id);
+		adapter.close();
+		fillList();
 	}
 	
 	private void registerConnectionReceiver() {
@@ -290,28 +247,17 @@ public class ServerList extends ConnectedListActivity {
 	 * @param id
 	 */
 	protected final void connectServer(final long id) {
-		Server server = dbAdapter.fetchServer(id);
+		DbAdapter adapter = new DbAdapter(this);
+		adapter.open();
+		Server server = adapter.fetchServer(id);
+		adapter.close();
 
 		registerConnectionReceiver();
-
-		// TODO make 'Server' parcelable and send that instead
+		
 		final Intent connectionIntent = new Intent(this, MumbleService.class);
 		connectionIntent.setAction(MumbleService.ACTION_CONNECT);
-		connectionIntent.putExtra(MumbleService.EXTRA_SERVER_ID, server.getId());
-		connectionIntent.putExtra(MumbleService.EXTRA_HOST, server.getHost());
-		connectionIntent.putExtra(MumbleService.EXTRA_PORT, server.getPort());
-		connectionIntent.putExtra(MumbleService.EXTRA_USERNAME, server.getUsername());
-		connectionIntent.putExtra(MumbleService.EXTRA_PASSWORD, server.getPassword());
+		connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
 		startService(connectionIntent);
-	}
-
-	@Override
-	protected final void onActivityResult(
-		final int requestCode,
-		final int resultCode,
-		final Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		fillList();
 	}
 
 	@Override
@@ -333,7 +279,7 @@ public class ServerList extends ConnectedListActivity {
 		
 		setContentView(R.layout.main);
 		
-		registerForContextMenu(getListView());
+		listView = (ListView) findViewById(android.R.id.list);
 
 		// Create the service observer. If such exists, onServiceBound will
 		// register it.
@@ -341,33 +287,12 @@ public class ServerList extends ConnectedListActivity {
 			mServiceObserver = new ServerServiceObserver();
 		}
 
-		dbAdapter = new DbAdapter(this);
-		dbAdapter.open();
-
 		fillList();
-	}
-
-	@Override
-	protected final void onDestroy() {
-		super.onDestroy();
-
-		dbAdapter.close();
 	}
 
 	@Override
 	protected void onDisconnected() {
 		// Suppress the default disconnect behavior.
-	}
-
-	@Override
-	protected final void onListItemClick(
-		final ListView l,
-		final View v,
-		final int position,
-		final long id) {
-		super.onListItemClick(l, v, position, id);
-
-		connectServer(id);
 	}
 
 	@Override
@@ -407,6 +332,14 @@ public class ServerList extends ConnectedListActivity {
 	}
 
 	private void fillList() {
-		setListAdapter(new ServerAdapter(this, dbAdapter.fetchAllServers()));
+		DbAdapter dbAdapter = new DbAdapter(this);
+		dbAdapter.open();
+		listView.setAdapter(new ServerAdapter(this, dbAdapter.fetchAllServers()));
+		dbAdapter.close();
+	}
+
+	@Override
+	public void serverInfoUpdated() {
+		fillList();
 	}
 }

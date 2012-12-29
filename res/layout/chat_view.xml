@@ -1,36 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
 	android:orientation="vertical"
 	android:layout_height="fill_parent"
-	android:layout_width="fill_parent">
+	android:layout_width="fill_parent"
+    tools:ignore="NewApi" 
+    android:divider="?android:attr/dividerVertical"
+    android:showDividers="middle" >
+	<ScrollView
+	    android:id="@+id/chatScroll"
+	    android:layout_width="match_parent"
+	    android:layout_height="0dp"
+		android:layout_weight="1" >
 	<TextView
-		android:layout_width="fill_parent"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
 		android:id="@+id/chatText"
-		android:scrollbars="vertical"
-		android:layout_weight="1"
-		android:layout_height="0dip"
-		android:linksClickable="true"
 		android:textIsSelectable="true"
 		android:autoLink="all"
 		android:gravity="top"
 		android:layout_marginLeft="10dp"
 		android:layout_marginRight="10dp"/>
+	</ScrollView>
+
 	<LinearLayout
-		android:id="@+id/LinearLayout01"
-		android:layout_height="wrap_content"
-		android:layout_width="fill_parent">
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+    	android:divider="?android:attr/dividerHorizontal"
+    	android:showDividers="middle">
+
 		<EditText
-			android:layout_height="fill_parent"
-			android:id="@+id/chatTextEdit"
-			android:imeOptions="actionSend"
-			android:layout_width="0dp"
-			android:layout_weight="1"
-			android:hint="@string/chat_message"></EditText>
-		<Button
-			android:layout_width="wrap_content"
-			android:layout_height="fill_parent"
-			android:id="@+id/send_button"
-			android:text="@string/sendText"></Button>
+		    android:id="@+id/chatTextEdit"
+		    android:layout_width="0dp"
+		    android:layout_height="match_parent"
+		    android:layout_weight="1"
+		    android:minHeight="40dp"
+		    android:hint="@string/messageToChannel"
+		    android:inputType="textAutoCorrect"
+		    android:imeOptions="actionSend"
+	    	android:layout_marginLeft="10dp"
+	    	android:layout_marginRight="10dp" >
+		</EditText>
+
+		<ImageButton
+		    android:id="@+id/chatTextSend"
+            style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
+		    android:layout_width="50dp"
+		    android:layout_height="50dp"
+		    android:src="@drawable/ic_action_send"
+		    android:enabled="false"/>
+
 	</LinearLayout>
 </LinearLayout>
