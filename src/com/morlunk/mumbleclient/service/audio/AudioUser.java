@@ -46,7 +46,8 @@ public class AudioUser {
 			MumbleProtocol.FRAME_SIZE);
 		celtDecoder = Native.celt_decoder_create(celtMode, 1);
 		
-
+		opusMode = 0;
+		opusDecoder = 0;
 		
 		normalBuffer = new ConcurrentLinkedQueue<Native.JitterBufferPacket>();
 
