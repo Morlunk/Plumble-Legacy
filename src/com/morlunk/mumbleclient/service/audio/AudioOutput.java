@@ -15,7 +15,6 @@ import android.util.Log;
 
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.Settings;
-import com.morlunk.mumbleclient.Settings.PlumbleCallMode;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.PacketDataStream;
@@ -67,11 +66,11 @@ public class AudioOutput implements Runnable {
 		this.settings = Settings.getInstance(ctx);
 		this.host = host;
 		
-		PlumbleCallMode callMode = settings.getCallMode();
+		String callMode = settings.getCallMode();
 		int stream = AudioManager.STREAM_MUSIC;
-		if(callMode == PlumbleCallMode.SPEAKERPHONE) {
+		if(callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
 			stream = AudioManager.STREAM_MUSIC;
-		} else if(callMode == PlumbleCallMode.VOICE_CALL) {
+		} else if(callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
 			stream = AudioManager.STREAM_VOICE_CALL;
 		}
 

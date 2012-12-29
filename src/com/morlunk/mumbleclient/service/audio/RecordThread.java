@@ -12,7 +12,6 @@ import android.util.Log;
 
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.Settings;
-import com.morlunk.mumbleclient.Settings.PlumbleCallMode;
 import com.morlunk.mumbleclient.jni.Native;
 import com.morlunk.mumbleclient.jni.celtConstants;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
@@ -35,7 +34,7 @@ public class RecordThread implements Runnable, Observer {
 	private final short[] buffer;
 	private int bufferSize;
 	private boolean voiceActivity = false;
-	private PlumbleCallMode callMode;
+	private String callMode;
 	private final long celtEncoder;
 	private final long celtMode;
 	private final int framesPerPacket = 6;
@@ -111,9 +110,9 @@ public class RecordThread implements Runnable, Observer {
 		
 		int audioSource = MediaRecorder.AudioSource.MIC;
 		
-		if(callMode == PlumbleCallMode.SPEAKERPHONE) {
+		if(callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
 			audioSource = (MediaRecorder.AudioSource.MIC);
-		} else if(callMode == PlumbleCallMode.VOICE_CALL) {
+		} else if(callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
 			audioSource = (MediaRecorder.AudioSource.DEFAULT);
 		}
 		

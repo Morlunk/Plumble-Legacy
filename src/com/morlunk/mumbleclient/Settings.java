@@ -11,11 +11,6 @@ public class Settings extends Observable {
 	public static final String ARRAY_CALL_MODE_SPEAKER = "speakerphone";
 	public static final String ARRAY_CALL_MODE_VOICE = "voice";
 	
-	public enum PlumbleCallMode {
-		VOICE_CALL,
-		SPEAKERPHONE
-	}
-	
 	public static final String PREF_METHOD = "audioInputMethod";
 	public static final String ARRAY_METHOD_VOICE = "voiceActivity";
 	public static final String ARRAY_METHOD_PTT = "ptt";
@@ -79,14 +74,8 @@ public class Settings extends Observable {
 		preferences = PreferenceManager.getDefaultSharedPreferences(ctx);
 	}
 	
-	public PlumbleCallMode getCallMode() {
-		String callModeValue = preferences.getString(PREF_CALL_MODE, ARRAY_CALL_MODE_SPEAKER);
-		if(callModeValue.equals(ARRAY_CALL_MODE_SPEAKER)) {
-			return PlumbleCallMode.SPEAKERPHONE;
-		} else if(callModeValue.equals(ARRAY_CALL_MODE_VOICE)) {
-			return PlumbleCallMode.VOICE_CALL;
-		}
-		return null;
+	public String getCallMode() {
+		return preferences.getString(PREF_CALL_MODE, ARRAY_CALL_MODE_SPEAKER);
 	}
 
 	public int getAudioQuality() {

@@ -63,7 +63,6 @@ import com.actionbarsherlock.view.MenuItem;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
-import com.morlunk.mumbleclient.Settings.PlumbleCallMode;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
@@ -167,11 +166,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         
         // Handle differences in CallMode
         
-        PlumbleCallMode callMode = settings.getCallMode();
+        String callMode = settings.getCallMode();
         
-        if(callMode == PlumbleCallMode.SPEAKERPHONE) {
+        if(callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
     		setVolumeControlStream(AudioManager.STREAM_MUSIC);
-        } else if(callMode == PlumbleCallMode.VOICE_CALL) {
+        } else if(callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
         	setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
         	
         	// Set up proximity sensor
@@ -337,7 +336,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     protected void onResume() {
     	super.onResume();
     	
-    	if(settings.getCallMode() == PlumbleCallMode.VOICE_CALL)
+    	if(settings.getCallMode().equals(Settings.ARRAY_CALL_MODE_VOICE))
     		setProximityEnabled(true);
     		
     	
@@ -355,7 +354,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     protected void onPause() {
     	super.onPause();
     	
-    	if(settings.getCallMode() == PlumbleCallMode.VOICE_CALL)
+    	if(settings.getCallMode().equals(Settings.ARRAY_CALL_MODE_VOICE))
     		setProximityEnabled(false);
     	
     	if(mService != null)

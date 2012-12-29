@@ -3,10 +3,8 @@ package com.morlunk.mumbleclient.app;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import net.sf.mumble.MumbleProto.RequestBlob;
 import android.app.Activity;
@@ -15,6 +13,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.SparseArray;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -211,8 +210,8 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		 * Tracks the current row elements of a user.
 		 */
 		private final Context context;
-		private final Map<Integer, User> users = new HashMap<Integer, User>();
-		private final Map<Integer, String> visibleUserNames = new HashMap<Integer, String>();
+		private final SparseArray<User> users = new SparseArray<User>();
+		private final SparseArray<String> visibleUserNames = new SparseArray<String>();
 		private final List<User> visibleUserList = new ArrayList<User>();
 		private int visibleChannel = -1;
 
@@ -294,7 +293,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		}
 
 		public final boolean hasUser(final User user) {
-			return visibleUserNames.containsValue(user.session);
+			return visibleUserNames.indexOfKey(user.session) < 0;
 		}
 
 		@Override
@@ -366,7 +365,8 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		}
 
 		public void removeUser(final int id) {
-			final User user = users.remove(id);
+			User user = users.get(id);
+			users.remove(id);
 
 			if (user != null && user.getChannel().id == visibleChannel) {
 				final int userLocation = Collections.binarySearch(
@@ -510,7 +510,9 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		private void repopulateUsers() {
 			visibleUserList.clear();
 			visibleUserNames.clear();
-			for (final User user : users.values()) {
+			for (int i=0;i<users.size();i++) {
+				int key = users.keyAt(i);
+				User user = users.get(key);
 				if (user.getChannel().id == visibleChannel) {
 					addVisibleUser(user);
 				}
