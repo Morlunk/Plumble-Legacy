@@ -108,7 +108,11 @@ public class AudioOutput implements Runnable {
 		final int flags) {
 		AudioUser user = users.get(u);
 		if (user == null) {
-			user = new AudioUser(u);
+			// Get codec type for user
+			int header = pds.next();
+			int codecVersion = header >> 5 & 0x7;
+			pds.rewind();
+			user = new AudioUser(u, codecVersion);
 			users.put(u, user);
 			// Don't add the user to userPackets yet. The collection should
 			// have only users with ready frames. Since this method is

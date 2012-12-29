@@ -129,15 +129,15 @@ public class MumbleProtocol {
 			final boolean oldCanSpeak = canSpeak;
 			final CodecVersion codecVersion = CodecVersion.parseFrom(buffer);
 			codec = CODEC_NOCODEC;
-			if (codecVersion.hasAlpha() &&
+			if(codecVersion.hasOpus() &&
+					  codecVersion.getOpus()) {
+				codec = CODEC_OPUS;
+			} else if (codecVersion.hasAlpha() &&
 				codecVersion.getAlpha() == Globals.CELT_VERSION) {
 				codec = CODEC_ALPHA;
 			} else if (codecVersion.hasBeta() &&
 					   codecVersion.getBeta() == Globals.CELT_VERSION) {
 				codec = CODEC_BETA;
-			} else if(codecVersion.hasOpus() &&
-					  codecVersion.getOpus()) {
-				codec = CODEC_OPUS;
 			}
 			
 			canSpeak = canSpeak && (codec != CODEC_NOCODEC);
@@ -453,11 +453,9 @@ public class MumbleProtocol {
 		}
 
 		// Don't try to decode the unsupported codec version.
-		//if (type != codec) {
-		//	return;
-		//}
-		
-		Log.i(Globals.LOG_TAG, "Got voice packet");
+		if (type != codec) {
+			return;
+		}
 
 		final PacketDataStream pds = new PacketDataStream(buffer);
 		// skip type / flags

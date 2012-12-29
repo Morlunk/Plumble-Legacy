@@ -26,26 +26,33 @@ public class AudioUser {
 
 	private final Queue<Native.JitterBufferPacket> normalBuffer;
 
-	private final long celtMode;
-	private final long celtDecoder;
+	private final int codec;
 	
-	private final long opusDecoder;
+	private long celtMode;
+	private long celtDecoder;
+	
+	private long opusDecoder;
 	
 	private final Queue<byte[]> dataArrayPool = new ConcurrentLinkedQueue<byte[]>();
-	float[] lastFrame = new float[MumbleProtocol.FRAME_SIZE*12];
+	float[] lastFrame;
 	private final User user;
 
 	private int missedFrames = 0;
 
-	public AudioUser(final User user) {
+	public AudioUser(final User user, final int codec) {
 		this.user = user;
+		this.codec = codec;
 
-		celtMode = Native.celt_mode_create(
-			MumbleProtocol.SAMPLE_RATE,
-			MumbleProtocol.FRAME_SIZE);
-		celtDecoder = Native.celt_decoder_create(celtMode, 1);
-		
-		opusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
+		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
+			celtMode = Native.celt_mode_create(
+					MumbleProtocol.SAMPLE_RATE,
+					MumbleProtocol.FRAME_SIZE);
+			celtDecoder = Native.celt_decoder_create(celtMode, 1);
+			lastFrame = new float[MumbleProtocol.FRAME_SIZE];
+		} else if(codec == MumbleProtocol.CODEC_OPUS) {
+			opusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
+			lastFrame = new float[MumbleProtocol.FRAME_SIZE*12];
+		}
 		
 		normalBuffer = new ConcurrentLinkedQueue<Native.JitterBufferPacket>();
 
@@ -128,9 +135,11 @@ public class AudioUser {
 			missedFrames++;
 		}
 
-		//Native.celt_decode_float(celtDecoder, data, dataLength, lastFrame);
-		int result = NativeAudio.opusDecodeFloat(opusDecoder, data, dataLength, lastFrame, MumbleProtocol.FRAME_SIZE*12, 0);
-		Log.i(Globals.LOG_TAG, "Result code: "+result);
+		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
+			Native.celt_decode_float(celtDecoder, data, dataLength, lastFrame);
+		} else if(codec == MumbleProtocol.CODEC_OPUS) {
+			NativeAudio.opusDecodeFloat(opusDecoder, data, dataLength, lastFrame, MumbleProtocol.FRAME_SIZE*12, 0);
+		}
 		
 		if (data != null) {
 			freeDataArray(data);
@@ -151,8 +160,11 @@ public class AudioUser {
 
 	@Override
 	protected final void finalize() {
-		Native.celt_decoder_destroy(celtDecoder);
-		Native.celt_mode_destroy(celtMode);
-		NativeAudio.opusDecoderDestroy(opusDecoder);
+		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
+			Native.celt_decoder_destroy(celtDecoder);
+			Native.celt_mode_destroy(celtMode);
+		} else if(codec == MumbleProtocol.CODEC_OPUS) {
+			NativeAudio.opusDecoderDestroy(opusDecoder);
+		}
 	}
 }
