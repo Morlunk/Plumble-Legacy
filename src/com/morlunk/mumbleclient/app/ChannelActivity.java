@@ -439,7 +439,36 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		}
     }
     
-    
+    /**
+     * Creates the channel list spinner with the channel list provided by the service.
+     */
+	public void loadChannelSpinner() {		
+		List<Channel> channelList = mService.getSortedChannelList();
+		channelAdapter = new ChannelSpinnerAdapter(channelList);
+		getSupportActionBar().setListNavigationCallbacks(channelAdapter, new OnNavigationListener() {
+			@Override
+			public boolean onNavigationItemSelected(final int itemPosition, long itemId) {
+				
+				new AsyncTask<Channel, Void, Void>() {
+					
+					@Override
+					protected Void doInBackground(Channel... params) {
+						if(visibleChannel == null || !visibleChannel.equals(params[0]))
+							mService.joinChannel(params[0].id);
+						
+						return null;
+					}
+					
+				}.execute(channelAdapter.getItem(itemPosition));
+				return true;
+			}
+		});
+		
+		// Re-select visible channel.
+		if(visibleChannel != null)
+			setVisibleChannel(visibleChannel);
+	}
+	
     /**
      * Updates the icon and title of the 'favourites' menu icon to represent the channel's favourited status.
      */
@@ -598,26 +627,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         // Load favourites
         favourites = loadFavourites();
         
-		List<Channel> channelList = mService.getSortedChannelList();
-		channelAdapter = new ChannelSpinnerAdapter(channelList);
-		getSupportActionBar().setListNavigationCallbacks(channelAdapter, new OnNavigationListener() {
-			@Override
-			public boolean onNavigationItemSelected(final int itemPosition, long itemId) {
-				
-				new AsyncTask<Channel, Void, Void>() {
-					
-					@Override
-					protected Void doInBackground(Channel... params) {
-						if(visibleChannel == null || !visibleChannel.equals(params[0]))
-							mService.joinChannel(params[0].id);
-						
-						return null;
-					}
-					
-				}.execute(channelAdapter.getItem(itemPosition));
-				return true;
-			}
-		});
+		// Load channel spinner
+        loadChannelSpinner();
 		
 		// If we don't have visible channel selected, get the last stored channel from preferences.
 		// Setting channel also synchronizes the UI so we don't need to do it manually.
@@ -642,7 +653,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		} else {
 			// Re-select visible channel. Necessary after a rotation is
 			// performed or the app is suspended.
-			if (channelList.contains(visibleChannel)) {
+			if (mService.getChannelList().contains(visibleChannel)) {
 				setVisibleChannel(visibleChannel);
 			}
 		}
@@ -986,6 +997,21 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			if(userChannel != visibleChannel) {
 				setVisibleChannel(userChannel);
 			}
+		}
+		
+		@Override
+		public void onChannelAdded(Channel channel) throws RemoteException {
+			loadChannelSpinner();
+		}
+		
+		@Override
+		public void onChannelRemoved(Channel channel) throws RemoteException {
+			loadChannelSpinner();
+		}
+		
+		@Override
+		public void onChannelUpdated(Channel channel) throws RemoteException {
+			loadChannelSpinner();
 		}
 
 		@Override
