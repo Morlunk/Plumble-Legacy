@@ -24,6 +24,7 @@
 	    <item>lightDark</item>
 	    <item>dark</item>
 	</string-array>
+	
 	<string-array name="callModeNames">
 	    <item>Speakerphone</item>
 	    <item>Voice Call</item>
@@ -56,6 +57,7 @@
 		<item>Larger</item>
 		<item>Very Large</item>
 	</string-array>
+
 	<string-array name="rowheightValues">
 		<item>30</item>
 		<item>35</item>
