@@ -15,7 +15,7 @@
 	
 	<string-array
 	    name="themeNames">
-	    <item>Jasno-Ciemny</item>
+	    <item>Jasny</item>
 	    <item>Ciemny</item>
 	</string-array>
 	
@@ -34,6 +34,22 @@
 	    <item>speakerphone</item>
 	    <item>voice</item>
 	</string-array>
+	
+	<string-array name="hotCornerNames">
+	    <item>Żaden</item>
+	    <item>Lewy górny</item>
+	    <item>Lewy dolny</item>
+	    <item>Prawy górny</item>
+	    <item>Prawy dolny</item>
+	</string-array>
+	
+	<string-array name="hotCornerValues">
+	    <item>none</item>
+	    <item>topLeft</item>
+	    <item>bottomLeft</item>
+	    <item>topRight</item>
+	    <item>bottomRight</item>
+	</string-array>
 
 	<string-array name="rowheightText">
 		<item>Wąski</item>
@@ -41,7 +57,7 @@
 		<item>Większy</item>
 		<item>Bardzo duży</item>
 	</string-array>
-	
+
 	<string-array name="rowheightValues">
 		<item>30</item>
 		<item>35</item>
@@ -63,6 +79,8 @@
 	<string name="detectionThresholdSum">Minimalna amplituda głosu wymagana by został wykryty (dotyczy wyłącznie aktywacji głosowej).</string>
 	<string name="pttKey">Aktywacja przyciskiem</string>
 	<string name="pttKeySum">Wybór sprzętowego przycisku do aktywacji transmisji. (Opcjonalny)</string>
+	<string name="hotCorner">Gorące narożniki</string>
+	<string name="hotCornerSum">Określa róg ekranu, który będzie służył do aktywacji przyciskiem w całym systemie Android.</string>
 	<string name="appearance">Wygląd</string>
 	<string name="themeSum">Wygląd listy kanałów.</string>
 	<string name="theme">Motyw</string>
@@ -77,4 +95,11 @@
 	<string name="colorthresholdSum">Jeżeli liczba użytkowników przekroczy ustaloną wartość, kanał zostanie oznaczony kolorem czerwonym.</string>
 	<string name="chatNotifications">Powiadomienia Czatu</string>
 	<string name="chatNotificationsSum">Wyświetlaj powiadomienia, gdy ktoś napisze wiadomość.</string>
+	<string name="certificateGenerate">Generowanie Certyfikatu</string>
+	<string name="certificateGenerateSum">Generuje nowy własnoręcznie podpisany certyfikat Plumble. Zalecane dla początkujących.</string>
+	<string name="pttSettings">Konfiguracja Aktywacji Przyciskiem</string>
+	<string name="pttSettingsSum">Konfiguruje aktywację przyciskiem, gdy jest włączona.</string>
+	<string name="voiceActivitySettings">Konfiguracja Aktywacji Głosowej</string>
+	<string name="voiceActivitySettingsSum">Konfiguruje aktywację głosową, gdy jest włączona.</string>
+	<string name="audioOutput">Wyjście Dźwięku</string>
 </resources>
