@@ -54,7 +54,8 @@
     <string name="forceTcp">Force TCP</string>
     <string name="forceTcpSum">Whether to force TCP (disable UDP) communications.</string>
     <string name="addFavorite">Add Favorite</string>
-    <string name="removeFavorite">Remove Favorite</string><string name="viewFavorites">View Favorites</string>
+    <string name="removeFavorite">Remove Favorite</string>
+    <string name="viewFavorites">View Favorites</string>
     <string name="favorites">Favorites</string>
     <string name="favoriteRemoved">Favorite removed.</string>
     <string name="favoriteAdded">Favorite added.</string>
@@ -81,6 +82,5 @@
     <string name="retry">Retry</string>
     <string name="messageToUser">Type message to user \'%s\'</string>
     <string name="messageToChannel">Type message to channel here</string>
-    
-
+    <string name="online">Online</string>
 </resources>

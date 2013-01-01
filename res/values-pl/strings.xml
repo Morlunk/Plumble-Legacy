@@ -49,23 +49,37 @@
     <string name="kickedMessage">Zostałeś wykopany z serwera z powodu: %s</string>
     <string name="loading">Ładowanie…</string>
     <string name="reset_key">Resetuj</string>
-    <string name="externalStorageUnavailable">Pamięć zewnętrzna jest niedostępna, nie można załadować certyfikatu</string>
-    <string name="audioQualitySum">Szybkość transmisji dźwięku z którym będzie działał Plumble (w kbit/s)</string>
+    <string name="externalStorageUnavailable">Pamięć zewnętrzna jest niedostępna, nie można wczytać certyfikatu</string>
+    <string name="audioQualitySum">Bitrate dźwięku, której będzie używał Plumble (w kbit/s)</string>
     <string name="forceTcp">Wymuś TCP</string>
     <string name="forceTcpSum">Definiuje czy wymuszać połączenie TCP (wyłącza UDP).</string>
     <string name="addFavorite">Dodaj do ulubionych</string>
     <string name="removeFavorite">Usuń z ulubionych</string>
-    <string name="viewFavorites">Wyświetl ulubione</string>
+    <string name="viewFavorites">Ulubione</string>
     <string name="favorites">Ulubione</string>
     <string name="favoriteRemoved">Usunięto z ulubionych</string>
     <string name="favoriteAdded">Dodano do ulubionych</string>
-    <string name="noFavorites">Nie masz ulubionych kanałów</string>
+    <string name="noFavorites">Brak ulubionych kanałów</string>
     <string name="accessTokens">Hasła dostępu</string>
     <string name="accessAdd">Dodaj hasło dostępu</string>
     <string name="pushToTalkHint">(zaznacz, aby przełączać)</string>
     <string name="messageReceived">Nowa wiadomość</string>
     <string name="general">Ogólne</string>
-    
-    
-	
+    <string name="generateCert">Generuj Certyfikat</string>
+    <string name="generateCertSuccess">Twój certyfikat został utworzony i  zapisany jako %s!</string>
+    <string name="generateCertFailure">Generowanie certyfikatu nie powiodło się.</string>
+    <string name="generateCertProgress">Trwa generowanie certyfikatu…</string>
+    <string name="search">Szukaj</string>
+    <string name="searchHint">Wyszukiwanie kanału</string>
+    <string name="undocumentedWakeLock">Niestety, Plumble nie jest w stanie zapewnić obsługi sensora zbliżeniowego w twoim urządzeniu. Proszę zmienić tryb wyjścia dźwięku na głośnik.</string>
+    <string name="amplifier">Wzmacniacz</string>
+    <string name="recordingVolume">Zwiększ głośność nagrywania</string>
+    <string name="quickConnect">Szybkie połączenie</string>
+    <string name="connect">Połącz</string>
+    <string name="connectToServer">Połącz do serwera</string>
+    <string name="edit">Edytuj</string>
+    <string name="delete">Usuń</string>
+    <string name="retry">Ponów</string>
+    <string name="messageToUser">Wiadomość do użytkownika: \'%s\'</string>
+    <string name="messageToChannel">Wiadomość do kanału</string>
 </resources>

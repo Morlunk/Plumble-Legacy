@@ -18,7 +18,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Binder;
 import android.os.Handler;
@@ -1017,7 +1016,7 @@ public class MumbleService extends Service {
 	 * Creates a system overlay that allows the user to touch the corner of the screen to push to talk.
 	 */
 	public void createPTTOverlay() {
-		WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+		WindowManager.LayoutParams pttParams = new WindowManager.LayoutParams(
 				WindowManager.LayoutParams.WRAP_CONTENT,
 				WindowManager.LayoutParams.WRAP_CONTENT,
 				WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
@@ -1027,13 +1026,13 @@ public class MumbleService extends Service {
 				PixelFormat.TRANSLUCENT);
 		String hotCorner = settings.getHotCorner();
 		if(hotCorner.equals(Settings.ARRAY_HOT_CORNER_TOP_LEFT)) {
-			params.gravity = Gravity.LEFT | Gravity.TOP;
+			pttParams.gravity = Gravity.LEFT | Gravity.TOP;
 		} else if(hotCorner.equals(Settings.ARRAY_HOT_CORNER_BOTTOM_LEFT)) {
-			params.gravity = Gravity.LEFT | Gravity.BOTTOM;
+			pttParams.gravity = Gravity.LEFT | Gravity.BOTTOM;
 		} else if(hotCorner.equals(Settings.ARRAY_HOT_CORNER_TOP_RIGHT)) {
-			params.gravity = Gravity.RIGHT | Gravity.TOP;
+			pttParams.gravity = Gravity.RIGHT | Gravity.TOP;
 		} else if(hotCorner.equals(Settings.ARRAY_HOT_CORNER_BOTTOM_RIGHT)) {
-			params.gravity = Gravity.RIGHT | Gravity.BOTTOM;
+			pttParams.gravity = Gravity.RIGHT | Gravity.BOTTOM;
 		}
 		WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
 		LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -1047,7 +1046,7 @@ public class MumbleService extends Service {
 					setRecording(true);
 					// Vibrate to provide haptic feedback
 					vibrator.vibrate(10);
-					overlayView.setBackgroundColor(Color.RED);
+					overlayView.setBackgroundColor(0xAA33b5e5);
 				} else if(event.getAction() == MotionEvent.ACTION_UP) {
 					setRecording(false);
 					overlayView.setBackgroundColor(0);
@@ -1055,9 +1054,9 @@ public class MumbleService extends Service {
 				return false;
 			}
 		});
-
+		
 		// Add layout to window manager
-		wm.addView(overlayView, params);
+		wm.addView(overlayView, pttParams);
 	}
 	
 	/**
