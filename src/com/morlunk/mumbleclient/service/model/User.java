@@ -101,7 +101,7 @@ public class User implements Parcelable {
 		dest.writeString(name);
 		dest.writeInt(localMuted ? 1 : 0);
 		dest.writeString(comment);
-		dest.writeString(commentHash.toStringUtf8());
+		dest.writeString(commentHash != null ? commentHash.toStringUtf8() : "");
 		dest.writeFloat(averageAvailable);
 		dest.writeInt(talkingState);
 		dest.writeBooleanArray(new boolean[] { isCurrent, muted, deafened });
