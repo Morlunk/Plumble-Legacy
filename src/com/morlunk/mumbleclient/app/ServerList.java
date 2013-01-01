@@ -18,7 +18,6 @@ import android.content.pm.ApplicationInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.renderscript.Program;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -437,6 +436,8 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		serverAdapter = new ServerAdapter(this, servers);
 		listView.setAdapter(serverAdapter);
 		
+		// Clear and reload server ping responses
+		infoResponses.clear();
 		for(Server server : servers) {
 			pingServerInfo(server);
 		}
