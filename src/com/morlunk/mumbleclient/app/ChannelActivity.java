@@ -282,9 +282,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 				this.visibleChannel = channel;
 			}
 			
-			this.chatTarget = (User) savedInstanceState.getParcelable(SAVED_STATE_CHAT_TARGET);
-			listFragment.setChatTarget(chatTarget);
-			chatFragment.setChatTarget(chatTarget);
+			chatTarget = (User) savedInstanceState.getParcelable(SAVED_STATE_CHAT_TARGET);
+			if(chatTarget != null) {
+				listFragment.setChatTarget(chatTarget);
+				chatFragment.setChatTarget(chatTarget);
+			}
         }
     }
     
