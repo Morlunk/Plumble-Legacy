@@ -382,8 +382,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		if (savedInstanceState != null) {
 			mServiceObserver = new ServerServiceObserver();
 		}
-
-		fillList();
 	}
 
 	@Override
@@ -407,6 +405,8 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		if(mService != null && mService.getConnectionState() == MumbleService.CONNECTION_STATE_CONNECTED) {
 			// If already connected, just jump to channel list.
 			startActivity(new Intent(this, ChannelActivity.class));
+		} else {
+			fillList();
 		}
 	}
 
