@@ -47,6 +47,31 @@ jint Java_com_morlunk_mumbleclient_jni_NativeAudio_opusPacketGetChannels(JNIEnv 
 	return result;
 }
 
+jlong Java_com_morlunk_mumbleclient_jni_NativeAudio_opusEncoderCreate(JNIEnv *env, jobject object, jint sampleRate, jint channels, jint application) {
+	int error;
+	OpusEncoder *encoder = opus_encoder_create((opus_int32)sampleRate, (int)channels, (int)application, &error);
+	return (jlong)(intptr_t)encoder;
+}
+
+void Java_com_morlunk_mumbleclient_jni_NativeAudio_opusEncoderDestroy(JNIEnv *env, jobject object, jlong encoder) {
+	opus_encoder_destroy((OpusEncoder *)(intptr_t)encoder);
+}
+
+jint Java_com_morlunk_mumbleclient_jni_NativeAudio_opusEncode(JNIEnv *env, jobject object, jlong encoderRef, jshortArray pcm, jint frameSize, jbyteArray data, jint maxBytes) {
+	OpusEncoder *encoder = (OpusEncoder *)(intptr_t)encoderRef;
+	jshort *pcmShort = env->GetShortArrayElements(pcm, NULL);
+	jbyte *dataBytes = env->GetByteArrayElements(data, NULL);
+	jint result = (jint)opus_encode(encoder, (opus_int16*)pcmShort, (int)frameSize, (unsigned char*)dataBytes, (int)maxBytes);
+	env->ReleaseByteArrayElements(data, (signed char*)dataBytes, NULL);
+	env->ReleaseShortArrayElements(pcm, pcmShort, NULL);
+	return result;
+}
+
+jint Java_com_morlunk_mumbleclient_jni_NativeAudio_opusEncoderCtl(JNIEnv *env, jobject object, jlong encoderRef, jint request, jint value) {
+	OpusEncoder *encoder = (OpusEncoder *)(intptr_t)encoderRef;
+	return (jint)opus_encoder_ctl(encoder, request, value);
+}
+
 #ifdef __cplusplus
 }
 #endif

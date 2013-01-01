@@ -139,8 +139,10 @@ public class AudioOutput implements Runnable {
 			userPackets.notify();
 		}
 	}
-	
+
 	private void audioLoop() throws InterruptedException {
+		// TODO: Fix this monstrosity! I don't understand why this code assumes all packets contain the same number of samples (I guess it was pre-opus, eh).
+		// I had to add some nasty clipping code, I feel bad about it.
 		final short[] out = new short[MumbleProtocol.FRAME_SIZE*12];
 		final List<AudioUser> mix = new LinkedList<AudioUser>();
 
@@ -162,12 +164,12 @@ public class AudioOutput implements Runnable {
 				mix(out, mix);
 				
 				// Trim the mix, removing unused samples by selecting the longest frame size.
-				// This is hackish. I'm sorry. -AC
 				int mixSize = 0;
 				for(AudioUser user : mix) {
 					if(user.frameSize > mixSize)
 						mixSize = user.frameSize;
 				}
+				
 				short[] clippedOut = new short[mixSize];
 				for(int x=0;x<mixSize;x++) {
 					clippedOut[x] = out[x];

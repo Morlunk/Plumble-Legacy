@@ -13,6 +13,7 @@ import android.util.Log;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.jni.Native;
+import com.morlunk.mumbleclient.jni.NativeAudio;
 import com.morlunk.mumbleclient.jni.celtConstants;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.MumbleService;
@@ -33,10 +34,16 @@ public class RecordThread implements Runnable, Observer {
 	private static final int TARGET_SAMPLE_RATE = MumbleProtocol.SAMPLE_RATE;
 	private final short[] buffer;
 	private int bufferSize;
+	private int codec;
 	private boolean voiceActivity = false;
 	private String callMode;
-	private final long celtEncoder;
-	private final long celtMode;
+	
+	// CELT
+	private long celtEncoder;
+	private long celtMode;
+	// Opus
+	private long opusEncoder;
+	
 	private final int framesPerPacket = 6;
 	private final LinkedList<byte[]> outputQueue = new LinkedList<byte[]>();
 	private final short[] resampleBuffer = new short[MumbleProtocol.FRAME_SIZE];
@@ -49,10 +56,11 @@ public class RecordThread implements Runnable, Observer {
 	private long lastDetection = 0;
 	private int talkState = AudioOutputHost.STATE_PASSIVE;
 
-	public RecordThread(final MumbleService service, final boolean voiceActivity) {
+	public RecordThread(final MumbleService service, final boolean voiceActivity, final int codec) {
 		mService = service;
 		this.voiceActivity = voiceActivity;
-
+		this.codec = codec;
+		
 		Settings settings = Settings.getInstance(service);
 		settings.addObserver(this);
 		update(settings, null);
@@ -78,18 +86,24 @@ public class RecordThread implements Runnable, Observer {
 		frameSize = recordingSampleRate / 100;
 
 		buffer = new short[frameSize];
-		celtMode = Native.celt_mode_create(
-			MumbleProtocol.SAMPLE_RATE,
-			MumbleProtocol.FRAME_SIZE);
-		celtEncoder = Native.celt_encoder_create(celtMode, 1);
-		Native.celt_encoder_ctl(
-			celtEncoder,
-			celtConstants.CELT_SET_PREDICTION_REQUEST,
-			0);
-		Native.celt_encoder_ctl(
-			celtEncoder,
-			celtConstants.CELT_SET_VBR_RATE_REQUEST,
-			audioQuality);
+		
+		if(codec == MumbleProtocol.CODEC_OPUS) {
+			opusEncoder = NativeAudio.opusEncoderCreate(MumbleProtocol.SAMPLE_RATE, 1, NativeAudio.OPUS_APPLICATION_VOIP);
+			NativeAudio.opusEncoderCtl(opusEncoder, NativeAudio.OPUS_SET_VBR_REQUEST, 0);
+		} else if(codec == MumbleProtocol.CODEC_BETA || codec == MumbleProtocol.CODEC_ALPHA) {
+			celtMode = Native.celt_mode_create(
+					MumbleProtocol.SAMPLE_RATE,
+					MumbleProtocol.FRAME_SIZE);
+			celtEncoder = Native.celt_encoder_create(celtMode, 1);
+			Native.celt_encoder_ctl(
+					celtEncoder,
+					celtConstants.CELT_SET_PREDICTION_REQUEST,
+					0);
+			Native.celt_encoder_ctl(
+					celtEncoder,
+					celtConstants.CELT_SET_VBR_RATE_REQUEST,
+					audioQuality);
+		}
 
 		if (recordingSampleRate != TARGET_SAMPLE_RATE) {
 			speexResamplerState = Native.speex_resampler_init(
@@ -188,8 +202,12 @@ public class RecordThread implements Runnable, Observer {
 						127);
 				final byte[] compressed = new byte[compressedSize];
 				synchronized (Native.class) {
-					Native.celt_encode(celtEncoder, out, compressed,
-							compressedSize);
+					if(codec == MumbleProtocol.CODEC_OPUS) {
+						NativeAudio.opusEncode(opusEncoder, out, read, compressed, compressedSize);
+					} else if(codec == MumbleProtocol.CODEC_BETA || codec == MumbleProtocol.CODEC_ALPHA) {
+						Native.celt_encode(celtEncoder, out, compressed,
+								compressedSize);
+					}
 				}
 				outputQueue.add(compressed);
 
@@ -237,11 +255,17 @@ public class RecordThread implements Runnable, Observer {
 
 	@Override
 	protected final void finalize() {
-		if (speexResamplerState != 0) {
+		if (speexResamplerState != 0)
 			Native.speex_resampler_destroy(speexResamplerState);
-		}
-		Native.celt_encoder_destroy(celtEncoder);
-		Native.celt_mode_destroy(celtMode);
+		
+		if(opusEncoder != 0)
+			NativeAudio.opusEncoderDestroy(opusEncoder);
+		
+		if(celtEncoder != 0)
+			Native.celt_encoder_destroy(celtEncoder);
+		
+		if(celtMode != 0)
+			Native.celt_mode_destroy(celtMode);
 		
 		Settings.getInstance(mService).deleteObserver(this);
 	}

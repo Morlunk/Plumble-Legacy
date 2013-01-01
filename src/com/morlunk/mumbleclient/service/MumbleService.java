@@ -749,7 +749,7 @@ public class MumbleService extends Service {
 		if (state) {
 			// start record
 			// TODO check initialized
-			mRecordThread = new RecordThread(this, settings.isVoiceActivity());
+			mRecordThread = new RecordThread(this, settings.isVoiceActivity(), mProtocol.codec);
 			mRecordThreadInstance = new Thread(mRecordThread, "record");
 			mRecordThreadInstance.start();
 			
