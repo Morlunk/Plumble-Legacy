@@ -1,5 +1,12 @@
 package com.morlunk.mumbleclient.app;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -8,9 +15,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -90,11 +99,12 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			}
 			
 			final Server server = getItem(position);
+			final ServerInfoResponse infoResponse = infoResponses.get(server.getId());
 
 			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
 			TextView userText = (TextView) view.findViewById(R.id.server_row_user);
 			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
-
+			
 			if(server.getName().equals("")) {
 				nameText.setText(server.getHost());
 			} else {
@@ -140,12 +150,69 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		}
 	}
 	
+	private class ServerInfoTask extends AsyncTask<Server, Void, ServerInfoResponse> {
+		
+		@Override
+		protected ServerInfoResponse doInBackground(Server... params) {
+			Server server = params[0];
+			try {
+				InetAddress host = InetAddress.getByName(server.getHost());
+				
+				// Create ping message
+				ByteBuffer buffer = ByteBuffer.allocate(12);
+				buffer.putInt(0); // Request type
+				buffer.putLong((long)server.getId()); // Identifier
+				DatagramPacket requestPacket = new DatagramPacket(buffer.array(), 12, host, server.getPort());
+				
+				// Send packet and wait for response
+				DatagramSocket socket = new DatagramSocket();
+				socket.setSoTimeout(1000);
+				socket.setReceiveBufferSize(1024);
+				socket.send(requestPacket);
+				
+				byte[] responseBuffer = new byte[24];
+				DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
+				socket.receive(responsePacket);
+				
+				ServerInfoResponse response = new ServerInfoResponse(responseBuffer);
+								
+				Log.i(Globals.LOG_TAG, "DEBUG: Server version: "+response.getVersionString()+"\nUsers: "+response.getCurrentUsers()+"/"+response.getMaximumUsers());
+				
+				return response;
+				
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			} catch (SocketException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(ServerInfoResponse result) {
+			super.onPostExecute(result);
+			
+			if(result != null) {
+				infoResponses.put((int) result.getIdentifier(), result);
+				serverAdapter.notifyDataSetChanged();
+			} else {
+				// TODO tell the user that the server could not be pinged.
+			}
+		}
+		
+	}
+	
 	private static final int ACTIVITY_CHANNEL_LIST = 1;
 
 	private static final String STATE_WAIT_CONNECTION = "com.morlunk.mumbleclient.ServerList.WAIT_CONNECTION";
-
+	
 	private ServerServiceObserver mServiceObserver;
 	private ListView listView;
+	private ServerAdapter serverAdapter;
+	private SparseArray<ServerInfoResponse> infoResponses = new SparseArray<ServerInfoResponse>();
 	
 	@Override
 	public final boolean onCreateOptionsMenu(final Menu menu) {
@@ -225,6 +292,15 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		});
 		alertBuilder.setNegativeButton(android.R.string.cancel, null);
 		alertBuilder.show();
+	}
+	
+	/**
+	 * Pings the passed host to retrieve server information.
+	 * @see ServerInfoResponse
+	 * @param server The server to ping.
+	 */
+	private void pingServerInfo(Server server) {
+		new ServerInfoTask().execute(server);
 	}
 	
 	private void registerConnectionReceiver() {
@@ -339,8 +415,15 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	private void fillList() {
 		DbAdapter dbAdapter = new DbAdapter(this);
 		dbAdapter.open();
-		listView.setAdapter(new ServerAdapter(this, dbAdapter.fetchAllServers()));
+		List<Server> servers = dbAdapter.fetchAllServers();
 		dbAdapter.close();
+
+		serverAdapter = new ServerAdapter(this, servers);
+		listView.setAdapter(serverAdapter);
+		
+		for(Server server : servers) {
+			pingServerInfo(server);
+		}
 	}
 
 	@Override
