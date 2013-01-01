@@ -18,6 +18,7 @@ import android.content.pm.ApplicationInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.renderscript.Program;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -28,6 +29,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.actionbarsherlock.view.Menu;
@@ -99,7 +101,8 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			}
 			
 			final Server server = getItem(position);
-			final ServerInfoResponse infoResponse = infoResponses.get(server.getId());
+			
+			ServerInfoResponse infoResponse = infoResponses.get(server.getId());
 
 			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
 			TextView userText = (TextView) view.findViewById(R.id.server_row_user);
@@ -137,7 +140,20 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 					deleteServer(server.getId());
 				}
 			});
+			
+			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
+			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
+			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
+			
+			serverVersionText.setVisibility(infoResponse == null ? View.INVISIBLE : View.VISIBLE);
+			serverUsersText.setVisibility(infoResponse == null ? View.INVISIBLE : View.VISIBLE);
+			serverInfoProgressBar.setVisibility(infoResponse == null ? View.VISIBLE : View.INVISIBLE);
 
+			if(infoResponse != null) {
+				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");
+				serverUsersText.setText(infoResponse.getCurrentUsers()+"/"+infoResponse.getMaximumUsers());
+			}
+			
 			return view;
 		}
 	}

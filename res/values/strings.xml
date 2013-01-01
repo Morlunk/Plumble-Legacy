@@ -82,4 +82,5 @@
     <string name="retry">Retry</string>
     <string name="messageToUser">Type message to user \'%s\'</string>
     <string name="messageToChannel">Type message to channel here</string>
+    <string name="online">Online</string>
 </resources>
