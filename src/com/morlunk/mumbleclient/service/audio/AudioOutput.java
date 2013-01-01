@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -58,7 +59,7 @@ public class AudioOutput implements Runnable {
 	 * Buffer used to hold temporary float values while mixing multiple
 	 * inputs. Only for use in the audio thread.
 	 */
-	final float[] tempMix = new float[MumbleProtocol.FRAME_SIZE];
+	final float[] tempMix = new float[MumbleProtocol.FRAME_SIZE*12];
 
 	private final AudioOutputHost host;
 
@@ -140,8 +141,9 @@ public class AudioOutput implements Runnable {
 		}
 	}
 
+	@SuppressLint("NewApi")
 	private void audioLoop() throws InterruptedException {
-		final short[] out = new short[MumbleProtocol.FRAME_SIZE];
+		final short[] out = new short[MumbleProtocol.FRAME_SIZE*12];
 		final List<AudioUser> mix = new LinkedList<AudioUser>();
 
 		int buffered = 0;
@@ -160,8 +162,19 @@ public class AudioOutput implements Runnable {
 					!MumbleService.getCurrentService().getCurrentUser().deafened) {
 				// Mix all the frames into one array.
 				mix(out, mix);
-
-				at.write(out, 0, MumbleProtocol.FRAME_SIZE);
+				
+				// Trim the mix, removing unused samples by selecting the longest frame size.
+				int mixSize = 0;
+				for(AudioUser user : mix) {
+					if(user.frameSize > mixSize)
+						mixSize = user.frameSize;
+				}
+				short[] clippedOut = new short[mixSize];
+				for(int x=0;x<mixSize;x++) {
+					clippedOut[x] = out[x];
+				}
+				
+				at.write(clippedOut, 0, clippedOut.length);
 
 				// Make sure we are playing when there are enough samples
 				// buffered.
@@ -228,7 +241,7 @@ public class AudioOutput implements Runnable {
 		}
 
 		// Clip buffer for real output.
-		for (int i = 0; i < MumbleProtocol.FRAME_SIZE; i++) {
+		for (int i = 0; i < MumbleProtocol.FRAME_SIZE*12; i++) {
 			clipOut[i] = (short) (Short.MAX_VALUE * (tempMix[i] < -1.0f ? -1.0f
 				: (tempMix[i] > 1.0f ? 1.0f : tempMix[i])));
 		}

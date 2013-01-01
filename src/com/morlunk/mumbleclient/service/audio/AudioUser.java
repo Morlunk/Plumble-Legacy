@@ -3,16 +3,15 @@ package com.morlunk.mumbleclient.service.audio;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import android.util.Log;
+
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.jni.Native;
-import com.morlunk.mumbleclient.jni.NativeAudio;
 import com.morlunk.mumbleclient.jni.Native.JitterBufferPacket;
+import com.morlunk.mumbleclient.jni.NativeAudio;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.PacketDataStream;
 import com.morlunk.mumbleclient.service.model.User;
-
-
-import android.util.Log;
 
 /**
  * Thread safe buffer for audio data.
@@ -36,6 +35,7 @@ public class AudioUser {
 	
 	private final Queue<byte[]> dataArrayPool = new ConcurrentLinkedQueue<byte[]>();
 	float[] lastFrame;
+	int frameSize;
 	private final User user;
 
 	private int missedFrames = 0;
@@ -52,7 +52,7 @@ public class AudioUser {
 			lastFrame = new float[MumbleProtocol.FRAME_SIZE];
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
 			opusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
-			lastFrame = new float[MumbleProtocol.FRAME_SIZE*12];
+			lastFrame = new float[MumbleProtocol.FRAME_SIZE*12]; // With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
 		}
 		
 		normalBuffer = new ConcurrentLinkedQueue<Native.JitterBufferPacket>();
@@ -100,18 +100,14 @@ public class AudioUser {
 			int frames = NativeAudio.opusPacketGetFrames(data, size);
 			samples = frames * NativeAudio.opusPacketGetSamplesPerFrame(data, MumbleProtocol.SAMPLE_RATE);
 			
-			//Log.i(Globals.LOG_TAG, "Frames: "+frames+", Samples: "+samples);
-			
 			if(samples % MumbleProtocol.FRAME_SIZE != 0)
 				return false; // All samples must be divisible by the frame size.
 			
 			if(pds.isValid()) {
 				JitterBufferPacket jbp = new JitterBufferPacket();
 				jbp.data = data;
-				jbp.len = data.length;
+				jbp.len = size;
 				jbp.span = samples;
-				
-				Log.i(Globals.LOG_TAG, "Span: "+samples);
 				
 				normalBuffer.add(jbp);
 				readyHandler.packetReady(this);
@@ -163,6 +159,7 @@ public class AudioUser {
 		if (jbp != null) {
 			data = jbp.data;
 			dataLength = jbp.len;
+			frameSize = jbp.span;
 			missedFrames = 0;
 		} else {
 			missedFrames++;
@@ -171,12 +168,11 @@ public class AudioUser {
 		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
 			Native.celt_decode_float(celtDecoder, data, dataLength, lastFrame);
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
-			int opusResult = NativeAudio.opusDecodeFloat(opusDecoder,
+			NativeAudio.opusDecodeFloat(opusDecoder,
 									data == null ? null : data,
 									data == null ? 0 : dataLength, 
 									lastFrame, 
 									MumbleProtocol.FRAME_SIZE*12, 0);
-			//Log.i(Globals.LOG_TAG, "Packets/error: "+opusResult);
 		}
 		
 		if (data != null) {
