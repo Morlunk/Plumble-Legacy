@@ -3,7 +3,9 @@ package com.morlunk.mumbleclient.app;
 import java.util.List;
 
 import junit.framework.Assert;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
@@ -208,12 +210,21 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		infoDialog.show(getSupportFragmentManager(), "serverInfo");
 	}
 	
-	private void deleteServer(long id) {
-		DbAdapter adapter = new DbAdapter(this);
-		adapter.open();
-		adapter.deleteServer(id);
-		adapter.close();
-		fillList();
+	private void deleteServer(final long id) {
+		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+		alertBuilder.setMessage(R.string.sureDeleteServer);
+		alertBuilder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				DbAdapter adapter = new DbAdapter(ServerList.this);
+				adapter.open();
+				adapter.deleteServer(id);
+				adapter.close();
+				fillList();
+			}
+		});
+		alertBuilder.setNegativeButton(android.R.string.cancel, null);
+		alertBuilder.show();
 	}
 	
 	private void registerConnectionReceiver() {
