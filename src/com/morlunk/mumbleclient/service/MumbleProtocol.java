@@ -93,10 +93,12 @@ public class MumbleProtocol {
 	}
 
 	public final void joinChannel(final int channelId) {
-		final UserState.Builder us = UserState.newBuilder();
-		us.setSession(currentUser.session);
-		us.setChannelId(channelId);
-		conn.sendTcpMessage(MessageType.UserState, us);
+		if(currentUser != null) {
+			final UserState.Builder us = UserState.newBuilder();
+			us.setSession(currentUser.session);
+			us.setChannelId(channelId);
+			conn.sendTcpMessage(MessageType.UserState, us);
+		}
 	}
 	
 	public void sendAccessTokens(List<String> tokens) {
