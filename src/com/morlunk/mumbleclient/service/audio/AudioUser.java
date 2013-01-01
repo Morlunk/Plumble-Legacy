@@ -91,26 +91,28 @@ public class AudioUser {
 		byte[] data = null;
 
 		if(codec == MumbleProtocol.CODEC_OPUS) {
-			int size;
-			size = pds.next();
-			size &= 0x1fff;
-			
-			data = new byte[size];
-			pds.dataBlock(data, size);
-			int frames = NativeAudio.opusPacketGetFrames(data, size);
-			samples = frames * NativeAudio.opusPacketGetSamplesPerFrame(data, MumbleProtocol.SAMPLE_RATE);
-			
-			if(samples % MumbleProtocol.FRAME_SIZE != 0)
-				return false; // All samples must be divisible by the frame size.
-			
-			if(pds.isValid()) {
-				JitterBufferPacket jbp = new JitterBufferPacket();
-				jbp.data = data;
-				jbp.len = size;
-				jbp.span = samples;
+			long header = pds.readLong();
+			int size = (int) (header & ((1 << 13) - 1));
+			if(size > 0) {
+				data = new byte[size];
+				pds.dataBlock(data, size);
+				int frames = NativeAudio.opusPacketGetFrames(data, size);
+				samples = frames * NativeAudio.opusPacketGetSamplesPerFrame(data, MumbleProtocol.SAMPLE_RATE);
 				
-				normalBuffer.add(jbp);
-				readyHandler.packetReady(this);
+				if(samples % MumbleProtocol.FRAME_SIZE != 0)
+					return false; // All samples must be divisible by the frame size.
+				
+				Log.i(Globals.LOG_TAG, "DEBUG: "+samples+" samples, "+frames+" frames");
+				
+				if(pds.isValid()) {
+					JitterBufferPacket jbp = new JitterBufferPacket();
+					jbp.data = data;
+					jbp.len = size;
+					jbp.span = samples;
+					
+					normalBuffer.add(jbp);
+					readyHandler.packetReady(this);
+				}
 			}
 		} else {
 			int dataHeader = 0;
@@ -119,7 +121,6 @@ public class AudioUser {
 				int dataLength = dataHeader & 0x7f;
 				if (dataLength > 0) {
 					data = acquireDataArray();
-
 					pds.dataBlock(data, dataLength);
 
 					final Native.JitterBufferPacket jbp = new Native.JitterBufferPacket();

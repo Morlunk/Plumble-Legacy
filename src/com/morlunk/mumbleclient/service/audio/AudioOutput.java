@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -140,8 +139,7 @@ public class AudioOutput implements Runnable {
 			userPackets.notify();
 		}
 	}
-
-	@SuppressLint("NewApi")
+	
 	private void audioLoop() throws InterruptedException {
 		final short[] out = new short[MumbleProtocol.FRAME_SIZE*12];
 		final List<AudioUser> mix = new LinkedList<AudioUser>();
@@ -164,6 +162,7 @@ public class AudioOutput implements Runnable {
 				mix(out, mix);
 				
 				// Trim the mix, removing unused samples by selecting the longest frame size.
+				// This is hackish. I'm sorry. -AC
 				int mixSize = 0;
 				for(AudioUser user : mix) {
 					if(user.frameSize > mixSize)
