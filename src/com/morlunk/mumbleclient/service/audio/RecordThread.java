@@ -219,26 +219,35 @@ public class RecordThread implements Runnable, Observer {
 				final PacketDataStream pds = new PacketDataStream(outputBuffer);
 				while (!outputQueue.isEmpty()) {
 					int flags = 0;
-					flags |= mService.getCodec() << 5;
+					flags |= codec << 5;
 					outputBuffer[0] = (byte) flags;
 
-					pds.rewind();
-					// skip flags
-					pds.next();
-					seq += framesPerPacket;
-					pds.writeLong(seq);
-					for (int i = 0; i < framesPerPacket; ++i) {
-						final byte[] tmp = outputQueue.poll();
-						if (tmp == null) {
-							break;
-						}
-						int head = (short) tmp.length;
-						if (i < framesPerPacket - 1) {
-							head |= 0x80;
-						}
+					if(codec == MumbleProtocol.CODEC_OPUS) {
+						byte[] frame = outputQueue.poll();
+						pds.rewind();
+						// skip flags
+						pds.next();
+						seq += framesPerPacket;
+						pds.writeLong(seq);
+					} else if(codec == MumbleProtocol.CODEC_BETA || codec == MumbleProtocol.CODEC_ALPHA) {
+						pds.rewind();
+						// skip flags
+						pds.next();
+						seq += framesPerPacket;
+						pds.writeLong(seq);
+						for (int i = 0; i < framesPerPacket; ++i) {
+							final byte[] tmp = outputQueue.poll();
+							if (tmp == null) {
+								break;
+							}
+							int head = (short) tmp.length;
+							if (i < framesPerPacket - 1) {
+								head |= 0x80;
+							}
 
-						pds.append(head);
-						pds.append(tmp);
+							pds.append(head);
+							pds.append(tmp);
+						}
 					}
 					
 					if(talkState == AudioOutputHost.STATE_TALKING || !voiceActivity) {

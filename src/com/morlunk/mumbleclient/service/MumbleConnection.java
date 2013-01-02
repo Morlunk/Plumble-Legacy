@@ -126,12 +126,15 @@ public class MumbleConnection implements Runnable {
 		protected void process() throws IOException {
 			udpSocket.receive(packet);
 
+			Log.d(Globals.LOG_TAG, "UDP: Received packet.");
+			
 			final byte[] buffer = cryptState.decrypt(
 				packet.getData(),
 				packet.getLength());
 
 			// Decrypt might return null if the buffer was total garbage.
 			if (buffer == null) {
+				Log.d(Globals.LOG_TAG, "UDP: Garbage buffer.");
 				return;
 			}
 
@@ -139,7 +142,7 @@ public class MumbleConnection implements Runnable {
 		}
 	};
 
-	public static final int UDP_BUFFER_SIZE = 2048;
+	public static final int UDP_BUFFER_SIZE = 1024;
 
 	private final MumbleConnectionHost connectionHost;
 	private MumbleProtocol protocol;
@@ -427,9 +430,10 @@ public class MumbleConnection implements Runnable {
 		final int length,
 		final boolean forceUdp) {
 		// FIXME: This would break things because we don't handle nonce resync messages
-//		if (!cryptState.isInitialized()) {
-//			return;
-//		}
+		if (!cryptState.isInitialized()) {
+			Log.i(Globals.LOG_TAG, "CryptState not initialized.");
+			return;
+		}
 
 		if (forceUdp || useUdpUntil > System.currentTimeMillis()) {
 			if (!usingUdp && !forceUdp) {

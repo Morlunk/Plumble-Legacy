@@ -102,7 +102,7 @@ public class AudioUser {
 				if(samples % MumbleProtocol.FRAME_SIZE != 0)
 					return false; // All samples must be divisible by the frame size.
 				
-				Log.i(Globals.LOG_TAG, "DEBUG: "+samples+" samples, "+frames+" frames");
+				//Log.i(Globals.LOG_TAG, "DEBUG: "+samples+" samples, "+frames+" frames");
 				
 				if(pds.isValid()) {
 					JitterBufferPacket jbp = new JitterBufferPacket();
@@ -126,6 +126,7 @@ public class AudioUser {
 					final Native.JitterBufferPacket jbp = new Native.JitterBufferPacket();
 					jbp.data = data;
 					jbp.len = dataLength;
+					jbp.span = 480;
 					
 					normalBuffer.add(jbp);
 

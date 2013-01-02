@@ -15,6 +15,7 @@ import net.sf.mumble.MumbleProto.PermissionDenied;
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.ServerSync;
 import net.sf.mumble.MumbleProto.TextMessage;
+import net.sf.mumble.MumbleProto.UDPTunnel;
 import net.sf.mumble.MumbleProto.UserRemove;
 import net.sf.mumble.MumbleProto.UserState;
 import android.content.Context;
@@ -122,6 +123,7 @@ public class MumbleProtocol {
 
 		switch (t) {
 		case UDPTunnel:
+			Log.i(Globals.LOG_TAG, "TUNNELED!");
 			processUdp(buffer, buffer.length);
 			break;
 		case Ping:
@@ -170,6 +172,11 @@ public class MumbleProtocol {
 			if(!conn.forceTcp) {
 				pingThread = new Thread(new PingThread(conn), "Ping");
 				pingThread.start();
+			} else {
+				// Mumble protocol docs say we should send a blank UDP tunnel packet to tell the server we want UDP tunneling.
+				UDPTunnel.Builder tunnelBuilder = UDPTunnel.newBuilder();
+				tunnelBuilder.setPacket(ByteString.EMPTY);
+				conn.sendTcpMessage(MessageType.UDPTunnel, tunnelBuilder);
 			}
 			
 			Log.d(Globals.LOG_TAG, ">>> " + t);
@@ -343,18 +350,6 @@ public class MumbleProtocol {
 					cryptsetup.getKey().toByteArray(),
 					cryptsetup.getClientNonce().toByteArray(),
 					cryptsetup.getServerNonce().toByteArray());
-			} else if (cryptsetup.hasServerNonce()) {
-				// Server syncing its nonce to us.
-				Log.d(Globals.LOG_TAG, "MumbleConnection: Server sending nonce");
-				conn.cryptState.setServerNonce(cryptsetup.getServerNonce().toByteArray());
-			} else {
-				// Server wants our nonce.
-				Log.d(
-					Globals.LOG_TAG,
-					"MumbleConnection: Server requesting nonce");
-				final CryptSetup.Builder nonceBuilder = CryptSetup.newBuilder();
-				nonceBuilder.setClientNonce(ByteString.copyFrom(conn.cryptState.getClientNonce()));
-				conn.sendTcpMessage(MessageType.CryptSetup, nonceBuilder);
 			}
 			break;
 		default:

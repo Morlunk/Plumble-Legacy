@@ -236,7 +236,7 @@ public class AudioOutput implements Runnable {
 
 		// Sum the buffers.
 		for (final AudioUser user : mix) {
-			for (int i = 0; i < tempMix.length; i++) {
+			for (int i = 0; i < user.lastFrame.length; i++) {
 				tempMix[i] += user.lastFrame[i];
 			}
 		}
