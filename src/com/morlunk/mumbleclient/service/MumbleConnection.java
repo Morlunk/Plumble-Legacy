@@ -135,6 +135,11 @@ public class MumbleConnection implements Runnable {
 				return;
 			}
 
+			if (!usingUdp) {
+				Log.i(Globals.LOG_TAG, "MumbleConnection: UDP enabled");
+				usingUdp = true;
+			}
+
 			protocol.processUdp(buffer, buffer.length);
 		}
 	};
@@ -432,11 +437,7 @@ public class MumbleConnection implements Runnable {
 			return;
 		}
 
-		if (forceUdp || useUdpUntil > System.currentTimeMillis()) {
-			if (!usingUdp && !forceUdp) {
-				Log.i(Globals.LOG_TAG, "MumbleConnection: UDP enabled");
-				usingUdp = true;
-			}
+		if ((!forceTcp && usingUdp) || forceUdp) {
 
 			final byte[] encryptedBuffer = cryptState.encrypt(buffer, length);
 			final DatagramPacket outPacket = new DatagramPacket(
@@ -456,10 +457,6 @@ public class MumbleConnection implements Runnable {
 				handleSendingException(e);
 			}
 		} else {
-			if (usingUdp) {
-				Log.i(Globals.LOG_TAG, "MumbleConnection: UDP disabled");
-				usingUdp = false;
-			}
 
 			final short type = (short) MessageType.UDPTunnel.ordinal();
 

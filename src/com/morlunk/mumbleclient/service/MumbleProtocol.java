@@ -357,6 +357,7 @@ public class MumbleProtocol {
 	}
 
 	public void processUdp(final byte[] buffer, final int length) {
+		
 		if (stopped) {
 			return;
 		}
