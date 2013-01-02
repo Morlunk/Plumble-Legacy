@@ -50,7 +50,7 @@
     <string name="loading">Ładowanie…</string>
     <string name="reset_key">Resetuj</string>
     <string name="externalStorageUnavailable">Pamięć zewnętrzna jest niedostępna, nie można wczytać certyfikatu</string>
-    <string name="audioQualitySum">Bitrate dźwięku, której będzie używał Plumble (w kbit/s)</string>
+    <string name="audioQualitySum">Bitrate dźwięku, którego będzie używał Plumble (w kbit/s)</string>
     <string name="forceTcp">Wymuś TCP</string>
     <string name="forceTcpSum">Definiuje czy wymuszać połączenie TCP (wyłącza UDP).</string>
     <string name="addFavorite">Dodaj do ulubionych</string>
@@ -82,4 +82,5 @@
     <string name="retry">Ponów</string>
     <string name="messageToUser">Wiadomość do użytkownika: \'%s\'</string>
     <string name="messageToChannel">Wiadomość do kanału</string>
+    <string name="online">Online</string>
 </resources>
