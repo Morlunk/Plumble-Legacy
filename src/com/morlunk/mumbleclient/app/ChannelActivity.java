@@ -978,19 +978,22 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		@Override
 		public void onChannelAdded(Channel channel) throws RemoteException {
-			loadChannelSpinner();
+			if(mService.isConnected())
+				loadChannelSpinner(); // Reload channel spinner if connected
 		}
 		
 		@Override
 		public void onChannelRemoved(Channel channel) throws RemoteException {
-			loadChannelSpinner();
+			if(mService.isConnected())
+				loadChannelSpinner(); // Reload channel spinner if connected
 		}
 		
 		@Override
 		public void onChannelUpdated(Channel channel) throws RemoteException {
-			loadChannelSpinner();
+			if(mService.isConnected())
+				loadChannelSpinner(); // Reload channel spinner if connected
 		}
-
+		
 		@Override
 		public void onCurrentUserUpdated() throws RemoteException {
 			updateMuteDeafenMenuItems(mService.getCurrentUser().muted, mService.getCurrentUser().deafened);
