@@ -106,6 +106,7 @@ public class RecordThread implements Runnable, Observer {
 		}
 
 		if (recordingSampleRate != TARGET_SAMPLE_RATE) {
+			Log.d(Globals.LOG_TAG, "Initializing Speex resampler.");
 			speexResamplerState = Native.speex_resampler_init(
 				1,
 				recordingSampleRate,
@@ -203,7 +204,8 @@ public class RecordThread implements Runnable, Observer {
 				final byte[] compressed = new byte[compressedSize];
 				synchronized (Native.class) {
 					if(codec == MumbleProtocol.CODEC_OPUS) {
-						NativeAudio.opusEncode(opusEncoder, out, read, compressed, compressedSize);
+						NativeAudio.opusEncoderCtl(opusEncoder, NativeAudio.OPUS_SET_BITRATE_REQUEST, audioQuality);
+						NativeAudio.opusEncode(opusEncoder, out, frameSize, compressed, compressedSize);
 					} else if(codec == MumbleProtocol.CODEC_BETA || codec == MumbleProtocol.CODEC_ALPHA) {
 						Native.celt_encode(celtEncoder, out, compressed,
 								compressedSize);
@@ -220,15 +222,17 @@ public class RecordThread implements Runnable, Observer {
 				while (!outputQueue.isEmpty()) {
 					int flags = 0;
 					flags |= codec << 5;
-					outputBuffer[0] = (byte) flags;
+					outputBuffer[0] = (byte)(flags & 0xff);
 
 					if(codec == MumbleProtocol.CODEC_OPUS) {
-						byte[] frame = outputQueue.poll();
 						pds.rewind();
-						// skip flags
 						pds.next();
-						seq += framesPerPacket;
+						seq += 1;
 						pds.writeLong(seq);
+						byte[] frame = outputQueue.poll();
+						long header = frame.length;
+						pds.writeLong(header);
+						pds.append(frame);
 					} else if(codec == MumbleProtocol.CODEC_BETA || codec == MumbleProtocol.CODEC_ALPHA) {
 						pds.rewind();
 						// skip flags
