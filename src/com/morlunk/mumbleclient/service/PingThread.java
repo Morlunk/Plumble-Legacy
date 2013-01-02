@@ -19,14 +19,16 @@ class PingThread implements Runnable {
 		while (running && mc.isConnectionAlive()) {
 			try {
 				final long timestamp = System.currentTimeMillis();
-
-				// UDP
-				PacketDataStream pds = new PacketDataStream(udpBuffer);
-				pds.next();
-				pds.writeLong(timestamp);
 				
-				if(pds.isValid()) {
-					mc.sendUdpMessage(udpBuffer, udpBuffer.length, true);
+				if(!mc.forceTcp) {
+					// UDP
+					PacketDataStream pds = new PacketDataStream(udpBuffer);
+					pds.next();
+					pds.writeLong(timestamp);
+				
+					if(pds.isValid()) {
+						mc.sendUdpMessage(udpBuffer, udpBuffer.length, true);
+					}
 				}
 
 				// TCP

@@ -123,7 +123,6 @@ public class MumbleProtocol {
 
 		switch (t) {
 		case UDPTunnel:
-			Log.i(Globals.LOG_TAG, "TUNNELED!");
 			processUdp(buffer, buffer.length);
 			break;
 		case Ping:
@@ -169,10 +168,10 @@ public class MumbleProtocol {
 			currentUser.isCurrent = true;
 			currentChannel = currentUser.getChannel();
 			
-			if(!conn.forceTcp) {
-				pingThread = new Thread(new PingThread(conn), "Ping");
-				pingThread.start();
-			} else {
+			pingThread = new Thread(new PingThread(conn), "Ping");
+			pingThread.start();
+			
+			if(conn.forceTcp) {
 				// Mumble protocol docs say we should send a blank UDP tunnel packet to tell the server we want UDP tunneling.
 				UDPTunnel.Builder tunnelBuilder = UDPTunnel.newBuilder();
 				tunnelBuilder.setPacket(ByteString.EMPTY);

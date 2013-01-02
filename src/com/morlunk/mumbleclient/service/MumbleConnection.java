@@ -125,8 +125,6 @@ public class MumbleConnection implements Runnable {
 		@Override
 		protected void process() throws IOException {
 			udpSocket.receive(packet);
-
-			Log.d(Globals.LOG_TAG, "UDP: Received packet.");
 			
 			final byte[] buffer = cryptState.decrypt(
 				packet.getData(),
@@ -134,7 +132,6 @@ public class MumbleConnection implements Runnable {
 
 			// Decrypt might return null if the buffer was total garbage.
 			if (buffer == null) {
-				Log.d(Globals.LOG_TAG, "UDP: Garbage buffer.");
 				return;
 			}
 
