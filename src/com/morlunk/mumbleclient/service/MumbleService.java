@@ -469,6 +469,21 @@ public class MumbleService extends Service {
 				}
 			});
 		}
+
+		@Override
+		public void userStateUpdated(final User user, final UserState state) {
+			handler.post(new ServiceProtocolMessage() {
+				@Override
+				public void process() {
+				}
+
+				@Override
+				protected void broadcast(final BaseServiceObserver observer)
+					throws RemoteException {
+					observer.onUserStateUpdated(user, state);
+				}
+			});
+		}
 	}
 
 	public static final int CONNECTION_STATE_DISCONNECTED = 0;

@@ -1,5 +1,6 @@
 package com.morlunk.mumbleclient.app;
 
+import net.sf.mumble.MumbleProto.UserState;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -110,6 +111,27 @@ public class ChannelChatFragment extends SherlockFragment {
 		updateChatTargetText();
 		return view;
 	}
+	
+	/**
+	 * Convenience method to insert a span for colouring a string to a SSB. For channel/user names.
+	 */
+	private void appendNameHighlight(String name, SpannableStringBuilder sb) {
+		sb.append(name);
+		sb.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.abs__holo_blue_light)), sb.length()-name.length(), sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	}
+	
+	private void addChatText(Spannable text) {
+		chatText.append(text);
+		chatText.append(Html.fromHtml("<br>"));
+		
+		chatScroll.post(new Runnable() {
+			
+			@Override
+			public void run() {
+				chatScroll.smoothScrollTo(0, chatText.getHeight());
+			}
+		});
+	}
 
 	void addMessage(final Message msg) {
 		final SpannableStringBuilder sb = new SpannableStringBuilder();
@@ -129,8 +151,7 @@ public class ChannelChatFragment extends SherlockFragment {
 			else
 				targetString = "Unknown";
 			sb.append("To ");
-			sb.append(targetString);
-			sb.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.abs__holo_blue_light)), sb.length()-targetString.length(), sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			appendNameHighlight(targetString, sb);
 		} else {
 			if (msg.channelIds > 0) {
 				sb.append("(C) ");
@@ -146,22 +167,12 @@ public class ChannelChatFragment extends SherlockFragment {
 			else
 				actorName = msg.actor.name;
 			
-			sb.append(actorName);
-			sb.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.abs__holo_blue_light)), sb.length()-actorName.length(), sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			appendNameHighlight(actorName, sb);
 		}
 		sb.append(": ");
 		sb.append(Html.fromHtml(msg.message));
-		sb.append(Html.fromHtml("<br>"));
 		
-		chatText.append(sb);
-		
-		chatScroll.post(new Runnable() {
-			
-			@Override
-			public void run() {
-				chatScroll.smoothScrollTo(0, chatText.getHeight());
-			}
-		});
+		addChatText(sb);
 	}
 
 	void sendMessage(final TextView v) {
@@ -232,6 +243,79 @@ public class ChannelChatFragment extends SherlockFragment {
 			chatTextEdit.setHint(R.string.messageToChannel);
 		} else {
 			chatTextEdit.setHint(getString(R.string.messageToUser, chatTarget.name));
+		}
+	}
+
+	public void userStateUpdated(User user, UserState userState) {
+		/*
+		 *  Hi localizers,
+		 *  
+		 *  Please wait until I move all strings here into strings.xml before starting localization. Thanks.
+		 *  
+		 *  - Andrew
+		 */
+		
+		final SpannableStringBuilder sb = new SpannableStringBuilder();
+		sb.append("[");
+		sb.append(DateUtils.formatDateTime(
+			getActivity(),
+			System.currentTimeMillis(),
+			DateUtils.FORMAT_SHOW_TIME));
+		sb.append("] ");
+		
+		User actor = null;
+		if(userState.hasActor()) {
+			actor = channelProvider.getUserWithIdentifier(userState.getActor());
+		}
+		
+		// Connect action
+		if(user == null) {
+			appendNameHighlight(userState.getName(), sb);
+			sb.append(" connected.");
+			addChatText(sb);
+			return;
+		}
+		
+		// Channel move actions
+		if(userState.hasChannelId() && userState.getChannelId() == channelProvider.getChannel().id) {
+			appendNameHighlight(user.name, sb);
+			sb.append(" moved in from ");
+			appendNameHighlight(user.getChannel().name, sb); // This doesn't return the correct result. TODO fix!
+			sb.append(" by ");
+			if(actor != null) {
+				appendNameHighlight(actor.name, sb);
+			} else {
+				sb.append("the server");
+			}
+			sb.append(".");
+			addChatText(sb);
+			return;
+		}
+		
+		// Mute/deafen actions within the current user's channel
+		if(user.getChannel().id == channelProvider.getChannel().id) {
+			if(userState.hasSelfDeaf() || userState.hasSelfMute()) {
+				if(userState.getSession() == channelProvider.getCurrentUser().session) {
+					if(userState.getSelfMute() && userState.getSelfDeaf()) {
+						sb.append("Muted and deafened.");
+					} else if(userState.getSelfMute()) {
+						sb.append("Muted.");
+					} else {
+						sb.append("Unmuted.");
+					}
+				} else {
+					appendNameHighlight(user.name, sb);
+					if(userState.getSelfMute() && userState.getSelfDeaf()) {
+						sb.append(" is now muted and deafened.");
+					} else if(userState.getSelfMute()) {
+						sb.append(" is now muted.");
+					} else {
+						sb.append(" is now unmuted.");
+					}
+				}
+				addChatText(sb);
+				return;
+			}
 		}
 	}
 }

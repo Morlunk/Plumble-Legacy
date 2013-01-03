@@ -1,6 +1,7 @@
 package com.morlunk.mumbleclient.service;
 
 import net.sf.mumble.MumbleProto.UserRemove;
+import net.sf.mumble.MumbleProto.UserState;
 import android.os.IBinder;
 import android.os.RemoteException;
 
@@ -43,8 +44,11 @@ public class BaseServiceObserver {
 
 	public void onUserRemoved(final User user, final UserRemove reject) throws RemoteException {
 	}
-
+	
 	public void onUserUpdated(final User user) throws RemoteException {
+	}
+
+	public void onUserStateUpdated(final User user, UserState state) throws RemoteException {
 	}
 	
 	public void onPermissionDenied(String reason, int denyType) throws RemoteException {

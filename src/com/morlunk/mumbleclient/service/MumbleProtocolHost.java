@@ -2,6 +2,7 @@ package com.morlunk.mumbleclient.service;
 
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.UserRemove;
+import net.sf.mumble.MumbleProto.UserState;
 
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
@@ -36,7 +37,9 @@ public interface MumbleProtocolHost {
 
 	public void userRemoved(int userId, UserRemove remove);
 
-	public void userUpdated(User user);
+	public void userStateUpdated(User user, UserState us);
 	
 	public void permissionDenied(String reason, int denyType);
+
+	public void userUpdated(User user);
 }

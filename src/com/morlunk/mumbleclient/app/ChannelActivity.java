@@ -7,6 +7,7 @@ import java.util.Locale;
 
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
 import net.sf.mumble.MumbleProto.UserRemove;
+import net.sf.mumble.MumbleProto.UserState;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -80,6 +81,8 @@ import com.morlunk.mumbleclient.service.model.User;
 interface ChannelProvider {
 	public Channel getChannel();
 	public List<User> getChannelUsers();
+	public User getCurrentUser();
+	public User getUserWithIdentifier(int id);
 	public void setChatTarget(User chatTarget);
 	public void sendChannelMessage(String message);
 	public void sendUserMessage(String string, User chatTarget);
@@ -892,6 +895,21 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		return mService.getUserList();
 	}
 	
+	@Override
+	public User getCurrentUser() {
+		return mService.getCurrentUser();
+	}
+	
+	@Override
+	public User getUserWithIdentifier(int id) {
+		for(User user : mService.getUserList()) {
+			if(user.session == id) {
+				return user;
+			}
+		}
+		return null;
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.morlunk.mumbleclient.app.ChannelProvider#sendChannelMessage(java.lang.String)
 	 */
@@ -1001,7 +1019,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
 		@Override
 		public void onUserAdded(final User user) throws RemoteException {
-			refreshUser(user);
+			listFragment.updateUser(user);
 		}
 
 		@Override
@@ -1014,8 +1032,14 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		}
 
 		@Override
-		public void onUserUpdated(final User user) throws RemoteException {
-			refreshUser(user);
+		public void onUserStateUpdated(final User user, final UserState state) throws RemoteException {
+			if(mService.isConnected())
+				chatFragment.userStateUpdated(user, state);
+		}
+		
+		@Override
+		public void onUserUpdated(User user) throws RemoteException {
+			listFragment.updateUser(user);
 		}
 		
 		/* (non-Javadoc)
@@ -1024,10 +1048,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		@Override
 		public void onPermissionDenied(String reason, int denyType) throws RemoteException {
 			permissionDenied(reason, DenyType.valueOf(denyType));
-		}
-
-		private void refreshUser(final User user) {
-			listFragment.updateUser(user);
 		}
 	};
     
@@ -1173,7 +1193,7 @@ class ChannelSpinnerAdapter implements SpinnerAdapter {
 
 			// Show 'return' arrow and pad the view depending on channel's
 			// nested level.
-			// Width of return arrow is 50dp, convert that to px.
+			// Width of return arrow is 50dp, convert thamutedt to px.
 			if (channel.parent != -1) {
 				returnImage.setVisibility(View.VISIBLE);
 				view.setPadding((int) (getNestedLevel(channel) * TypedValue

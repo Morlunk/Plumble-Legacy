@@ -227,6 +227,8 @@ public class MumbleProtocol {
 		case UserState:
 			final UserState us = UserState.parseFrom(buffer);
 			user = findUser(us.getSession());
+			
+			host.userStateUpdated(user, us);
 
 			boolean added = false;
 			boolean currentUserUpdated = false;
