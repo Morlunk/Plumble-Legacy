@@ -3,11 +3,10 @@ package com.morlunk.mumbleclient.app;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.morlunk.mumbleclient.app.ConnectedActivityLogic.Host;
-import com.morlunk.mumbleclient.service.IServiceObserver;
+import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
 
 /**
@@ -32,7 +31,7 @@ public class ConnectedListActivity extends SherlockFragmentActivity {
 		}
 
 		@Override
-		public IServiceObserver createServiceObserver() {
+		public BaseServiceObserver createServiceObserver() {
 			return ConnectedListActivity.this.createServiceObserver();
 		}
 
@@ -91,9 +90,9 @@ public class ConnectedListActivity extends SherlockFragmentActivity {
 		logicHost);
 
 	protected MumbleService mService;
-	protected IServiceObserver mObserver;
+	protected BaseServiceObserver mObserver;
 
-	protected IServiceObserver createServiceObserver() {
+	protected BaseServiceObserver createServiceObserver() {
 		return null;
 	}
 
@@ -104,10 +103,6 @@ public class ConnectedListActivity extends SherlockFragmentActivity {
 	}
 
 	protected void onDisconnected() {
-		final String error = mService.getError().getReason();
-		if (error != null) {
-			Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
-		}
 		finish();
 	}
 

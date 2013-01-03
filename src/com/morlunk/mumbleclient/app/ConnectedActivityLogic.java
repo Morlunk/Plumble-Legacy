@@ -1,13 +1,6 @@
 package com.morlunk.mumbleclient.app;
 
 import junit.framework.Assert;
-
-import com.morlunk.mumbleclient.Globals;
-import com.morlunk.mumbleclient.service.BaseServiceObserver;
-import com.morlunk.mumbleclient.service.IServiceObserver;
-import com.morlunk.mumbleclient.service.MumbleService;
-
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -16,11 +9,15 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
+import com.morlunk.mumbleclient.Globals;
+import com.morlunk.mumbleclient.service.BaseServiceObserver;
+import com.morlunk.mumbleclient.service.MumbleService;
+
 public class ConnectedActivityLogic {
 	public interface Host {
 		boolean bindService(Intent intent, ServiceConnection conn, int flags);
 
-		IServiceObserver createServiceObserver();
+		BaseServiceObserver createServiceObserver();
 
 		void finish();
 
@@ -79,11 +76,11 @@ public class ConnectedActivityLogic {
 		}
 	};
 
-	private IServiceObserver mInternalObserver;
+	private BaseServiceObserver mInternalObserver;
 	private final Host mHost;
 	private boolean paused = false;
 
-	protected IServiceObserver mObserver;
+	protected BaseServiceObserver mObserver;
 
 	public ConnectedActivityLogic(final Host host) {
 		this.mHost = host;

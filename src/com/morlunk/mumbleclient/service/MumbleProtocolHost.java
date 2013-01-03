@@ -1,6 +1,7 @@
 package com.morlunk.mumbleclient.service;
 
 import net.sf.mumble.MumbleProto.Reject;
+import net.sf.mumble.MumbleProto.UserRemove;
 
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
@@ -33,7 +34,7 @@ public interface MumbleProtocolHost {
 
 	public void userAdded(User user);
 
-	public void userRemoved(int userId, String reason);
+	public void userRemoved(int userId, UserRemove remove);
 
 	public void userUpdated(User user);
 	

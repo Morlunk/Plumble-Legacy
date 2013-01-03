@@ -17,7 +17,7 @@ public abstract class AbstractHost {
 
 			process();
 
-			for (final IServiceObserver observer : getObservers()) {
+			for (final BaseServiceObserver observer : getObservers()) {
 				try {
 					broadcast(observer);
 				} catch (final RemoteException e) {
@@ -29,10 +29,10 @@ public abstract class AbstractHost {
 			}
 		}
 
-		protected abstract void broadcast(IServiceObserver observer)
+		protected abstract void broadcast(BaseServiceObserver observer)
 			throws RemoteException;
 
-		protected abstract Iterable<IServiceObserver> getObservers();
+		protected abstract Iterable<BaseServiceObserver> getObservers();
 
 		protected abstract void process();
 	}

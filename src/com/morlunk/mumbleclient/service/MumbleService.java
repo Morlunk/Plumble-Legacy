@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import junit.framework.Assert;
 import net.sf.mumble.MumbleProto.Reject;
+import net.sf.mumble.MumbleProto.UserRemove;
 import net.sf.mumble.MumbleProto.UserState;
 import android.annotation.TargetApi;
 import android.app.Notification;
@@ -67,7 +68,7 @@ public class MumbleService extends Service {
 		AudioOutputHost {
 		abstract class ServiceProtocolMessage extends ProtocolMessage {
 			@Override
-			protected Iterable<IServiceObserver> getObservers() {
+			protected Iterable<BaseServiceObserver> getObservers() {
 				return observers.values();
 			}
 		}
@@ -81,7 +82,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onUserUpdated(user);
 				}
@@ -112,7 +113,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onUserUpdated(user);
 				}
@@ -143,7 +144,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onUserUpdated(user);
 				}
@@ -155,7 +156,7 @@ public class MumbleService extends Service {
 		MumbleConnectionHost {
 		abstract class ServiceProtocolMessage extends ProtocolMessage {
 			@Override
-			protected Iterable<IServiceObserver> getObservers() {
+			protected Iterable<BaseServiceObserver> getObservers() {
 				return observers.values();
 			}
 		}
@@ -188,7 +189,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer) {
+				protected void broadcast(final BaseServiceObserver observer) {
 				}
 			});
 		}
@@ -225,7 +226,7 @@ public class MumbleService extends Service {
 		MumbleProtocolHost {
 		abstract class ServiceProtocolMessage extends ProtocolMessage {
 			@Override
-			protected Iterable<IServiceObserver> getObservers() {
+			protected Iterable<BaseServiceObserver> getObservers() {
 				return observers.values();
 			}
 		}
@@ -239,7 +240,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onChannelAdded(channel);
 				}
@@ -261,7 +262,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onChannelRemoved(channel);
 				}
@@ -282,7 +283,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onChannelUpdated(channel);
 				}
@@ -296,7 +297,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onCurrentChannelChanged();
 				}
@@ -314,7 +315,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onCurrentUserUpdated();
 				}
@@ -334,7 +335,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onMessageReceived(msg);
 				}
@@ -349,7 +350,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onMessageSent(msg);
 				}
@@ -361,7 +362,7 @@ public class MumbleService extends Service {
 		public void setError(final Reject reject) {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
-				protected void broadcast(final IServiceObserver observer) {
+				protected void broadcast(final BaseServiceObserver observer) {
 				}
 
 				@Override
@@ -381,7 +382,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer) {
+				protected void broadcast(final BaseServiceObserver observer) {
 				}
 			});
 		}
@@ -395,7 +396,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onUserAdded(user);
 				}
@@ -403,7 +404,7 @@ public class MumbleService extends Service {
 		}
 
 		@Override
-		public void userRemoved(final int userId, final String reason) {
+		public void userRemoved(final int userId, final UserRemove remove) {
 			handler.post(new ServiceProtocolMessage() {
 				private User user;
 
@@ -420,9 +421,9 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
-					observer.onUserRemoved(user, reason);
+					observer.onUserRemoved(user, remove);
 				}
 			});
 		}
@@ -443,7 +444,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onUserUpdated(user);
 				}
@@ -462,7 +463,7 @@ public class MumbleService extends Service {
 				}
 
 				@Override
-				protected void broadcast(final IServiceObserver observer)
+				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
 					observer.onPermissionDenied(reason, denyType);
 				}
@@ -516,14 +517,17 @@ public class MumbleService extends Service {
 	int state;
 	boolean synced;
 	int serviceState;
-	Reject rejectResponse;
+	
+	// Will be either a `UserRemove` or a `Reject` response. TODO make this cleaner.
+	Object rejectResponse;
+	
 	final List<Message> messages = new LinkedList<Message>();
 	final List<Message> unreadMessages = new LinkedList<Message>();
 	final List<Channel> channels = new ArrayList<Channel>();
 	final List<User> users = new ArrayList<User>();
 
 	// Use concurrent hash map so we can modify the collection while iterating.
-	private final Map<Object, IServiceObserver> observers = new ConcurrentHashMap<Object, IServiceObserver>();
+	private final Map<Object, BaseServiceObserver> observers = new ConcurrentHashMap<Object, BaseServiceObserver>();
 
 	private ServiceProtocolHost mProtocolHost;
 	private ServiceConnectionHost mConnectionHost;
@@ -617,14 +621,17 @@ public class MumbleService extends Service {
 		return mProtocol.currentUser;
 	}
 	
-	public void setError(Reject reject) {
+	public void setDisconnectResponse(Object reject) {
 		rejectResponse = reject;
 	}
 
-	public Reject getError() {
-		Reject error = rejectResponse;
+	/**
+	 * @return Either a `UserRemove` or `Reject` object, depending on the reason for the diconnect.
+	 */
+	public Object getDisconnectResponse() {
+		Object response = rejectResponse;
 		rejectResponse = null; // Clear error
-		return error;
+		return response;
 	}
 
 	public boolean isActivityVisible() {
@@ -714,7 +721,7 @@ public class MumbleService extends Service {
 		return handleCommand(intent);
 	}
 
-	public void registerObserver(final IServiceObserver observer) {
+	public void registerObserver(final BaseServiceObserver observer) {
 		observers.put(observer, observer);
 	}
 
@@ -802,12 +809,12 @@ public class MumbleService extends Service {
 		manager.notify(STATUS_NOTIFICATION_ID, mStatusNotification);
 	}
 
-	public void unregisterObserver(final IServiceObserver observer) {
+	public void unregisterObserver(final BaseServiceObserver observer) {
 		observers.remove(observer);
 	}
 
 	private void broadcastState() {
-		for (final IServiceObserver observer : observers.values()) {
+		for (final BaseServiceObserver observer : observers.values()) {
 			try {
 				observer.onConnectionStateChanged(serviceState);
 			} catch (final RemoteException e) {

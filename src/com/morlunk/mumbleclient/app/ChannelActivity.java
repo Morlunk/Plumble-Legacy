@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Locale;
 
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
+import net.sf.mumble.MumbleProto.Reject;
+import net.sf.mumble.MumbleProto.UserRemove;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -66,7 +68,6 @@ import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
-import com.morlunk.mumbleclient.service.IServiceObserver;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
@@ -701,7 +702,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	 * @see com.morlunk.mumbleclient.app.ConnectedActivity#createServiceObserver()
 	 */
 	@Override
-	protected IServiceObserver createServiceObserver() {
+	protected BaseServiceObserver createServiceObserver() {
 		return new ChannelServiceObserver();
 	}
 	
@@ -1005,10 +1006,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		}
 
 		@Override
-		public void onUserRemoved(final User user, String reason) throws RemoteException {
+		public void onUserRemoved(final User user, UserRemove remove) throws RemoteException {
 			if(user.equals(mService.getCurrentUser())) {
-				Log.i(Globals.LOG_TAG, String.format("Kicked: \"%s\"", reason));
-				//mService.setError(getString(R.string.kickedMessage, reason));
+				Log.i(Globals.LOG_TAG, String.format("Kicked: \"%s\"", remove.getReason()));
+				mService.setDisconnectResponse(remove);
 			}
 			listFragment.removeUser(user);
 		}

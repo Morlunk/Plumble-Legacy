@@ -331,7 +331,7 @@ public class MumbleProtocol {
 				user.getChannel().userCount--;
 
 				host.channelUpdated(user.getChannel());
-				host.userRemoved(user.session, ur.getReason());
+				host.userRemoved(user.session, ur);
 			}
 			break;
 		case TextMessage:

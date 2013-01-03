@@ -1,6 +1,7 @@
 package com.morlunk.mumbleclient.app;
 
 import net.sf.mumble.MumbleProto.Reject;
+import net.sf.mumble.MumbleProto.UserRemove;
 import net.sf.mumble.MumbleProto.Reject.RejectType;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -16,7 +17,7 @@ import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.ConnectedActivityLogic.Host;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
-import com.morlunk.mumbleclient.service.IServiceObserver;
+import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
 
 /**
@@ -41,7 +42,7 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 		}
 
 		@Override
-		public IServiceObserver createServiceObserver() {
+		public BaseServiceObserver createServiceObserver() {
 			return ConnectedActivity.this.createServiceObserver();
 		}
 
@@ -100,9 +101,9 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 		logicHost);
 
 	protected MumbleService mService;
-	protected IServiceObserver mObserver;
+	protected BaseServiceObserver mObserver;
 
-	protected IServiceObserver createServiceObserver() {
+	protected BaseServiceObserver createServiceObserver() {
 		return null;
 	}
 
@@ -113,40 +114,61 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 	}
 
 	protected void onDisconnected() {
-		final Reject reject = mService.getError();
+		final Object response = mService.getDisconnectResponse();
 		final Server server = mService.getConnectedServer();
 		
-		if(reject != null) {
+		if(response != null) {
 			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-			if(reject.getType() == RejectType.WrongUserPW || reject.getType() == RejectType.WrongServerPW) {		
-				// Allow password entry
-				final EditText passwordField = new EditText(this);
-				passwordField.setHint(R.string.serverPassword);
-				alertBuilder.setView(passwordField);
+			if(response instanceof Reject) {
+				Reject reject = (Reject)response;
+				if(reject.getType() == RejectType.WrongUserPW || reject.getType() == RejectType.WrongServerPW) {		
+					// Allow password entry
+					final EditText passwordField = new EditText(this);
+					passwordField.setHint(R.string.serverPassword);
+					alertBuilder.setView(passwordField);
 
-				alertBuilder.setTitle(reject.getReason());
-				
-				alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						// Update server
-						
-						DbAdapter adapter = new DbAdapter(ConnectedActivity.this);
-						adapter.open();
-						adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
-						Server updatedServer = adapter.fetchServer(server.getId()); // Update server object again
-						adapter.close();
-						mService.connectToServer(updatedServer);
-					}
-				});
-				alertBuilder.setOnCancelListener(new OnCancelListener() {
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						finish();
-					}
-				});
-			} else {
-				
+					alertBuilder.setTitle(reject.getReason());
+					
+					alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							// Update server
+							
+							DbAdapter adapter = new DbAdapter(ConnectedActivity.this);
+							adapter.open();
+							adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
+							Server updatedServer = adapter.fetchServer(server.getId()); // Update server object again
+							adapter.close();
+							mService.connectToServer(updatedServer);
+						}
+					});
+					alertBuilder.setOnCancelListener(new OnCancelListener() {
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							finish();
+						}
+					});
+				} else {
+					
+					alertBuilder.setPositiveButton("Ok", new OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							finish();
+						}
+					});
+					alertBuilder.setOnCancelListener(new OnCancelListener() {
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							finish();
+						}
+					});
+					alertBuilder.setMessage(reject.getReason());
+				}
+			} else if (response instanceof UserRemove) {
+				UserRemove remove = (UserRemove) response;
+
+				alertBuilder.setTitle(R.string.disconnected);
+
 				alertBuilder.setPositiveButton("Ok", new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
@@ -159,8 +181,9 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 						finish();
 					}
 				});
-				alertBuilder.setMessage(reject.getReason());
+				alertBuilder.setMessage(getResources().getString(R.string.kickedMessage, remove.getReason()));
 			}
+			
 			alertBuilder.show();
 			
 		} else {
