@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceFragment;
@@ -36,7 +37,7 @@ interface PreferenceProvider {
 	public Preference findPreference(CharSequence key);
 }
 
-public class Preferences extends SherlockPreferenceActivity implements PreferenceProvider {
+public class Preferences extends PreferenceActivity implements PreferenceProvider {
 
 	private static final String CERTIFICATE_GENERATE_KEY = "certificateGenerate";
 	private static final String CERTIFICATE_PATH_KEY = "certificatePath";

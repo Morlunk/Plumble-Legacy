@@ -817,7 +817,7 @@ public class MumbleService extends Service {
 
 		mStatusNotificationBuilder.setTicker(status);
 		mStatusNotificationBuilder.setContentInfo(status);
-		mStatusNotificationBuilder.setSmallIcon(user.talkingState == User.TALKINGSTATE_TALKING ? R.drawable.ic_stat_notify_active : R.drawable.ic_stat_notify);
+		mStatusNotificationBuilder.setSmallIcon(R.drawable.ic_stat_notify);
 
 		mStatusNotification = mStatusNotificationBuilder.build();
 		NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
