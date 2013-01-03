@@ -8,6 +8,7 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.text.style.ForegroundColorSpan;
@@ -29,6 +30,8 @@ import com.morlunk.mumbleclient.service.model.User;
 
 public class ChannelChatFragment extends SherlockFragment {
 
+	private static final String CHAT_TEXT_KEY = "chatText";
+	
 	private ChannelProvider channelProvider;
 	private ScrollView chatScroll;
 	private TextView chatText;
@@ -39,6 +42,12 @@ public class ChannelChatFragment extends SherlockFragment {
 	
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
+		
+		if(savedInstanceState != null) {
+			if(savedInstanceState.containsKey(CHAT_TEXT_KEY)) {
+				chatText.setText(Html.fromHtml(savedInstanceState.getString(CHAT_TEXT_KEY)));
+			}
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -55,15 +64,11 @@ public class ChannelChatFragment extends SherlockFragment {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see android.support.v4.app.Fragment#onResume()
-	 */
 	@Override
-	public void onResume() {
-		super.onResume();
-		
-		// Clear chat text. It'll reload from the data source.
-		chatText.setText(null);
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		if(chatText != null)
+			outState.putString(CHAT_TEXT_KEY, Html.toHtml((Spanned) chatText.getText()));
 	}
 	
 	/* (non-Javadoc)

@@ -638,11 +638,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			}
 		}
 		
-		final List<Message> messages = mService.getMessageList();
-		for (final Message m : messages) {
-			chatFragment.addMessage(m);
-		}
-		
 		// Start recording for voice activity, as there is no push to talk button.
 		if(settings.isVoiceActivity()) {
 			mService.setRecording(true);
