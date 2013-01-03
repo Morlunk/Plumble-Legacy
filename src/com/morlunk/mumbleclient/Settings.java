@@ -29,6 +29,9 @@ public class Settings extends Observable {
 	public static final String ARRAY_HOT_CORNER_BOTTOM_RIGHT = "bottomRight";
 	public static final String DEFAULT_HOT_CORNER = ARRAY_HOT_CORNER_NONE;
 	
+	public static final String PREF_PUSH_BUTTON_HIDE_KEY = "hidePtt";
+	public static final Boolean DEFAULT_PUSH_BUTTON_HIDE = false;
+	
 	public static final String PREF_QUALITY = "quality";
 	public static final String DEFAULT_QUALITY = "60000";
 	
@@ -130,6 +133,10 @@ public class Settings extends Observable {
 	
 	public boolean isPushToTalk() {
 		return preferences.getString(PREF_METHOD, ARRAY_METHOD_VOICE).equals(ARRAY_METHOD_PTT);
+	}
+	
+	public boolean isPushToTalkButtonShown() {
+		return !preferences.getBoolean(PREF_PUSH_BUTTON_HIDE_KEY, DEFAULT_PUSH_BUTTON_HIDE);
 	}
 	
 	public boolean isChatNotifyEnabled() {

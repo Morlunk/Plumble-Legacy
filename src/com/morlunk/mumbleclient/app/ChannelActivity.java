@@ -191,7 +191,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         actionBar.setDisplayShowTitleEnabled(false);
         
         // Set up PTT button.
-        if(settings.isPushToTalk()) {
+        if(settings.isPushToTalk() && settings.isPushToTalkButtonShown()) {
         	RelativeLayout pushView = (RelativeLayout) findViewById(R.id.pushview);
         	pushView.setVisibility(View.VISIBLE);
         	
