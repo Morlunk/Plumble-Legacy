@@ -106,12 +106,12 @@ public class AudioOutput implements Runnable {
 		final User u,
 		final PacketDataStream pds,
 		final int flags) {
+		// Get codec type for user
+		int header = pds.next();
+		int codecVersion = header >> 5 & 0x7;
+		pds.rewind();
 		AudioUser user = users.get(u);
-		if (user == null) {
-			// Get codec type for user
-			int header = pds.next();
-			int codecVersion = header >> 5 & 0x7;
-			pds.rewind();
+		if (user == null || user.codec != codecVersion) {
 			user = new AudioUser(u, codecVersion);
 			users.put(u, user);
 			// Don't add the user to userPackets yet. The collection should

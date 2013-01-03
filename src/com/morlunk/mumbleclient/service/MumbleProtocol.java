@@ -23,6 +23,7 @@ import android.util.Log;
 
 import com.google.protobuf.ByteString;
 import com.morlunk.mumbleclient.Globals;
+import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.service.audio.AudioOutput;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
 import com.morlunk.mumbleclient.service.model.Channel;
@@ -130,10 +131,13 @@ public class MumbleProtocol {
 			break;
 		case CodecVersion:
 			final boolean oldCanSpeak = canSpeak;
+			final boolean opusSupported = Settings.getInstance(ctx).isOpusEnabled();
 			final CodecVersion codecVersion = CodecVersion.parseFrom(buffer);
 			codec = CODEC_NOCODEC;
 			if(codecVersion.hasOpus() &&
-					  codecVersion.getOpus()) {
+					  codecVersion.getOpus() &&
+					  opusSupported) {
+				Log.i(Globals.LOG_TAG, "Experimental opus support enabled.");
 				codec = CODEC_OPUS;
 			} else if (codecVersion.hasAlpha() &&
 				codecVersion.getAlpha() == Globals.CELT_VERSION) {

@@ -195,7 +195,7 @@ public class MumbleService extends Service {
 		}
 
 		@Override
-		public void setError(final Reject reject) {
+		public void setError(final Object reject) {
 			handler.post(new Runnable() {
 				@Override
 				public void run() {
@@ -877,7 +877,8 @@ public class MumbleService extends Service {
 			connectedServer.getPassword(),
 			certificatePath,
 			certificatePassword,
-			settings.isTcpForced());
+			settings.isTcpForced(),
+			settings.isOpusEnabled());
 
 		mProtocol = new MumbleProtocol(
 			mProtocolHost,

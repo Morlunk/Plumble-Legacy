@@ -60,6 +60,10 @@ public class Settings extends Observable {
 	public static final String PREF_FORCE_TCP = "forceTcp";
 	public static final Boolean DEFAULT_FORCE_TCP = false;
 	
+	// When opus support gets decent (particularly mode switching) we will create a new preference for this that will be enabled by default.
+	public static final String PREF_USE_OPUS = "useOpus";
+	public static final Boolean DEFAULT_USE_OPUS = false;
+	
 	private final SharedPreferences preferences;
 
 	private static Settings settings;
@@ -159,6 +163,10 @@ public class Settings extends Observable {
 	}
 	
 	public boolean isTcpForced() {
-		return preferences.getBoolean(PREF_FORCE_TCP, false);
+		return preferences.getBoolean(PREF_FORCE_TCP, DEFAULT_FORCE_TCP);
+	}
+	
+	public boolean isOpusEnabled() {
+		return preferences.getBoolean(PREF_USE_OPUS, DEFAULT_USE_OPUS);
 	}
 }

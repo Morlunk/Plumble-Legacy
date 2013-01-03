@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Locale;
 
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
-import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.UserRemove;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;

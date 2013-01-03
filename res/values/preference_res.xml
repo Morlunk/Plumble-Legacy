@@ -102,4 +102,6 @@
 	<string name="voiceActivitySettings">Voice Activity Settings</string>
 	<string name="voiceActivitySettingsSum">Configure Voice Activity if it is enabled.</string>
 	<string name="audioOutput">Audio Output</string>
+	<string name="useOpus">Enable Opus Codec</string>
+	<string name="useOpusSum">Enable experimental Opus support for Mumble 1.2.4 servers. Stability is not guaranteed.</string>
 </resources>

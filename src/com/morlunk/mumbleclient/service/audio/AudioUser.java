@@ -25,8 +25,6 @@ public class AudioUser {
 	}
 
 	private final Queue<Native.JitterBufferPacket> normalBuffer;
-
-	private final int codec;
 	
 	private long celtMode;
 	private long celtDecoder;
@@ -34,6 +32,7 @@ public class AudioUser {
 	private long opusDecoder;
 	
 	private final Queue<byte[]> dataArrayPool = new ConcurrentLinkedQueue<byte[]>();
+	final int codec;
 	float[] lastFrame;
 	int frameSize;
 	private final User user;
