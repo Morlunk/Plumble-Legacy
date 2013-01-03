@@ -5,11 +5,15 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Assert;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -19,7 +23,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -103,6 +106,9 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			final Server server = getItem(position);
 			
 			ServerInfoResponse infoResponse = infoResponses.get(server.getId());
+			// If there is a null value for the server info (rather than none at all), the request must have failed.
+			boolean requestExists = infoResponses.containsKey(server.getId());
+			boolean requestFailure = requestExists && infoResponse == null;
 
 			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
 			TextView userText = (TextView) view.findViewById(R.id.server_row_user);
@@ -145,13 +151,16 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
 			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
 			
-			serverVersionText.setVisibility(infoResponse == null ? View.INVISIBLE : View.VISIBLE);
-			serverUsersText.setVisibility(infoResponse == null ? View.INVISIBLE : View.VISIBLE);
-			serverInfoProgressBar.setVisibility(infoResponse == null ? View.VISIBLE : View.INVISIBLE);
+			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
+			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
+			serverInfoProgressBar.setVisibility(!requestExists ? View.VISIBLE : View.INVISIBLE);
 
 			if(infoResponse != null) {
 				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");
 				serverUsersText.setText(infoResponse.getCurrentUsers()+"/"+infoResponse.getMaximumUsers());
+			} else if(requestFailure) {
+				serverVersionText.setText(R.string.offline);
+				serverUsersText.setText("");
 			}
 			
 			return view;
@@ -168,9 +177,11 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	
 	private class ServerInfoTask extends AsyncTask<Server, Void, ServerInfoResponse> {
 		
+		private Server server;
+		
 		@Override
 		protected ServerInfoResponse doInBackground(Server... params) {
-			Server server = params[0];
+			server = params[0];
 			try {
 				InetAddress host = InetAddress.getByName(server.getHost());
 				
@@ -188,7 +199,11 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				
 				byte[] responseBuffer = new byte[24];
 				DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
-				socket.receive(responsePacket);
+				try {
+					socket.receive(responsePacket);
+				} catch (SocketTimeoutException e) {
+					return null;
+				}
 				
 				ServerInfoResponse response = new ServerInfoResponse(responseBuffer);
 								
@@ -211,12 +226,8 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		protected void onPostExecute(ServerInfoResponse result) {
 			super.onPostExecute(result);
 			
-			if(result != null) {
-				infoResponses.put((int) result.getIdentifier(), result);
-				serverAdapter.notifyDataSetChanged();
-			} else {
-				// TODO tell the user that the server could not be pinged.
-			}
+			infoResponses.put(server.getId(), result);
+			serverAdapter.notifyDataSetChanged();
 		}
 		
 	}
@@ -228,7 +239,8 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	private ServerServiceObserver mServiceObserver;
 	private ListView listView;
 	private ServerAdapter serverAdapter;
-	private SparseArray<ServerInfoResponse> infoResponses = new SparseArray<ServerInfoResponse>();
+	@SuppressLint("UseSparseArrays") // We use Map instead of SparseArray so we can contain null values for keys.
+	private Map<Integer, ServerInfoResponse> infoResponses = new HashMap<Integer, ServerInfoResponse>();
 	
 	@Override
 	public final boolean onCreateOptionsMenu(final Menu menu) {
