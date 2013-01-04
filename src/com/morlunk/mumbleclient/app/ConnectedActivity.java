@@ -182,6 +182,23 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 					}
 				});
 				alertBuilder.setMessage(getResources().getString(R.string.kickedMessage, remove.getReason()));
+			} else if(response instanceof String) {
+				String responseString = (String) response;
+				alertBuilder.setTitle(R.string.disconnected);
+
+				alertBuilder.setPositiveButton("Ok", new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						finish();
+					}
+				});
+				alertBuilder.setOnCancelListener(new OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						finish();
+					}
+				});
+				alertBuilder.setMessage(responseString);
 			}
 			
 			alertBuilder.show();
