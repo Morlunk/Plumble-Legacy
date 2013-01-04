@@ -106,4 +106,6 @@
 	<string name="useOpusSum">Enable experimental Opus support for Mumble 1.2.4 servers. Stability is not guaranteed.</string>
 	<string name="hidePtt">Hide Push to Talk Button</string>
 	<string name="hidePttSum">Hides the push to talk button when in push to talk mode. Useful if you use hot corners or a hardware key exclusively.</string>
+    <string name="useTts">Text-to-Speech</string>
+    <string name="useTtsSum">Enable Text-to-Speech for incoming messages.</string>
 </resources>

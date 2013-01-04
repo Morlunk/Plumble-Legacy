@@ -41,6 +41,9 @@ public class Settings extends Observable {
 	public static final String PREF_CHAT_NOTIFY = "chatNotify";
 	public static final Boolean DEFAULT_CHAT_NOTIFY = true;
 	
+	public static final String PREF_USE_TTS = "useTts";
+	public static final Boolean DEFAULT_USE_TTS = true;
+	
 	public static final String PREF_THEME = "theme";
 	public static final String ARRAY_THEME_LIGHTDARK = "lightDark";
 	public static final String ARRAY_THEME_DARK = "dark";
@@ -141,6 +144,10 @@ public class Settings extends Observable {
 	
 	public boolean isChatNotifyEnabled() {
 		return preferences.getBoolean(PREF_CHAT_NOTIFY, DEFAULT_CHAT_NOTIFY);
+	}
+	
+	public boolean isTextToSpeechEnabled() {
+		return preferences.getBoolean(PREF_USE_TTS, DEFAULT_USE_TTS);
 	}
 	
 	public int getLastChannel(int serverId) {

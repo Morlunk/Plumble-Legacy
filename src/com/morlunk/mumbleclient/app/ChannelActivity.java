@@ -33,6 +33,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.text.Spannable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -638,6 +639,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			}
 		}
 		
+		// Load messages
+		reloadChat();
+		
 		// Start recording for voice activity, as there is no push to talk button.
 		if(settings.isVoiceActivity()) {
 			mService.setRecording(true);
@@ -905,6 +909,16 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		return null;
 	}
 	
+	/**
+	 * Reloads the chat with data from the service.
+	 */
+	public void reloadChat() {
+		chatFragment.clear();
+		for(Spannable spannable : mService.getChatMessages()) {
+			chatFragment.addChatMessage(spannable);
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.morlunk.mumbleclient.app.ChannelProvider#sendChannelMessage(java.lang.String)
 	 */
@@ -973,12 +987,12 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     class ChannelServiceObserver extends BaseServiceObserver {
 		@Override
 		public void onMessageReceived(final Message msg) throws RemoteException {
-			chatFragment.addMessage(msg);
+			reloadChat();
 		}
 
 		@Override
 		public void onMessageSent(final Message msg) throws RemoteException {
-			chatFragment.addMessage(msg);
+			reloadChat();
 		}
 		
 		@Override
@@ -1028,8 +1042,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
 		@Override
 		public void onUserStateUpdated(final User user, final UserState state) throws RemoteException {
-			if(mService.isConnected())
-				chatFragment.userStateUpdated(user, state);
+			reloadChat();
 		}
 		
 		@Override

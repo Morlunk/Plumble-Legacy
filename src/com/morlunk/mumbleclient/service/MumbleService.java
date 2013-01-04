@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,7 +28,10 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
 import android.os.Vibrator;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.TextToSpeech.OnInitListener;
 import android.support.v4.app.NotificationCompat;
+import android.text.Spannable;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -56,7 +60,7 @@ import com.morlunk.mumbleclient.service.model.User;
  *
  * @author Rantanen
  */
-public class MumbleService extends Service {
+public class MumbleService extends Service implements OnInitListener {
 	
 	public class LocalBinder extends Binder {
 		public MumbleService getService() {
@@ -326,6 +330,10 @@ public class MumbleService extends Service {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
+					if(settings.isTextToSpeechEnabled() && !isDeafened())
+						readMessage(msg);
+					
+					chatMessages.add(chatFormatter.formatMessage(msg));
 					messages.add(msg);
 					
 					if(settings.isChatNotifyEnabled() && !activityVisible) {
@@ -475,6 +483,9 @@ public class MumbleService extends Service {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
+					Spannable stateSpannable = chatFormatter.formatUserStateUpdate(user, state);
+					if(stateSpannable != null && isConnected())
+						chatMessages.add(stateSpannable);
 				}
 
 				@Override
@@ -519,6 +530,8 @@ public class MumbleService extends Service {
 	private NotificationCompat.Builder mStatusNotificationBuilder;
 	private View overlayView; // Hot corner overlay view
 	
+	private TextToSpeech tts;
+	
 	private WakeLock wakeLock;
 
 	private final LocalBinder mBinder = new LocalBinder();
@@ -536,6 +549,9 @@ public class MumbleService extends Service {
 	// Will be either a `UserRemove` or a `Reject` response. TODO make this cleaner.
 	Object rejectResponse;
 	
+	private PlumbleChatFormatter chatFormatter;
+	
+	final List<Spannable> chatMessages = new LinkedList<Spannable>();
 	final List<Message> messages = new LinkedList<Message>();
 	final List<Message> unreadMessages = new LinkedList<Message>();
 	final List<Channel> channels = new ArrayList<Channel>();
@@ -636,6 +652,14 @@ public class MumbleService extends Service {
 		return mProtocol.currentUser;
 	}
 	
+	public User getUser(int session) {
+		for(User user : users) {
+			if(user.session == session)
+				return user;
+		}
+		return null;
+	}
+	
 	public void setDisconnectResponse(Object reject) {
 		rejectResponse = reject;
 	}
@@ -710,6 +734,8 @@ public class MumbleService extends Service {
 		Log.i(Globals.LOG_TAG, "MumbleService: Created");
 		serviceState = CONNECTION_STATE_DISCONNECTED;
 		
+		chatFormatter = new PlumbleChatFormatter(this);
+		
 		currentService = this;
 	}
 	
@@ -746,6 +772,10 @@ public class MumbleService extends Service {
 
 	public void sendUserTextMessage(String string, User chatTarget) {
 		mProtocol.sendUserTestMessage(string, chatTarget);
+	}
+
+	public List<Spannable> getChatMessages() {
+		return Collections.unmodifiableList(chatMessages);
 	}
 
 	public void sendUdpMessage(final byte[] buffer, final int length) {
@@ -905,6 +935,9 @@ public class MumbleService extends Service {
 		
 		// Acquire wake lock
 		wakeLock.acquire();
+		
+		if(settings.isTextToSpeechEnabled())
+			tts = new TextToSpeech(this, this);
 	}
 
 	private void doConnectionDisconnect() {
@@ -949,6 +982,7 @@ public class MumbleService extends Service {
 		hideNotification();
 
 		// Now observers shouldn't need these anymore.
+		chatMessages.clear();
 		users.clear();
 		messages.clear();
 		channels.clear();
@@ -956,6 +990,11 @@ public class MumbleService extends Service {
 		// Stop wakelock
 		if(wakeLock.isHeld()) {
 			wakeLock.release();
+		}
+		
+		if(tts != null) {
+			tts.stop();
+			tts.shutdown();
 		}
 	}
 
@@ -1033,6 +1072,41 @@ public class MumbleService extends Service {
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		
 		notificationManager.notify(STATUS_NOTIFICATION_ID, notificationCompat);
+	}
+
+	/**
+	 * TTS
+	 */
+	@Override
+	public void onInit(int status) {
+		if(status == TextToSpeech.SUCCESS) {
+			Log.i(Globals.LOG_TAG, "TTS enabled.");
+			int langResult = tts.setLanguage(Locale.getDefault());
+			if(langResult == TextToSpeech.LANG_MISSING_DATA ||
+					langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+				Log.i(Globals.LOG_TAG, "TTS not available for this locale.");
+			}
+		} else {
+			Log.i(Globals.LOG_TAG, "TTS failed to initialize.");
+		}
+	}
+	
+	public void readMessage(Message msg) {
+		StringBuilder ttsText = new StringBuilder();
+		
+		if(msg.channelIds > 0) {
+			ttsText.append("Channel ");
+		}
+		
+		if(msg.actor != null)
+			ttsText.append(msg.actor.name);
+		else
+			ttsText.append("Server");
+		
+		ttsText.append(": ");
+		ttsText.append(msg.message);
+		
+		tts.speak(ttsText.toString(), TextToSpeech.QUEUE_ADD, null);
 	}
 	
 	/**

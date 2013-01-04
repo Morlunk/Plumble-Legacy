@@ -3,6 +3,7 @@
 
     <PreferenceCategory android:title="@string/general">
         <CheckBoxPreference android:title="@string/chatNotifications" android:summary="@string/chatNotificationsSum" android:key="chatNotify" android:defaultValue="true"/>
+        <CheckBoxPreference android:defaultValue="true" android:summary="@string/useTtsSum" android:key="useTts" android:title="@string/useTts"/>
     </PreferenceCategory><PreferenceCategory android:title="@string/authentication" >
         <Preference android:title="@string/certificateGenerate" android:summary="@string/certificateGenerateSum" android:key="certificateGenerate"/><ListPreference
             android:key="certificatePath"
