@@ -354,6 +354,7 @@ public class MumbleService extends Service implements OnInitListener {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
+					chatMessages.add(chatFormatter.formatMessage(msg));
 					messages.add(msg);
 				}
 
