@@ -603,11 +603,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			mProgressDialog = null;
 		}
 		
-		// Make sure that the server is running a supported codec.
-		if(mService.getCodec() == MumbleProtocol.CODEC_NOCODEC) {
-			
-		}
-		
 		// Send access tokens after connection.
 		sendAccessTokens();
 		
