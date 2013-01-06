@@ -48,6 +48,7 @@ public class AudioOutput implements Runnable {
 
 	private boolean shouldRun;
 	private final AudioTrack at;
+	private final int bufferSize;
 	private final int minBufferSize;
 
 	final Map<User, AudioUser> userPackets = new HashMap<User, AudioUser>();
@@ -78,7 +79,6 @@ public class AudioOutput implements Runnable {
 			AudioFormat.CHANNEL_OUT_MONO,
 			AudioFormat.ENCODING_PCM_16BIT);
 
-		/*
 		// Double the buffer size to reduce stuttering.
 		final int desiredBufferSize = minBufferSize * 2;
 
@@ -86,15 +86,14 @@ public class AudioOutput implements Runnable {
 		final int frameCount = (int) Math.ceil((double) desiredBufferSize /
 											   MumbleProtocol.FRAME_SIZE);
 
-		final int bufferSize = frameCount * MumbleProtocol.FRAME_SIZE;
-		*/
-		
+		bufferSize = frameCount * MumbleProtocol.FRAME_SIZE;
+
 		at = new AudioTrack(
 			stream,
 			MumbleProtocol.SAMPLE_RATE,
 			AudioFormat.CHANNEL_OUT_MONO,
 			AudioFormat.ENCODING_PCM_16BIT,
-			minBufferSize,
+			bufferSize,
 			AudioTrack.MODE_STREAM);
 
 		// Set this here so this.start(); this.shouldRun = false; doesn't
