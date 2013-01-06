@@ -69,6 +69,7 @@ import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
+import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
@@ -600,6 +601,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		if (mProgressDialog != null) {
 			mProgressDialog.dismiss();
 			mProgressDialog = null;
+		}
+		
+		// Make sure that the server is running a supported codec.
+		if(mService.getCodec() == MumbleProtocol.CODEC_NOCODEC) {
+			
 		}
 		
 		// Send access tokens after connection.
