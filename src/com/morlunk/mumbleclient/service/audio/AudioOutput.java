@@ -173,7 +173,7 @@ public class AudioOutput implements Runnable {
 				// Make sure we are playing when there are enough samples
 				// buffered.
 				if (!playing) {
-					buffered += mixSize;
+					buffered += out.length;
 
 					if (buffered >= minBufferSize) {
 						at.play();
@@ -212,15 +212,19 @@ public class AudioOutput implements Runnable {
 				if (user.hasBuffer()) {
 					if(!user.getUser().localMuted) {
 						mix.add(user);
+						if(user.getUser().talkingState != AudioOutputHost.STATE_TALKING) {
+							host.setTalkState(
+									user.getUser(),
+									AudioOutputHost.STATE_TALKING);
+						}
 					}
-					host.setTalkState(
-							user.getUser(),
-							AudioOutputHost.STATE_TALKING);
-				} else {
+				} else if(!user.isStreaming()) {
 					i.remove();
-					host.setTalkState(
-						user.getUser(),
-						AudioOutputHost.STATE_PASSIVE);
+					if(user.getUser().talkingState != AudioOutputHost.STATE_PASSIVE) {
+						host.setTalkState(
+								user.getUser(),
+								AudioOutputHost.STATE_PASSIVE);
+					}
 				}
 			}
 		}

@@ -33,7 +33,7 @@ public class Settings extends Observable {
 	public static final Boolean DEFAULT_PUSH_BUTTON_HIDE = false;
 	
 	public static final String PREF_QUALITY = "quality";
-	public static final String DEFAULT_QUALITY = "60000";
+	public static final String DEFAULT_QUALITY = "48000";
 	
 	public static final String PREF_AMPLITUDE_BOOST = "amplitudeBoost";
 	public static final Float DEFAULT_AMPLITUDE_BOOST = 0f;

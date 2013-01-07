@@ -70,7 +70,7 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/advancedAudio" >
         <CheckBoxPreference android:title="@string/useOpus" android:key="useOpus" android:summary="@string/useOpusSum" android:defaultValue="false"/><EditTextPreference
-            android:defaultValue="60000"
+            android:defaultValue="48000"
             android:inputType="number"
             android:key="quality"
             android:title="@string/audioQuality" android:summary="@string/audioQualitySum"/>
