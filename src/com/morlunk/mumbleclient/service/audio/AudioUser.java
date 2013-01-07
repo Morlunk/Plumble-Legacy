@@ -35,7 +35,7 @@ public class AudioUser {
 	final int codec;
 	float[] buffer;
 	int bufferSize;
-	int bufferIndex; // The position of the latest frame in the buffer. For opus.
+	int bufferIndex = 0; // The position of the latest frame in the buffer. For opus.
 	private final User user;
 
 	private int missedFrames = 0;
@@ -45,16 +45,17 @@ public class AudioUser {
 		this.codec = codec;
 
 		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
+			bufferSize = MumbleProtocol.FRAME_SIZE;
 			celtMode = Native.celt_mode_create(
 					MumbleProtocol.SAMPLE_RATE,
 					MumbleProtocol.FRAME_SIZE);
 			celtDecoder = Native.celt_decoder_create(celtMode, 1);
-			buffer = new float[MumbleProtocol.FRAME_SIZE];
-			bufferIndex = 0;
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
+			bufferSize = MumbleProtocol.FRAME_SIZE*12; // With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
 			opusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
-			buffer = new float[MumbleProtocol.FRAME_SIZE*12]; // With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
 		}
+		
+		buffer = new float[bufferSize];
 		
 		normalBuffer = new ConcurrentLinkedQueue<Native.JitterBufferPacket>();
 
@@ -179,6 +180,7 @@ public class AudioUser {
 			// We only hold one frame in the buffer. Return true if we have less than 10 missed frames.
 			return (missedFrames < 10);
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
+			// TODO add exception handling and discard frame if opus fails
 			float[] frame = new float[frameSize];
 			NativeAudio.opusDecodeFloat(opusDecoder,
 									data == null ? null : data,
