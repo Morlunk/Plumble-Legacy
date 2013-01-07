@@ -33,8 +33,9 @@ public class AudioUser {
 	
 	private final Queue<byte[]> dataArrayPool = new ConcurrentLinkedQueue<byte[]>();
 	final int codec;
-	float[] lastFrame;
-	int frameSize;
+	float[] buffer;
+	int bufferSize;
+	int bufferIndex; // The position of the latest frame in the buffer. For opus.
 	private final User user;
 
 	private int missedFrames = 0;
@@ -48,10 +49,11 @@ public class AudioUser {
 					MumbleProtocol.SAMPLE_RATE,
 					MumbleProtocol.FRAME_SIZE);
 			celtDecoder = Native.celt_decoder_create(celtMode, 1);
-			lastFrame = new float[MumbleProtocol.FRAME_SIZE];
+			buffer = new float[MumbleProtocol.FRAME_SIZE];
+			bufferIndex = 0;
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
 			opusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
-			lastFrame = new float[MumbleProtocol.FRAME_SIZE*12]; // With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
+			buffer = new float[MumbleProtocol.FRAME_SIZE*12]; // With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
 		}
 		
 		normalBuffer = new ConcurrentLinkedQueue<Native.JitterBufferPacket>();
@@ -152,9 +154,10 @@ public class AudioUser {
 	 *
 	 * @return
 	 */
-	public boolean hasFrame() {
+	public boolean hasBuffer() {
 		byte[] data = null;
 		int dataLength = 0;
+		int frameSize = 0;
 
 		Native.JitterBufferPacket jbp = normalBuffer.poll();
 		if (jbp != null) {
@@ -167,20 +170,33 @@ public class AudioUser {
 		}
 
 		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
-			Native.celt_decode_float(celtDecoder, data, dataLength, lastFrame);
+			Native.celt_decode_float(celtDecoder, data, dataLength, buffer);
+			
+			if (data != null) {
+				freeDataArray(data);
+			}
+			
+			// We only hold one frame in the buffer. Return true if we have less than 10 missed frames.
+			return (missedFrames < 10);
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
+			float[] frame = new float[frameSize];
 			NativeAudio.opusDecodeFloat(opusDecoder,
 									data == null ? null : data,
 									data == null ? 0 : dataLength, 
-									lastFrame, 
+									buffer, 
 									MumbleProtocol.FRAME_SIZE*12, 0);
+			System.arraycopy(frame, 0, buffer, bufferIndex, frameSize);
+			bufferIndex += frameSize;
+			
+			// Return true if the buffer is full (120ms).
+			if(bufferIndex == bufferSize) {
+				bufferIndex = 0;
+				return true;
+			} else {
+				return false;
+			}
 		}
-		
-		if (data != null) {
-			freeDataArray(data);
-		}
-
-		return (missedFrames < 10);
+		return false; // Never play a frame without a codec.
 	}
 
 	private byte[] acquireDataArray() {
