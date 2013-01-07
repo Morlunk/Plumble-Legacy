@@ -185,11 +185,12 @@ public class AudioUser {
 			NativeAudio.opusDecodeFloat(opusDecoder,
 									data == null ? null : data,
 									data == null ? 0 : dataLength, 
-									buffer, 
-									MumbleProtocol.FRAME_SIZE*12, 0);
+									frame, 
+									frameSize, 0);
+			
 			System.arraycopy(frame, 0, buffer, bufferIndex, frameSize);
 			bufferIndex += frameSize;
-			
+						
 			// Return true if the buffer is full (120ms).
 			if(bufferIndex == bufferSize) {
 				bufferIndex = 0;

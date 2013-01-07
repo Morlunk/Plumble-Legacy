@@ -11,6 +11,7 @@ public class NativeAudio {
 	}
 	
 	// Constants
+	public static final int OPUS_OK = 0;
 	public static final int OPUS_APPLICATION_VOIP = 2048;
 	public static final int OPUS_SET_BITRATE_REQUEST = 4002;
 	public static final int OPUS_SET_VBR_REQUEST = 4006;

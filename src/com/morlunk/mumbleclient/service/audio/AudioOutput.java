@@ -33,9 +33,6 @@ public class AudioOutput implements Runnable {
 		public void packetReady(final AudioUser user) {
 			synchronized (userPackets) {
 				if (!userPackets.containsKey(user.getUser())) {
-					host.setTalkState(
-						user.getUser(),
-						AudioOutputHost.STATE_TALKING);
 					userPackets.put(user.getUser(), user);
 					userPackets.notify();
 				}
@@ -84,9 +81,9 @@ public class AudioOutput implements Runnable {
 
 		// Resolve the minimum frame count that fills the minBuffer requirement.
 		final int frameCount = (int) Math.ceil((double) desiredBufferSize /
-											   (MumbleProtocol.FRAME_SIZE*12));
+											   (MumbleProtocol.FRAME_SIZE));
 
-		bufferSize = frameCount * (MumbleProtocol.FRAME_SIZE*12);
+		bufferSize = frameCount * (MumbleProtocol.FRAME_SIZE);
 
 		at = new AudioTrack(
 			stream,
@@ -171,12 +168,12 @@ public class AudioOutput implements Runnable {
 				short[] clippedOut = new short[mixSize];
 				System.arraycopy(out, 0, clippedOut, 0, mixSize);
 				
-				at.write(clippedOut, 0, mixSize);
+				at.write(out, 0, mixSize);
 
 				// Make sure we are playing when there are enough samples
 				// buffered.
 				if (!playing) {
-					buffered += out.length;
+					buffered += mixSize;
 
 					if (buffered >= minBufferSize) {
 						at.play();
@@ -216,6 +213,9 @@ public class AudioOutput implements Runnable {
 					if(!user.getUser().localMuted) {
 						mix.add(user);
 					}
+					host.setTalkState(
+							user.getUser(),
+							AudioOutputHost.STATE_TALKING);
 				} else {
 					i.remove();
 					host.setTalkState(
@@ -232,7 +232,7 @@ public class AudioOutput implements Runnable {
 
 		// Sum the buffers.
 		for (final AudioUser user : mix) {
-			for (int i = 0; i < user.buffer.length; i++) {
+			for (int i = 0; i < user.bufferSize; i++) {
 				tempMix[i] += user.buffer[i];
 			}
 		}
