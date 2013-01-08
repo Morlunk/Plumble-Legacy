@@ -300,24 +300,28 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	
     	mService.setRecording(talking);
     	
-		Animation fade = AnimationUtils.loadAnimation(ChannelActivity.this, talking ? R.anim.fade_in : R.anim.fade_out);
-		fade.setAnimationListener(new AnimationListener() {
-			@Override
-			public void onAnimationStart(Animation animation) {
-				if(talking)
-					mTalkGradient.setVisibility(View.VISIBLE);
-			}
-			
-			@Override
-			public void onAnimationRepeat(Animation animation) {}
-			
-			@Override
-			public void onAnimationEnd(Animation animation) {
-				if(!talking)
-					mTalkGradient.setVisibility(View.INVISIBLE);
-			}
-		});
-		mTalkGradient.startAnimation(fade);
+		if(settings.isPushToTalkButtonShown()) {
+			Animation fade = AnimationUtils.loadAnimation(ChannelActivity.this,
+					talking ? R.anim.fade_in : R.anim.fade_out);
+			fade.setAnimationListener(new AnimationListener() {
+				@Override
+				public void onAnimationStart(Animation animation) {
+					if (talking)
+						mTalkGradient.setVisibility(View.VISIBLE);
+				}
+
+				@Override
+				public void onAnimationRepeat(Animation animation) {
+				}
+
+				@Override
+				public void onAnimationEnd(Animation animation) {
+					if (!talking)
+						mTalkGradient.setVisibility(View.INVISIBLE);
+				}
+			});
+			mTalkGradient.startAnimation(fade);
+		}
     	
     }
     
