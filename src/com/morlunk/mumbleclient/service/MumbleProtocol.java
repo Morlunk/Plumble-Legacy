@@ -12,6 +12,7 @@ import net.sf.mumble.MumbleProto.ChannelState;
 import net.sf.mumble.MumbleProto.CodecVersion;
 import net.sf.mumble.MumbleProto.CryptSetup;
 import net.sf.mumble.MumbleProto.PermissionDenied;
+import net.sf.mumble.MumbleProto.Ping;
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.ServerSync;
 import net.sf.mumble.MumbleProto.TextMessage;
@@ -127,7 +128,27 @@ public class MumbleProtocol {
 			processUdp(buffer, buffer.length);
 			break;
 		case Ping:
-			// ignore
+			Ping msg = Ping.parseFrom(buffer);
+			CryptState cryptState = conn.cryptState;
+			cryptState.uiRemoteGood = msg.getGood();
+			cryptState.uiRemoteLate = msg.getLate();
+			cryptState.uiRemoteLost = msg.getLost();
+			cryptState.uiRemoteResync = msg.getResync();
+			
+			if(((cryptState.uiRemoteGood == 0) || (cryptState.uiGood == 0)) && conn.usingUdp && (conn.getElapsedTime() > 2000) && !conn.forceTcp) {
+				// Disable UDP: no ping responses after 2 seconds
+				conn.usingUdp = false;
+				Log.i(Globals.LOG_TAG, "UDP packets cannot be sent to or received from the server. Switching to TCP mode.");
+				// Mumble protocol docs say we should send a blank UDP tunnel packet to tell the server we want UDP tunneling.
+				UDPTunnel.Builder tunnelBuilder = UDPTunnel.newBuilder();
+				tunnelBuilder.setPacket(ByteString.EMPTY);
+				conn.sendTcpMessage(MessageType.UDPTunnel, tunnelBuilder);
+			} else if(!conn.usingUdp && (cryptState.uiRemoteGood > 3) && (cryptState.uiGood > 3) && !conn.forceTcp) {
+				// Enable UDP: received 3 good pings
+				conn.usingUdp = true;
+				Log.i(Globals.LOG_TAG, "UDP packets can be sent and received from the server. Switching to UDP mode.");
+			}
+			
 			break;
 		case CodecVersion:
 			final boolean oldCanSpeak = canSpeak;
@@ -379,7 +400,7 @@ public class MumbleProtocol {
 								   ((long) (buffer[7] & 0xFF) << 8) |
 								   ((buffer[8] & 0xFF));
 
-			conn.refreshUdpLimit(timestamp + UDP_PING_TRESHOLD);
+			//conn.refreshUdpLimit(timestamp + UDP_PING_TRESHOLD);
 		} else {
 			processVoicePacket(buffer);
 		}

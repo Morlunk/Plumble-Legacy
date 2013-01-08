@@ -18,7 +18,7 @@ class PingThread implements Runnable {
 	public final void run() {
 		while (running && mc.isConnectionAlive()) {
 			try {
-				final long timestamp = System.currentTimeMillis();
+				final long timestamp = mc.getElapsedTime();
 				
 				// UDP
 				udpBuffer[1] = (byte) ((timestamp >> 56) & 0xFF);
@@ -33,8 +33,14 @@ class PingThread implements Runnable {
 				mc.sendUdpMessage(udpBuffer, udpBuffer.length, true);
 
 				// TCP
+				CryptState cs = mc.cryptState;
 				final Ping.Builder p = Ping.newBuilder();
 				p.setTimestamp(timestamp);
+				p.setGood(cs.uiGood);
+				p.setLate(cs.uiLate);
+				p.setLost(cs.uiLost);
+				p.setResync(cs.uiResync);
+				
 				mc.sendTcpMessage(MumbleProtocol.MessageType.Ping, p);
 				Thread.sleep(5000);
 			} catch (final InterruptedException e) {

@@ -47,12 +47,16 @@ public class CryptState {
 	private byte[] encryptIv;
 	private byte[] decryptIv;
 	private boolean initialized = false;
-	@SuppressWarnings("unused")
-	private int good;
-	@SuppressWarnings("unused")
-	private int late;
-	@SuppressWarnings("unused")
-	private int lost;
+	
+	int uiGood;
+	int uiLate;
+	int uiLost;
+	int uiResync;
+	
+	int uiRemoteGood;
+	int uiRemoteLate;
+	int uiRemoteLost;
+	int uiRemoteResync;
 
 	public synchronized byte[] decrypt(final byte[] source, final int length) {
 		if (length < 4) {
@@ -161,9 +165,9 @@ public class CryptState {
 			System.arraycopy(saveiv, 0, decryptIv, 0, AES_BLOCK_SIZE);
 		}
 
-		good++;
-		this.late += late;
-		this.lost += lost;
+		uiGood++;
+		uiLate += late;
+		uiLost += lost;
 
 		return dst;
 	}

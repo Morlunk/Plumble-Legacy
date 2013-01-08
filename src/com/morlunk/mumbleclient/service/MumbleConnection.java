@@ -135,11 +135,6 @@ public class MumbleConnection implements Runnable {
 				return;
 			}
 
-			if (!usingUdp) {
-				Log.i(Globals.LOG_TAG, "MumbleConnection: UDP enabled");
-				usingUdp = true;
-			}
-
 			protocol.processUdp(buffer, buffer.length);
 		}
 	};
@@ -153,8 +148,8 @@ public class MumbleConnection implements Runnable {
 	private DataInputStream in;
 	private DataOutputStream out;
 	private DatagramSocket udpSocket;
-	private long useUdpUntil;
-	boolean usingUdp = false;
+	private long connectionTime;
+	boolean usingUdp = true;
 	boolean forceTcp = false;
 	boolean disableOpus = false;
 
@@ -267,6 +262,10 @@ public class MumbleConnection implements Runnable {
 			   !tcpSocket.isClosed() && tcpSocket.isConnected() &&
 			   !udpSocket.isClosed();
 	}
+	
+	public final long getElapsedTime() {
+		return System.currentTimeMillis()-connectionTime;
+	}
 
 	public final boolean isSameServer(
 		final String host_,
@@ -277,15 +276,12 @@ public class MumbleConnection implements Runnable {
 			   username.equals(username_) && password.equals(password_);
 	}
 
-	public void refreshUdpLimit(final long limit) {
-		useUdpUntil = limit;
-	}
-
 	@Override
 	public final void run() {
 		Assert.assertNotNull(protocol);
 
 		boolean connected = false;
+		connectionTime = 0;
 		try {
 			try {
 				Log.i(Globals.LOG_TAG, String.format(
@@ -297,6 +293,7 @@ public class MumbleConnection implements Runnable {
 				tcpSocket = connectTcp();
 				udpSocket = connectUdp();
 				connected = true;
+				connectionTime = System.currentTimeMillis();
 			} catch (final UnknownHostException e) {
 				final String errorString = String.format(
 					"Host \"%s\" unknown",
