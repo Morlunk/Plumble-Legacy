@@ -156,7 +156,7 @@ public class MumbleConnection implements Runnable {
 	private long useUdpUntil;
 	boolean usingUdp = false;
 	boolean forceTcp = false;
-	boolean useOpus = false;
+	boolean disableOpus = false;
 
 	/**
 	 * Signals disconnecting state. True if something has interrupted the normal
@@ -217,7 +217,7 @@ public class MumbleConnection implements Runnable {
 		final String certificatePath,
 		final String certificatePassword,
 		final Boolean forceTcp,
-		final Boolean useOpus) {
+		final Boolean disableOpus) {
 		this.connectionHost = connectionHost;
 		this.plumbleVersion = plumbleVersion;
 		this.host = host;
@@ -227,7 +227,7 @@ public class MumbleConnection implements Runnable {
 		this.certificatePath = certificatePath;
 		this.certificatePassword = certificatePassword;
 		this.forceTcp = forceTcp;
-		this.useOpus = useOpus;
+		this.disableOpus = disableOpus;
 		
 		connectionHost.setConnectionState(MumbleConnectionHost.STATE_CONNECTING);
 	}
@@ -523,7 +523,7 @@ public class MumbleConnection implements Runnable {
 		a.setUsername(username);
 		a.setPassword(password);
 		a.addCeltVersions(Globals.CELT_VERSION);
-		a.setOpus(useOpus);
+		a.setOpus(!disableOpus);
 		
 		sendTcpMessage(MessageType.Version, v);
 		sendTcpMessage(MessageType.Authenticate, a);

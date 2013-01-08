@@ -69,7 +69,7 @@
             android:title="@string/colorthreshold" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/advancedAudio" >
-        <CheckBoxPreference android:title="@string/useOpus" android:key="useOpus" android:summary="@string/useOpusSum" android:defaultValue="false"/><EditTextPreference
+        <CheckBoxPreference android:title="@string/disableOpus" android:key="disableOpus" android:summary="@string/disableOpusSum" android:defaultValue="false"/><EditTextPreference
             android:defaultValue="48000"
             android:inputType="number"
             android:key="quality"

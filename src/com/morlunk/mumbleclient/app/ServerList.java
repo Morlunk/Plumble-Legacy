@@ -41,7 +41,6 @@ import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
-import com.morlunk.mumbleclient.jni.NativeAudio;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
 
@@ -385,11 +384,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		} else {
 			Log.i(Globals.LOG_TAG, "Crittercism disabled in debug build.");
 		}
-		
-		// OPUS TEST CRAP
-		long decoder = NativeAudio.opusDecoderCreate(48000, 1);
-		Log.i(Globals.LOG_TAG, "Decoder pointer: "+decoder);
-		NativeAudio.opusDecoderDestroy(decoder);
 		
 		setContentView(R.layout.main);
 		

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Locale;
 
 import net.sf.mumble.MumbleProto.RequestBlob;
-import net.sf.mumble.MumbleProto.UserState;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -35,10 +34,8 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
-import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
-import com.morlunk.mumbleclient.service.audio.AudioUser;
 import com.morlunk.mumbleclient.service.model.User;
 
 /**

@@ -924,7 +924,7 @@ public class MumbleService extends Service implements OnInitListener {
 			certificatePath,
 			certificatePassword,
 			settings.isTcpForced(),
-			settings.isOpusEnabled());
+			settings.isOpusDisabled());
 
 		mProtocol = new MumbleProtocol(
 			mProtocolHost,

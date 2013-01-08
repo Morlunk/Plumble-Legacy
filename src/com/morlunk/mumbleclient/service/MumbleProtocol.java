@@ -131,7 +131,7 @@ public class MumbleProtocol {
 			break;
 		case CodecVersion:
 			final boolean oldCanSpeak = canSpeak;
-			final boolean opusSupported = Settings.getInstance(ctx).isOpusEnabled();
+			final boolean opusSupported = !Settings.getInstance(ctx).isOpusDisabled();
 			final CodecVersion codecVersion = CodecVersion.parseFrom(buffer);
 			codec = CODEC_NOCODEC;
 			if(codecVersion.hasOpus() &&
