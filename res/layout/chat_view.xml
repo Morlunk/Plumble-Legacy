@@ -19,6 +19,7 @@
 		android:id="@+id/chatText"
 		android:textIsSelectable="true"
 		android:autoLink="all"
+		android:linksClickable="true"
 		android:gravity="top"
 		android:layout_marginLeft="10dp"
 		android:layout_marginRight="10dp"/>
