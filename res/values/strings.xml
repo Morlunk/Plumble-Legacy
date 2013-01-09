@@ -50,7 +50,7 @@
     <string name="loading">Loading...</string>
     <string name="reset_key">Reset Key</string>
     <string name="externalStorageUnavailable">External storage unavailable, cannot load certificate</string>
-    <string name="audioQualitySum">The audio bit rate at which Plumble will try to operate at.</string>
+    <string name="audioQualitySum">The audio bit rate at which Plumble will try to operate.</string>
     <string name="forceTcp">Force TCP</string>
     <string name="forceTcpSum">Whether to force TCP (disable UDP) communications.</string>
     <string name="addFavorite">Add Favorite</string>
