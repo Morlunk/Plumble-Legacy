@@ -2,7 +2,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:ignore="NewApi" >
 
     <TextView
         android:id="@+id/plumbleWizardWelcome"
@@ -32,13 +33,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/wizardCancel"
+    	android:showDividers="middle"
+    	android:divider="?android:attr/dividerHorizontal"
+    	android:layout_marginTop="10dp"
         android:layout_alignParentBottom="true">
     
     <Button
         android:id="@+id/wizardCancel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@android:string/cancel" 
+        android:text="@android:string/cancel"
+        android:textColor="@color/abs__holo_blue_light"
+        style="?android:attr/borderlessButtonStyle" 
         android:layout_weight="1"/>
     
     <Button
@@ -46,18 +52,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/next"
+        android:textColor="@color/abs__holo_blue_light"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_weight="1"/>
         
     </LinearLayout>
 
     <ImageView
-        android:id="@+id/imageView1"
         android:layout_alignParentTop="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/plumbleWizardWelcome"
         android:layout_centerHorizontal="true"
         android:scaleType="fitCenter"
-        android:src="@drawable/plumble" />
+        android:src="@drawable/plumble_splash"
+        android:padding="20dp"/>
 
 </RelativeLayout>
