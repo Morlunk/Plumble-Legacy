@@ -29,6 +29,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".wizard.PlumbleWizard"/>
         <activity android:name=".app.ServerInfo" android:parentActivityName=".app.ServerList"/>
 		<provider android:name=".app.ChannelSearchProvider" android:authorities="com.morlunk.mumbleclient.app.ChannelSearchProvider" android:exported="false"></provider>
         <activity android:name=".app.ChannelActivity" android:launchMode="singleInstance">

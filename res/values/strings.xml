@@ -84,4 +84,7 @@
     <string name="messageToChannel">Type message to channel here</string>
     <string name="online">Online</string>
     <string name="offline">Offline</string>
+    <string name="welcomeToPlumble">Welcome to Plumble!</string>
+    <string name="plumbleDesc">Thanks for choosing Plumble, Android\'s premier Mumble client optimized for Android 4.0+.\n\nTo continue, press \'next\'.\n\nIf you wish to skip the wizard and go straight to the app, press \'cancel\'.</string>
+    <string name="next">Next</string>
 </resources>

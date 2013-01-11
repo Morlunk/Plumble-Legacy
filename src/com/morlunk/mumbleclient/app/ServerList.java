@@ -43,6 +43,7 @@ import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
+import com.morlunk.mumbleclient.wizard.PlumbleWizard;
 
 /**
  * Called whenever server info is changed.
@@ -376,6 +377,8 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	@Override
 	protected final void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		startActivity(new Intent(this, PlumbleWizard.class));
 		
 		boolean debuggable =  ( 0 != ( getApplicationInfo().flags &= ApplicationInfo.FLAG_DEBUGGABLE ) );
 		

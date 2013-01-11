@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/plumbleWizardWelcome"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:padding="10dp"
+        android:text="@string/welcomeToPlumble"
+        android:layout_above="@+id/plumbleWizardDescription"
+        android:gravity="center_horizontal"
+        android:textSize="24sp" />
+
+    <TextView
+        android:id="@+id/plumbleWizardDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/wizardControlBox"
+        android:fontFamily="sans-serif-light"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="10dp"
+        android:gravity="center_horizontal"
+        android:text="@string/plumbleDesc" />
+
+    <LinearLayout
+        android:id="@+id/wizardControlBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/wizardCancel"
+        android:layout_alignParentBottom="true">
+    
+    <Button
+        android:id="@+id/wizardCancel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@android:string/cancel" 
+        android:layout_weight="1"/>
+    
+    <Button
+        android:id="@+id/wizardContinue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/next"
+        android:layout_weight="1"/>
+        
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_alignParentTop="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/plumbleWizardWelcome"
+        android:layout_centerHorizontal="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/plumble" />
+
+</RelativeLayout>
