@@ -1,13 +1,11 @@
 package com.morlunk.mumbleclient.wizard;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 
 import com.morlunk.mumbleclient.R;
@@ -15,37 +13,45 @@ import com.morlunk.mumbleclient.R;
 public class PlumbleWizard extends FragmentActivity {
 	
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
+	public void onCreate(Bundle savedInstanceState) {
 		
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.wizard_intro);
 		
-		getSupportFragmentManager().beginTransaction().replace(android.R.id.content, new WizardIntroductionFragment()).commit();
+		Button cancelButton = (Button) findViewById(R.id.wizardCancel);
+		cancelButton.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				finish();	
+			}
+		});
+		
+		Button nextButton = (Button) findViewById(R.id.wizardContinue);
+		nextButton.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				startActivity(new Intent(PlumbleWizard.this, WizardCertificateActivity.class));
+			}
+		});
 	}
 	
-	public static class WizardIntroductionFragment extends Fragment {
-		
-		public WizardIntroductionFragment() {
-			
-		}
+	public static class WizardCertificateActivity extends FragmentActivity {
 		
 		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View view = inflater.inflate(R.layout.wizard_intro, container, false);
-			
-			Button cancelButton = (Button) view.findViewById(R.id.wizardCancel);
-			cancelButton.setOnClickListener(new OnClickListener() {
+		public void onCreate(Bundle arg0) {
+			super.onCreate(arg0);
+			setContentView(R.layout.wizard_certificate);
+
+			Button backButton = (Button) findViewById(R.id.wizardBack);
+			backButton.setOnClickListener(new OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
-					getActivity().finish();	
+					finish();
 				}
 			});
-			
-			return view;
 		}
-		
-		
 	}
 }

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="channels">Channels</string>
     <string name="userJoin">Join channel</string>
     <string name="userSpeak">Speak</string>
@@ -85,6 +84,10 @@
     <string name="online">Online</string>
     <string name="offline">Offline</string>
     <string name="welcomeToPlumble">Welcome to Plumble!</string>
-    <string name="plumbleDesc">Thanks for choosing Plumble, Android\'s premier Mumble client optimized for Android 4.0+.\n\nTo continue, press \'next\'.\n\nIf you wish to skip the wizard and go straight to the app, press \'cancel\'.</string>
+    <string name="plumbleDesc">Thanks for choosing Plumble, Android\'s premier Mumble client.\n\nTo continue, press \'next\'.\n\nIf you wish to skip the wizard and go straight to the app, press \'skip\'.</string>
     <string name="next">Next</string>
+    <string name="skip">Skip</string>
+    <string name="certificateSetup">Certificate Setup</string>
+    <string name="certificateSetupDesc">Many Mumble servers require a certificate to connect. If you\'d like, Plumble can generate one now for you- or load one off of your external storage in settings later.</string>
+    <string name="back">Back</string>
 </resources>
