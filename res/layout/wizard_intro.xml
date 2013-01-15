@@ -9,63 +9,33 @@
         android:id="@+id/plumbleWizardWelcome"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_above="@+id/plumbleWizardDescription"
         android:fontFamily="sans-serif-light"
+        android:gravity="center_horizontal"
         android:padding="10dp"
         android:text="@string/welcomeToPlumble"
-        android:layout_above="@+id/plumbleWizardDescription"
-        android:gravity="center_horizontal"
         android:textSize="24sp" />
 
     <TextView
         android:id="@+id/plumbleWizardDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/wizardControlBox"
+        android:layout_alignParentBottom="true"
         android:fontFamily="sans-serif-light"
+        android:gravity="center_horizontal"
+        android:paddingBottom="10dp"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:paddingBottom="10dp"
-        android:gravity="center_horizontal"
         android:text="@string/plumbleDesc" />
 
-    <LinearLayout
-        android:id="@+id/wizardControlBox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/wizardCancel"
-    	android:showDividers="middle"
-    	android:divider="?android:attr/dividerHorizontal"
-    	android:layout_marginTop="10dp"
-        android:layout_alignParentBottom="true">
-    
-    <Button
-        android:id="@+id/wizardCancel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/skip"
-        android:textColor="@color/abs__holo_blue_light"
-        style="?android:attr/borderlessButtonStyle" 
-        android:layout_weight="1"/>
-    
-    <Button
-        android:id="@+id/wizardContinue"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/next"
-        android:textColor="@color/abs__holo_blue_light"
-        style="?android:attr/borderlessButtonStyle"
-        android:layout_weight="1"/>
-        
-    </LinearLayout>
-
     <ImageView
-        android:layout_alignParentTop="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/plumbleWizardWelcome"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
+        android:padding="20dp"
         android:scaleType="fitCenter"
-        android:src="@drawable/plumble_splash"
-        android:padding="20dp"/>
+        android:src="@drawable/plumble_splash" />
 
 </RelativeLayout>

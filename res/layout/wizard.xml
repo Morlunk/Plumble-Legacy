@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" 
+    tools:ignore="NewApi" >
+
+    <ViewFlipper 
+        android:id="@+id/wizardFlipper"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <include layout="@layout/wizard_intro"/>
+        <include layout="@layout/wizard_certificate"/>
+    </ViewFlipper>
+    
+    <LinearLayout
+        android:id="@+id/wizardControlBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:divider="?android:attr/dividerHorizontal"
+        android:showDividers="middle">
+
+        <Button
+            android:id="@+id/wizardBack"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/skip"
+            android:textColor="@color/abs__holo_blue_light" />
+
+        <Button
+            android:id="@+id/wizardNext"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/next"
+            android:textColor="@color/abs__holo_blue_light" />
+    </LinearLayout>
+    
+
+</LinearLayout>

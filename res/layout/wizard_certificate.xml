@@ -28,36 +28,6 @@
         android:paddingBottom="10dp"
         android:text="@string/certificateSetupDesc" />
 
-    <LinearLayout
-        android:id="@+id/wizardControlBox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/wizardBack"
-    	android:showDividers="middle"
-    	android:divider="?android:attr/dividerHorizontal"
-    	android:layout_marginTop="10dp"
-        android:layout_alignParentBottom="true">
-    
-    <Button
-        android:id="@+id/wizardBack"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/back"
-        android:textColor="@color/abs__holo_blue_light"
-        style="?android:attr/borderlessButtonStyle" 
-        android:layout_weight="1"/>
-    
-    <Button
-        android:id="@+id/wizardContinue"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/next"
-        android:textColor="@color/abs__holo_blue_light"
-        style="?android:attr/borderlessButtonStyle"
-        android:layout_weight="1"/>
-        
-    </LinearLayout>
-
     <Button
         android:id="@+id/wizardGenerateCert"
         android:layout_width="wrap_content"
