@@ -13,6 +13,7 @@
         android:layout_weight="1">
         <include layout="@layout/wizard_intro"/>
         <include layout="@layout/wizard_certificate"/>
+        <include layout="@layout/wizard_audio"/>
     </ViewFlipper>
     
     <LinearLayout

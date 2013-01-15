@@ -91,4 +91,6 @@
     <string name="certificateSetupDesc">Many Mumble servers require a certificate to connect. If you\'d like, Plumble can generate one now for you- or load one off of your external storage in settings later.</string>
     <string name="back">Back</string>
     <string name="finish">Finish</string>
+    <string name="inputAmplitude">Amplitude of Input</string>
+    <string name="audioInputSetup">Audio Input Setup</string>
 </resources>

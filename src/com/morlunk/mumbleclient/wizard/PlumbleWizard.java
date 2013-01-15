@@ -12,6 +12,8 @@ import com.morlunk.mumbleclient.R;
 
 public class PlumbleWizard extends FragmentActivity {
 	
+	private static final String VIEW_FLIPPER_POSITION = "flipperPosition";
+	
 	private ViewFlipper mViewFlipper;
 	private Button mBackButton;
 	private Button mNextButton;
@@ -34,7 +36,7 @@ public class PlumbleWizard extends FragmentActivity {
 				if(mViewFlipper.getDisplayedChild() == 0) {
 					finish();
 				} else {
-					mViewFlipper.setDisplayedChild(mViewFlipper.getDisplayedChild()-1);
+					mViewFlipper.showPrevious();
 					updateButtonLabels();
 				}
 			}
@@ -48,13 +50,24 @@ public class PlumbleWizard extends FragmentActivity {
 				if(mViewFlipper.getDisplayedChild() == mViewFlipper.getChildCount()-1) {
 					finish();
 				} else {
-					mViewFlipper.setDisplayedChild(mViewFlipper.getDisplayedChild()+1);
+					mViewFlipper.showNext();
 					updateButtonLabels();
 				}
 			}
 		});
 		
+		if(savedInstanceState != null && savedInstanceState.containsKey(VIEW_FLIPPER_POSITION)) {
+			mViewFlipper.setDisplayedChild(savedInstanceState.getInt(VIEW_FLIPPER_POSITION));
+		}
+		
 		updateButtonLabels();
+	}
+	
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		
+		outState.putInt(VIEW_FLIPPER_POSITION, mViewFlipper.getDisplayedChild());
 	}
 	
 	/**
