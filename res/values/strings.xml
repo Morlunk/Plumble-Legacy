@@ -89,8 +89,10 @@
     <string name="skip">Skip</string>
     <string name="certificateSetup">Certificate Setup</string>
     <string name="certificateSetupDesc">Many Mumble servers require a certificate to connect. If you\'d like, Plumble can generate one now for you- or load one off of your external storage in settings later.</string>
-    <string name="back">Back</string>
+    <string name="selectCertificate">Select an Existing Certificate</string><string name="back">Back</string>
     <string name="finish">Finish</string>
     <string name="inputAmplitude">Amplitude of Input</string>
     <string name="audioInputSetup">Audio Input Setup</string>
+    <string name="inputAmplitudeDesc">Please make sure that your voice is registering on the above amplitude bar before continuing. As Plumble cannot possibly be tested on the entire range of Android devices with differing audio hardware, be sure that your input comes through loud and clear.</string>
+    
 </resources>

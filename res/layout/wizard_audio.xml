@@ -11,21 +11,36 @@
         android:layout_height="wrap_content"
         android:text="@string/audioInputSetup"
         android:fontFamily="sans-serif-light"
-        android:textSize="24sp"
-        android:textColor="@color/abs__holo_blue_light"
+        android:textSize="28sp"
+        android:textColor="@color/abs__holo_blue_light"/>
+    
+    <View 
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/cardOutline"
+        android:layout_marginTop="15dp"
         android:layout_marginBottom="15dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/inputAmplitude"
-        android:fontFamily="sans-serif-light"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <ProgressBar
         android:id="@+id/wizardAudioInputBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:max="32768"
+        android:progress="32768"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/inputAmplitudeDesc"
+        android:fontFamily="sans-serif-light"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
 
 </LinearLayout>
