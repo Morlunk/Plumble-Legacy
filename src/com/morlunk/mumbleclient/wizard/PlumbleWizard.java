@@ -2,7 +2,9 @@ package com.morlunk.mumbleclient.wizard;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
 import android.view.View.OnClickListener;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -20,6 +22,7 @@ public class PlumbleWizard extends FragmentActivity {
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.wizard);
@@ -69,6 +72,18 @@ public class PlumbleWizard extends FragmentActivity {
 		super.onSaveInstanceState(outState);
 		
 		outState.putInt(VIEW_FLIPPER_POSITION, mViewFlipper.getDisplayedChild());
+	}
+	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if(keyCode == KeyEvent.KEYCODE_BACK) {
+			if(mViewFlipper.getDisplayedChild() > 0) {
+				mViewFlipper.showPrevious();
+				updateButtonLabels();
+			}
+			return true;
+		}
+		return super.onKeyDown(keyCode, event);
 	}
 	
 	/**
