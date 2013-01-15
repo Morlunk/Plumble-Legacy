@@ -25,8 +25,8 @@ public class PlumbleWizard extends FragmentActivity {
 		setContentView(R.layout.wizard);
 		
 		mViewFlipper = (ViewFlipper) findViewById(R.id.wizardFlipper);
-		mViewFlipper.setInAnimation(AnimationUtils.loadAnimation(this, android.R.anim.slide_in_left));
-		mViewFlipper.setOutAnimation(AnimationUtils.loadAnimation(this, android.R.anim.slide_out_right));
+		mViewFlipper.setOutAnimation(AnimationUtils.loadAnimation(this, R.anim.slide_out_left));
+		mViewFlipper.setInAnimation(AnimationUtils.loadAnimation(this, R.anim.slide_in_right));
 		
 		mBackButton = (Button) findViewById(R.id.wizardBack);
 		mBackButton.setOnClickListener(new OnClickListener() {
@@ -57,6 +57,7 @@ public class PlumbleWizard extends FragmentActivity {
 		});
 		
 		if(savedInstanceState != null && savedInstanceState.containsKey(VIEW_FLIPPER_POSITION)) {
+			mViewFlipper.setAnimateFirstView(false);
 			mViewFlipper.setDisplayedChild(savedInstanceState.getInt(VIEW_FLIPPER_POSITION));
 		}
 		
