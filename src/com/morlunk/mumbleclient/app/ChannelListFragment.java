@@ -33,6 +33,7 @@ import android.widget.TextView;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
+import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
@@ -210,6 +211,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		 * Tracks the current row elements of a user.
 		 */
 		private final Context context;
+		private final DbAdapter dbAdapter;
 		private final SparseArray<User> users = new SparseArray<User>();
 		private final SparseArray<String> visibleUserNames = new SparseArray<String>();
 		private final List<User> visibleUserList = new ArrayList<User>();
@@ -226,6 +228,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			final Runnable visibleUsersChangedCallback) {
 			this.context = context;
 			this.visibleUsersChangedCallback = visibleUsersChangedCallback;
+			this.dbAdapter = new DbAdapter(context);
 			
 			// Fetch theme dependent icon
 			Settings settings = Settings.getInstance(context);
@@ -438,11 +441,36 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			
 			localMute.setVisibility(user.localMuted ? View.VISIBLE : View.GONE);
 			
+			if(user.comment != null || user.commentHash != null) {
+				// Launch a new thread to ask the DB whether the user's comment has been seen or not.
+				new AsyncTask<User, Void, Boolean>() {
+
+					@Override
+					protected Boolean doInBackground(User... params) {
+						User commentUser = params[0];
+						dbAdapter.open();
+						boolean commentSeen = dbAdapter.isCommentSeen(commentUser.name, commentUser.commentHash != null ? commentUser.commentHash.toStringUtf8() : commentUser.comment);
+						dbAdapter.close();
+						return commentSeen;
+					}
+					
+					protected void onPostExecute(Boolean result) {
+						comment.setImageResource(result ? R.drawable.ic_comment_seen : R.drawable.ic_comment);	
+					};
+				}.execute(user);
+			}
+			
 			comment.setVisibility(user.comment != null || user.commentHash != null ? View.VISIBLE : View.GONE);
 			comment.setOnClickListener(new OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
+					if(user.comment != null || user.commentHash != null) {
+						dbAdapter.open();
+						dbAdapter.setCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
+						dbAdapter.close();
+					}
+					
 					AlertDialog.Builder builder = new AlertDialog.Builder(context);
 					builder.setTitle("Comment");
 					builder.setPositiveButton("Close", null);
