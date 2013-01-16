@@ -1194,4 +1194,10 @@ public class MumbleService extends Service implements OnInitListener {
 			broadcastState();
 		}
 	}
+
+	public void clearChat() {
+		chatMessages.clear();
+		messages.clear();
+		unreadMessages.clear();
+	}
 }

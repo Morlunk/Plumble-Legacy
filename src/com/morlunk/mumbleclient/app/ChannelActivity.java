@@ -513,6 +513,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		case R.id.menu_view_favorites_button:
 			showFavouritesDialog();
 			return true;
+		case R.id.menu_clear_chat:
+			mService.clearChat();
+			chatFragment.clear();
+			return true;
 		case R.id.menu_search:
 			return false;
 		case R.id.menu_access_tokens_button:
