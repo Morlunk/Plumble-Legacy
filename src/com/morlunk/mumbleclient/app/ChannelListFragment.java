@@ -466,6 +466,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 				@Override
 				public void onClick(View v) {
 					if(user.comment != null || user.commentHash != null) {
+						comment.setImageResource(R.drawable.ic_comment_seen);
 						dbAdapter.open();
 						dbAdapter.setCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
 						dbAdapter.close();
