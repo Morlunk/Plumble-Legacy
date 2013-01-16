@@ -31,7 +31,7 @@
     <string name="menu_settings">Ustawienia</string>
     <string name="title_activity_channel">Kanał</string>
     <string name="pressKey">Naciśnij sprzętowy przycisk by go wybrać.</string>
-    <string name="pressKeyInfo">Uwaga: Ze względu na ograniczenia w systemie Android aplikacja musi być otwarta, aby można było używać przycisku.</string>
+    <string name="pressKeyInfo">Uwaga: Ze względu na ograniczenia w systemie Android aplikacja musi być otwarta, aby można było używać sprzętowego przycisku.</string>
     <string name="ptt">Aktywacja przyciskiem</string>
     <string name="mute">Wycisz</string>
     <string name="deafen">Ogłusz</string>
@@ -44,12 +44,12 @@
     <string name="chat">Czat</string>
     <string name="permDenied">Brak dostępu!</string>
     <string name="connectionRefused">Połączenie Odrzucone</string>
-    <string name="sureDeleteServer">Na pewno usunąć ten serwer?</string>
+    <string name="sureDeleteServer">Usunąć ten serwer?</string>
     <string name="disconnected">Rozłączono</string>
     <string name="kickedMessage">Zostałeś wykopany z serwera z powodu: %s</string>
     <string name="loading">Ładowanie…</string>
     <string name="reset_key">Resetuj</string>
-    <string name="externalStorageUnavailable">Pamięć zewnętrzna jest niedostępna, nie można wczytać certyfikatu</string>
+    <string name="externalStorageUnavailable">Pamięć zewnętrzna jest niedostępna, nie można załadować certyfikatu</string>
     <string name="audioQualitySum">Bitrate dźwięku, którego będzie używał Plumble (w kbit/s)</string>
     <string name="forceTcp">Wymuś TCP</string>
     <string name="forceTcpSum">Definiuje czy wymuszać połączenie TCP (wyłącza UDP).</string>
@@ -65,7 +65,7 @@
     <string name="pushToTalkHint">(zaznacz, aby przełączać)</string>
     <string name="messageReceived">Nowa wiadomość</string>
     <string name="general">Ogólne</string>
-    <string name="generateCert">Generuj Certyfikat</string>
+    <string name="generateCert">Generuj certyfikat</string>
     <string name="generateCertSuccess">Twój certyfikat został utworzony i  zapisany jako %s!</string>
     <string name="generateCertFailure">Generowanie certyfikatu nie powiodło się.</string>
     <string name="generateCertProgress">Trwa generowanie certyfikatu…</string>
@@ -83,4 +83,8 @@
     <string name="messageToUser">Wiadomość do użytkownika: \'%s\'</string>
     <string name="messageToChannel">Wiadomość do kanału</string>
     <string name="online">Online</string>
+    <string name="offline">Offline</string>
+    <string name="clearChat">Wyczyść czat</string>
+    <string name="connected">Połączony</string>
+    <string name="plumbleConnected">Plumble - Połączono</string>
 </resources>
