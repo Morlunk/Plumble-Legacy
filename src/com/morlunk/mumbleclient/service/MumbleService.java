@@ -1008,9 +1008,9 @@ public class MumbleService extends Service implements OnInitListener {
 	void showNotification() {
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setSmallIcon(R.drawable.ic_stat_notify);
-		builder.setTicker("Plumble Connected");
-		builder.setContentTitle("Plumble");
-		builder.setContentText("Connected.");
+		builder.setTicker(getResources().getString(R.string.plumbleConnected));
+		builder.setContentTitle(getResources().getString(R.string.app_name));
+		builder.setContentText(getResources().getString(R.string.connected));			
 		builder.setPriority(Notification.PRIORITY_HIGH);
 		builder.setOngoing(true);
 		
