@@ -31,6 +31,7 @@ import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.text.Spannable;
@@ -241,7 +242,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
             // of the app.
             mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
             // Set up the ViewPager with the sections adapter.
-            mViewPager.setAdapter(mSectionsPagerAdapter);
             mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
 				
 				@Override
@@ -271,6 +271,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		        listFragment = new ChannelListFragment();
 		        chatFragment = new ChannelChatFragment();
 			}
+            
+            mViewPager.setAdapter(mSectionsPagerAdapter);
         } else {
         	// Otherwise, create tablet UI.
 	        listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
@@ -331,8 +333,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     @Override
     protected void onSaveInstanceState(Bundle outState) {
     	super.onSaveInstanceState(outState);
-    	getSupportFragmentManager().putFragment(outState, ChannelListFragment.class.getName(), listFragment);
-    	getSupportFragmentManager().putFragment(outState, ChannelChatFragment.class.getName(), chatFragment);
+    	
+    	if(mViewPager != null) {
+    		getSupportFragmentManager().putFragment(outState, ChannelListFragment.class.getName(), listFragment);
+    		getSupportFragmentManager().putFragment(outState, ChannelChatFragment.class.getName(), chatFragment);
+    	}
 		outState.putParcelable(SAVED_STATE_VISIBLE_CHANNEL, visibleChannel);
 		
 		if(chatTarget != null)
@@ -959,7 +964,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to one of the primary
      * sections of the app.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
     	
         public SectionsPagerAdapter(FragmentManager fragmentManager) {
             super(fragmentManager);
