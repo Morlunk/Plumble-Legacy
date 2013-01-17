@@ -626,25 +626,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		// If we don't have visible channel selected, get the last stored channel from preferences.
 		// Setting channel also synchronizes the UI so we don't need to do it manually.
-		if (visibleChannel == null) {
-			int lastChannelId = settings.getLastChannel(mService.getConnectedServer().getId());
-			
-			Channel lastChannel = findChannelById(lastChannelId);
-			
-			if(lastChannel != null) {
-				new AsyncTask<Channel, Void, Void>() {
-					
-					@Override
-					protected Void doInBackground(Channel... params) {
-						mService.joinChannel(params[0].id);
-						return null;
-					}
-					
-				}.execute(lastChannel);
-			} else {
-				setVisibleChannel(mService.getCurrentChannel());
-			}
-		} else {
+		if (visibleChannel != null) {
 			// Re-select visible channel. Necessary after a rotation is
 			// performed or the app is suspended.
 			if (mService.getChannelList().contains(visibleChannel)) {
@@ -870,12 +852,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         
         // Update favourites icon
 		updateFavouriteMenuItem();
-		
-		// Update last channel in settings
-		int channelId = channel.id;
-		if(settings.getLastChannel(mService.getConnectedServer().getId()) != channelId) {
-			settings.setLastChannel(mService.getConnectedServer().getId(), channel.id); // Cache the last channel
-		}
 	}
 	
 	/* (non-Javadoc)
