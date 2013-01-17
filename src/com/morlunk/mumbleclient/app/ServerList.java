@@ -29,6 +29,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -236,7 +237,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	private static final String STATE_WAIT_CONNECTION = "com.morlunk.mumbleclient.ServerList.WAIT_CONNECTION";
 	
 	private ServerServiceObserver mServiceObserver;
-	private ListView listView;
+	private GridView gridView;
 	private ServerAdapter serverAdapter;
 	@SuppressLint("UseSparseArrays") // We use Map instead of SparseArray so we can contain null values for keys.
 	private Map<Integer, ServerInfoResponse> infoResponses = new HashMap<Integer, ServerInfoResponse>();
@@ -387,7 +388,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		
 		setContentView(R.layout.main);
 		
-		listView = (ListView) findViewById(android.R.id.list);
+		gridView = (GridView) findViewById(R.id.serverGrid);
 
 		// Create the service observer. If such exists, onServiceBound will
 		// register it.
@@ -446,7 +447,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		dbAdapter.close();
 
 		serverAdapter = new ServerAdapter(this, servers);
-		listView.setAdapter(serverAdapter);
+		gridView.setAdapter(serverAdapter);
 		
 		// Clear and reload server ping responses
 		infoResponses.clear();
