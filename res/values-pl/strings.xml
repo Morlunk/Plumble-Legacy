@@ -87,4 +87,6 @@
     <string name="clearChat">Wyczyść czat</string>
     <string name="connected">Połączony</string>
     <string name="plumbleConnected">Plumble - Połączono</string>
+    <string name="lostConnection">Utracono połączenie z serwerem.</string>
+    <string name="resume">Ponów</string>
 </resources>
