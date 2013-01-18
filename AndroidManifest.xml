@@ -31,7 +31,7 @@
         </activity>
         <activity android:name=".app.ServerInfo" android:parentActivityName=".app.ServerList"/>
 		<provider android:name=".app.ChannelSearchProvider" android:authorities="com.morlunk.mumbleclient.app.ChannelSearchProvider" android:exported="false"></provider>
-        <activity android:name=".app.ChannelActivity" android:launchMode="singleInstance">
+        <activity android:name=".app.ChannelActivity" android:launchMode="singleTop">
             <intent-filter>
             	<action android:name="android.intent.action.SEARCH" />
         	</intent-filter>

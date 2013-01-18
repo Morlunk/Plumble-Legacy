@@ -203,7 +203,7 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 			
 			alertBuilder.show();
 			
-		} else {
+		} else if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_DISCONNECTED){
 			finish();
 		}
 	}

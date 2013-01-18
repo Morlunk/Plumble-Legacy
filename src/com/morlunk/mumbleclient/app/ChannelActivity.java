@@ -694,6 +694,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		showProgressDialog(R.string.connectionProgressSynchronizingMessage);
 	}
 	
+	@Override
+	protected void onDisconnected() {
+		super.onDisconnected();
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.morlunk.mumbleclient.app.ConnectedActivity#createServiceObserver()
 	 */

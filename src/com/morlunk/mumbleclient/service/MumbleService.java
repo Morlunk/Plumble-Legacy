@@ -200,12 +200,12 @@ public class MumbleService extends Service implements OnInitListener {
 
 		@Override
 		public void setError(final Object reject) {
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					rejectResponse = reject;
-				}
-			});
+			rejectResponse = reject;
+		}
+
+		@Override
+		public boolean hasError() {
+			return rejectResponse != null;
 		}
 	}
 
@@ -965,7 +965,13 @@ public class MumbleService extends Service implements OnInitListener {
 		}
 
 		if (mClient != null && mClientThread != null) {
-			mClient.disconnect();
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					mClient.disconnect();
+				}
+			}).start();
+			
 			try {
 				mClientThread.join();
 			} catch (final InterruptedException e) {

@@ -134,7 +134,7 @@
             android:layout_height="wrap_content" >
 
             <Button
-                android:id="@+id/server_row_connect"
+                android:id="@+id/server_row_button1"
                 style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
@@ -151,7 +151,7 @@
                 android:background="@color/cardOutline" />
 
             <Button
-                android:id="@+id/server_row_edit"
+                android:id="@+id/server_row_button2"
                 style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"

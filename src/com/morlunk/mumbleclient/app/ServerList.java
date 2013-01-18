@@ -122,15 +122,16 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			userText.setText(server.getUsername());
 			addressText.setText(server.getHost()+":"+server.getPort());
 			
-			Button connectButton = (Button) view.findViewById(R.id.server_row_connect);
-			Button editButton = (Button) view.findViewById(R.id.server_row_edit);
-			connectButton.setOnClickListener(new OnClickListener() {
+			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
+			Button button2 = (Button) view.findViewById(R.id.server_row_button2);
+			
+			button1.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
 					connectServer(server.getId());
 				}
 			});
-			editButton.setOnClickListener(new OnClickListener() {
+			button2.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
 					editServer(server.getId());
@@ -230,8 +231,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		}
 		
 	}
-	
-	private static final int ACTIVITY_CHANNEL_LIST = 1;
 
 	private static final String STATE_WAIT_CONNECTION = "com.morlunk.mumbleclient.ServerList.WAIT_CONNECTION";
 	
@@ -279,7 +278,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		case MumbleService.CONNECTION_STATE_CONNECTED:
 			unregisterConnectionReceiver();
 			final Intent i = new Intent(this, ChannelActivity.class);
-			startActivityForResult(i, ACTIVITY_CHANNEL_LIST);
+			startActivity(i);
 			return true;
 		case MumbleService.CONNECTION_STATE_DISCONNECTED:
 			// TODO: Error message checks.
@@ -413,13 +412,8 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
-		if(mService != null && mService.getConnectionState() == MumbleService.CONNECTION_STATE_CONNECTED) {
-			// If already connected, just jump to channel list.
-			startActivity(new Intent(this, ChannelActivity.class));
-		} else {
-			fillList();
-		}
+			
+		fillList();
 	}
 
 	@Override
