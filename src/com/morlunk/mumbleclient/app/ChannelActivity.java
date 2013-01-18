@@ -372,8 +372,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	if(settings.getCallMode().equals(Settings.ARRAY_CALL_MODE_VOICE))
     		setProximityEnabled(false);
     	
-    	if(mService != null)
+    	if(mService != null) {
         	mService.setActivityVisible(false);
+        	
+        	// Turn off push to talk when rotating so it doesn't get stuck on.
+        	if(settings.isPushToTalk())
+        		mService.setRecording(false);
+    	}
     }
     
     @TargetApi(Build.VERSION_CODES.HONEYCOMB) 
@@ -638,7 +643,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		reloadChat();
 		
 		// Start recording for voice activity, as there is no push to talk button.
-		if(settings.isVoiceActivity()) {
+		if(settings.isVoiceActivity() && !mService.isRecording()) {
 			mService.setRecording(true);
 		}
 	}
