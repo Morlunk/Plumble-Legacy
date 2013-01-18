@@ -88,5 +88,5 @@
     <string name="connected">Połączony</string>
     <string name="plumbleConnected">Plumble - Połączono</string>
     <string name="lostConnection">Utracono połączenie z serwerem.</string>
-    <string name="resume">Ponów</string>
+    <string name="resume">Wznów</string>
 </resources>
