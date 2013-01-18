@@ -66,7 +66,7 @@
     <string name="messageReceived">Nowa wiadomość</string>
     <string name="general">Ogólne</string>
     <string name="generateCert">Generuj certyfikat</string>
-    <string name="generateCertSuccess">Twój certyfikat został utworzony i  zapisany jako %s!</string>
+    <string name="generateCertSuccess">Twój certyfikat został utworzony i zapisany jako %s!</string>
     <string name="generateCertFailure">Generowanie certyfikatu nie powiodło się.</string>
     <string name="generateCertProgress">Trwa generowanie certyfikatu…</string>
     <string name="search">Szukaj</string>
@@ -87,4 +87,6 @@
     <string name="clearChat">Wyczyść czat</string>
     <string name="connected">Połączony</string>
     <string name="plumbleConnected">Plumble - Połączono</string>
+    <string name="lostConnection">Utracono połączenie z serwerem.</string>
+    <string name="resume">Wznów</string>
 </resources>
