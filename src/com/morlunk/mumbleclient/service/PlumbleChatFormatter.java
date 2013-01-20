@@ -39,8 +39,8 @@ public class PlumbleChatFormatter {
 			else if(msg.channel != null)
 				targetString = msg.channel.name;
 			else
-				targetString = "Unknown";
-			sb.append("To ");
+				targetString = service.getString(R.string.unknown);
+			sb.append(service.getString(R.string.chat_message_to)+" ");
 			appendNameHighlight(targetString, sb);
 		} else {
 			if (msg.channelIds > 0) {
@@ -53,7 +53,7 @@ public class PlumbleChatFormatter {
 			String actorName;
 			
 			if(msg.actor == null || msg.actor.name == null)
-				actorName = "Server";
+				actorName = service.getString(R.string.server);
 			else
 				actorName = msg.actor.name;
 			
@@ -65,14 +65,6 @@ public class PlumbleChatFormatter {
 	}
 	
 	public Spannable formatUserStateUpdate(User user, UserState userState) {
-		/*
-		 *  Hi localizers,
-		 *  
-		 *  Please wait until I move all strings here into strings.xml before starting localization. Thanks.
-		 *  
-		 *  - Andrew
-		 */
-		
 		final SpannableStringBuilder sb = new SpannableStringBuilder();
 		sb.append("[");
 		sb.append(DateUtils.formatDateTime(
@@ -88,23 +80,14 @@ public class PlumbleChatFormatter {
 		
 		// Connect action
 		if(user == null) {
-			appendNameHighlight(userState.getName(), sb);
-			sb.append(" connected.");
+			sb.append(service.getString(R.string.chat_notify_connected, userState.getName()));
 			return sb;
 		}
 		
 		// Channel move actions
 		if(userState.hasChannelId() && userState.getChannelId() == service.getCurrentChannel().id) {
-			appendNameHighlight(user.name, sb);
-			sb.append(" moved in from ");
-			appendNameHighlight(user.getChannel().name, sb); // This doesn't return the correct result. TODO fix!
-			sb.append(" by ");
-			if(actor != null) {
-				appendNameHighlight(actor.name, sb);
-			} else {
-				sb.append("the server");
-			}
-			sb.append(".");
+			String actorName = (actor != null) ? actor.name : service.getString(R.string.server);
+			sb.append(service.getString(R.string.chat_notify_moved, user.name, user.getChannel().name, actorName));
 			return sb;
 		}
 		
@@ -113,20 +96,19 @@ public class PlumbleChatFormatter {
 			if(userState.hasSelfDeaf() || userState.hasSelfMute()) {
 				if(userState.getSession() == service.getCurrentUser().session) {
 					if(userState.getSelfMute() && userState.getSelfDeaf()) {
-						sb.append("Muted and deafened.");
+						sb.append(service.getString(R.string.chat_notify_muted_deafened));
 					} else if(userState.getSelfMute()) {
-						sb.append("Muted.");
+						sb.append(service.getString(R.string.chat_notify_muted));
 					} else {
-						sb.append("Unmuted.");
+						sb.append(service.getString(R.string.chat_notify_unmuted));
 					}
 				} else {
-					appendNameHighlight(user.name, sb);
 					if(userState.getSelfMute() && userState.getSelfDeaf()) {
-						sb.append(" is now muted and deafened.");
+						sb.append(service.getString(R.string.chat_notify_now_muted_deafened, user.name));
 					} else if(userState.getSelfMute()) {
-						sb.append(" is now muted.");
+						sb.append(service.getString(R.string.chat_notify_now_muted, user.name));
 					} else {
-						sb.append(" is now unmuted.");
+						sb.append(service.getString(R.string.chat_notify_now_unmuted, user.name));
 					}
 				}
 				return sb;

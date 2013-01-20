@@ -89,4 +89,16 @@
     <string name="plumbleConnected">Plumble Connected</string>
     <string name="lostConnection">Lost connection to the server.</string>
     <string name="resume">Resume</string>
+    <string name="channel">Channel</string>
+    <string name="server">Server</string>
+    <string name="chat_message_to">To</string>
+    <string name="chat_notify_moved">%1$s moved in from %2$s by %3$s.</string>
+    <string name="chat_notify_muted_deafened">Muted and deafened.</string>
+    <string name="chat_notify_muted">Muted.</string>
+    <string name="chat_notify_unmuted">Unmuted.</string>
+    <string name="chat_notify_now_muted_deafened" >%s is now muted and deafened.</string>
+    <string name="chat_notify_now_muted">%s is now muted.</string>
+    <string name="chat_notify_now_unmuted">%s is now unmuted.</string>
+    <string name="chat_notify_connected">%s connected.</string>
+    <string name="unknown">Unknown</string>
 </resources>

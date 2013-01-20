@@ -1104,13 +1104,13 @@ public class MumbleService extends Service implements OnInitListener {
 		StringBuilder ttsText = new StringBuilder();
 		
 		if(msg.channelIds > 0) {
-			ttsText.append("Channel ");
+			ttsText.append(getString(R.string.channel)+" ");
 		}
 		
 		if(msg.actor != null)
 			ttsText.append(msg.actor.name);
 		else
-			ttsText.append("Server");
+			ttsText.append(getString(R.string.server));
 		
 		ttsText.append(": ");
 		ttsText.append(msg.message);
