@@ -80,7 +80,7 @@
     <string name="edit">Edytuj</string>
     <string name="delete">Usuń</string>
     <string name="retry">Ponów</string>
-    <string name="messageToUser">Wiadomość do użytkownika: \'%s\'</string>
+    <string name="messageToUser">Wiadomość do: \'%s\'</string>
     <string name="messageToChannel">Wiadomość do kanału</string>
     <string name="online">Online</string>
     <string name="offline">Offline</string>
@@ -89,4 +89,16 @@
     <string name="plumbleConnected">Plumble - Połączono</string>
     <string name="lostConnection">Utracono połączenie z serwerem.</string>
     <string name="resume">Wznów</string>
+    <string name="channel">Kanał</string>
+    <string name="server">Serwer</string>
+    <string name="chat_message_to">Do</string>
+    <string name="chat_notify_moved">%1$s został przeniesiony z kanału %2$s przez %3$s.</string>
+    <string name="chat_notify_muted_deafened">Ogłuszono oraz wyciszono mikrofon.</string>
+    <string name="chat_notify_muted">Wyciszono mikrofon.</string>
+    <string name="chat_notify_unmuted">Wyłączono wyciszenie mikrofonu.</string>
+    <string name="chat_notify_now_muted_deafened">%s jest teraz ogłuszony oraz wyciszony.</string>
+    <string name="chat_notify_now_muted">%s jest teraz wyciszony.</string>
+    <string name="chat_notify_now_unmuted">%s nie jest już wyciszony.</string>
+    <string name="chat_notify_connected">%s połączony.</string>
+    <string name="unknown">Nieznany</string>
 </resources>
