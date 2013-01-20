@@ -826,12 +826,14 @@ public class MumbleService extends Service implements OnInitListener {
 	public void setMuted(final boolean state) {
 		if(mAudioHost != null && mProtocol != null && mProtocol.currentUser != null) {
 			mAudioHost.setMuted(mProtocol.currentUser, state);
+			settings.setMutedAndDeafened(state, false);
 		}
 	}
 	
 	public void setDeafened(final boolean state) {
 		if(mAudioHost != null && mProtocol != null && mProtocol.currentUser != null) {
 			mAudioHost.setDeafened(mProtocol.currentUser, state);
+			settings.setMutedAndDeafened(state, state);
 		}
 	}
 	
@@ -1188,6 +1190,11 @@ public class MumbleService extends Service implements OnInitListener {
 		case MumbleConnectionHost.STATE_CONNECTED:
 			serviceState = synced ? CONNECTION_STATE_CONNECTED
 				: CONNECTION_STATE_SYNCHRONIZING;
+			if(settings.isDeafened()) {
+				setDeafened(true);
+			} else if(settings.isMuted()) {
+				setMuted(true);
+			}
 			break;
 		case MumbleConnectionHost.STATE_DISCONNECTED:
 			serviceState = CONNECTION_STATE_DISCONNECTED;

@@ -4,6 +4,7 @@ import java.util.Observable;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 
 public class Settings extends Observable {
@@ -65,6 +66,12 @@ public class Settings extends Observable {
 	
 	public static final String PREF_DISABLE_OPUS = "disableOpus";
 	public static final Boolean DEFAULT_DISABLE_OPUS = false;
+	
+	public static final String PREF_MUTED = "muted";
+	public static final Boolean DEFAULT_MUTED = false;
+	
+	public static final String PREF_DEAFENED = "deafened";
+	public static final Boolean DEFAULT_DEAFENED = false;
 	
 	private final SharedPreferences preferences;
 
@@ -168,5 +175,21 @@ public class Settings extends Observable {
 	
 	public boolean isOpusDisabled() {
 		return preferences.getBoolean(PREF_DISABLE_OPUS, DEFAULT_DISABLE_OPUS);
+	}
+	
+	public boolean isMuted() {
+		return preferences.getBoolean(PREF_MUTED, DEFAULT_MUTED);
+	}
+	
+	public boolean isDeafened() {
+		return preferences.getBoolean(PREF_DEAFENED, DEFAULT_DEAFENED);
+	}
+	
+	public void setMutedAndDeafened(boolean muted, boolean deafened) {
+		Editor editor = preferences.edit();
+		editor.putBoolean(PREF_MUTED, muted || deafened);
+		editor.putBoolean(PREF_DEAFENED, deafened);
+		editor.commit();
+		notifyObservers();
 	}
 }
