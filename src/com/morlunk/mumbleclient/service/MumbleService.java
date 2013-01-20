@@ -1058,7 +1058,7 @@ public class MumbleService extends Service implements OnInitListener {
 		NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
 		
 		for(Message message : unreadMessages) {
-			inboxStyle.addLine(((lastMessage.actor != null && lastMessage.actor.name != null) ? lastMessage.actor.name : "Server")+": "+message.message);
+			inboxStyle.addLine(((message.actor != null && message.actor.name != null) ? message.actor.name : "Server")+": "+message.message);
 		}
 		
 		mStatusNotificationBuilder.setStyle(inboxStyle);
