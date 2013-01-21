@@ -96,9 +96,12 @@
     <string name="chat_notify_muted_deafened">Ogłuszono oraz wyciszono mikrofon.</string>
     <string name="chat_notify_muted">Wyciszono mikrofon.</string>
     <string name="chat_notify_unmuted">Wyłączono wyciszenie mikrofonu.</string>
+    <string name="chat_notify_unmuted_undeafened">Wyłączono ogłuszenie oraz wyciszenie mikrofonu.</string>
     <string name="chat_notify_now_muted_deafened">%s jest teraz ogłuszony oraz wyciszony.</string>
     <string name="chat_notify_now_muted">%s jest teraz wyciszony.</string>
     <string name="chat_notify_now_unmuted">%s nie jest już wyciszony.</string>
+    <string name="chat_notify_now_unmuted_undeafened">%s jest teraz ogłuszony oraz wyciszony.</string>
     <string name="chat_notify_connected">%s połączony.</string>
+    <string name="chat_notify_disconnected">%s rozłączony.</string>
     <string name="unknown">Nieznany</string>
 </resources>
