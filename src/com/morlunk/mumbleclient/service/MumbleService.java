@@ -334,8 +334,7 @@ public class MumbleService extends Service implements OnInitListener {
 						readMessage(msg);
 					
 					String message = chatFormatter.formatMessage(msg);
-					chatMessages.add(message);
-					unreadChatMessages.add(message);
+					postChatMessage(message);
 					messages.add(msg);
 					
 					if(settings.isChatNotifyEnabled() && !activityVisible) {
@@ -357,8 +356,7 @@ public class MumbleService extends Service implements OnInitListener {
 				@Override
 				public void process() {
 					String message = chatFormatter.formatMessage(msg);
-					chatMessages.add(message);
-					unreadChatMessages.add(message);
+					postChatMessage(message);
 					messages.add(msg);
 				}
 
@@ -427,8 +425,7 @@ public class MumbleService extends Service implements OnInitListener {
 						if (users.get(i).session == userId) {
 							this.user = users.remove(i);
 							String disconnectMessage = chatFormatter.formatUserStateUpdate(user, null);
-							chatMessages.add(disconnectMessage);
-							unreadChatMessages.add(disconnectMessage);
+							postChatMessage(disconnectMessage);
 							return;
 						}
 					}
@@ -492,9 +489,8 @@ public class MumbleService extends Service implements OnInitListener {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					if(stateString != null && isConnected()) {
-						chatMessages.add(stateString);
-						unreadChatMessages.add(stateString);
+					if(isConnected()) {
+						postChatMessage(stateString);
 					}
 				}
 
@@ -1101,6 +1097,14 @@ public class MumbleService extends Service implements OnInitListener {
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		
 		notificationManager.notify(STATUS_NOTIFICATION_ID, notificationCompat);
+	}
+	
+	public void postChatMessage(String message) {
+		if(message == null)
+			return;
+		
+		chatMessages.add(message);
+		unreadChatMessages.add(message);
 	}
 
 	/**

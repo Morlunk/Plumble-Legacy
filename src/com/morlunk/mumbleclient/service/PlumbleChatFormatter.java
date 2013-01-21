@@ -93,7 +93,7 @@ public class PlumbleChatFormatter {
 		}
 		
 		// Mute/deafen actions within the current user's channel
-		if(user.getChannel().id == service.getCurrentChannel().id) {
+		if(user.getChannel() != null && service.getCurrentChannel() != null && user.getChannel().id == service.getCurrentChannel().id) {
 			if(userState.hasSelfDeaf() || userState.hasSelfMute()) {
 				if(userState.getSession() == service.getCurrentUser().session) {
 					if(userState.getSelfMute() && userState.getSelfDeaf()) {
