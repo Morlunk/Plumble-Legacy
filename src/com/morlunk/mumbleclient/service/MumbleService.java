@@ -422,6 +422,8 @@ public class MumbleService extends Service implements OnInitListener {
 					for (int i = 0; i < users.size(); i++) {
 						if (users.get(i).session == userId) {
 							this.user = users.remove(i);
+							Spannable disconnectMessage = chatFormatter.formatUserStateUpdate(user, null);
+							chatMessages.add(disconnectMessage);
 							return;
 						}
 					}
@@ -481,10 +483,10 @@ public class MumbleService extends Service implements OnInitListener {
 
 		@Override
 		public void userStateUpdated(final User user, final UserState state) {
+			final Spannable stateSpannable = chatFormatter.formatUserStateUpdate(user, state);
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					Spannable stateSpannable = chatFormatter.formatUserStateUpdate(user, state);
 					if(stateSpannable != null && isConnected())
 						chatMessages.add(stateSpannable);
 				}

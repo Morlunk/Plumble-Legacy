@@ -1037,6 +1037,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 				mService.setDisconnectResponse(remove);
 			}
 			listFragment.removeUser(user);
+			reloadChat();
 		}
 
 		@Override

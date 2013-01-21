@@ -73,15 +73,21 @@ public class PlumbleChatFormatter {
 			DateUtils.FORMAT_SHOW_TIME));
 		sb.append("] ");
 		
-		User actor = null;
-		if(userState.hasActor()) {
-			actor = service.getUser(userState.getActor());
-		}
-		
 		// Connect action
 		if(user == null) {
 			sb.append(service.getString(R.string.chat_notify_connected, userState.getName()));
 			return sb;
+		}
+		
+		// Disconnect action
+		if(userState == null) {
+			sb.append(service.getString(R.string.chat_notify_disconnected, user.name));
+			return sb;
+		}
+		
+		User actor = null;
+		if(userState.hasActor()) {
+			actor = service.getUser(userState.getActor());
 		}
 		
 		// Channel move actions
@@ -107,6 +113,8 @@ public class PlumbleChatFormatter {
 						sb.append(service.getString(R.string.chat_notify_now_muted_deafened, user.name));
 					} else if(userState.getSelfMute()) {
 						sb.append(service.getString(R.string.chat_notify_now_muted, user.name));
+					} else if(user.userState == User.USERSTATE_DEAFENED && !userState.getSelfDeaf()){
+						sb.append(service.getString(R.string.chat_notify_now_unmuted_undeafened, user.name));
 					} else {
 						sb.append(service.getString(R.string.chat_notify_now_unmuted, user.name));
 					}
