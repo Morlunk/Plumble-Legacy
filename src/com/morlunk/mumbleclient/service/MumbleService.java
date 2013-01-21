@@ -31,6 +31,7 @@ import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.support.v4.app.NotificationCompat;
+import android.text.Html;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -1071,12 +1072,13 @@ public class MumbleService extends Service implements OnInitListener {
 		
 		Message lastMessage = unreadMessages.get(unreadMessages.size()-1);
 		
-		mStatusNotificationBuilder.setTicker(((lastMessage.actor != null && lastMessage.actor.name != null) ? lastMessage.actor.name : "Server") +": "+lastMessage.message);
+		mStatusNotificationBuilder.setTicker(((lastMessage.actor != null && lastMessage.actor.name != null) ? lastMessage.actor.name : getString(R.string.server)) +": "+Html.fromHtml(lastMessage.message).toString());
 		
 		NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
 		
 		for(Message message : unreadMessages) {
-			inboxStyle.addLine(((message.actor != null && message.actor.name != null) ? message.actor.name : "Server")+": "+message.message);
+			inboxStyle.addLine(((message.actor != null && message.actor.name != null) ? message.actor.name : getString(R.string.server))+": "
+						+Html.fromHtml(message.message).toString()); // Escapes HTML
 		}
 		
 		mStatusNotificationBuilder.setStyle(inboxStyle);
