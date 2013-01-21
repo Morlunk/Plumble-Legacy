@@ -333,7 +333,9 @@ public class MumbleService extends Service implements OnInitListener {
 					if(settings.isTextToSpeechEnabled() && !isDeafened())
 						readMessage(msg);
 					
-					chatMessages.add(chatFormatter.formatMessage(msg));
+					Spannable message = chatFormatter.formatMessage(msg);
+					chatMessages.add(message);
+					unreadChatMessages.add(message);
 					messages.add(msg);
 					
 					if(settings.isChatNotifyEnabled() && !activityVisible) {
@@ -354,7 +356,9 @@ public class MumbleService extends Service implements OnInitListener {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					chatMessages.add(chatFormatter.formatMessage(msg));
+					Spannable message = chatFormatter.formatMessage(msg);
+					chatMessages.add(message);
+					unreadChatMessages.add(message);
 					messages.add(msg);
 				}
 
@@ -424,6 +428,7 @@ public class MumbleService extends Service implements OnInitListener {
 							this.user = users.remove(i);
 							Spannable disconnectMessage = chatFormatter.formatUserStateUpdate(user, null);
 							chatMessages.add(disconnectMessage);
+							unreadChatMessages.add(disconnectMessage);
 							return;
 						}
 					}
@@ -487,8 +492,10 @@ public class MumbleService extends Service implements OnInitListener {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					if(stateSpannable != null && isConnected())
+					if(stateSpannable != null && isConnected()) {
 						chatMessages.add(stateSpannable);
+						unreadChatMessages.add(stateSpannable);
+					}
 				}
 
 				@Override
@@ -555,6 +562,7 @@ public class MumbleService extends Service implements OnInitListener {
 	private PlumbleChatFormatter chatFormatter;
 	
 	final List<Spannable> chatMessages = new LinkedList<Spannable>();
+	final List<Spannable> unreadChatMessages = new LinkedList<Spannable>();
 	final List<Message> messages = new LinkedList<Message>();
 	final List<Message> unreadMessages = new LinkedList<Message>();
 	final List<Channel> channels = new ArrayList<Channel>();
@@ -781,6 +789,14 @@ public class MumbleService extends Service implements OnInitListener {
 		return Collections.unmodifiableList(chatMessages);
 	}
 
+	public List<Spannable> getUnreadChatMessages() {
+		return Collections.unmodifiableList(unreadChatMessages);
+	}
+	
+	public void clearUnreadChatMessages() {
+		unreadChatMessages.clear();
+	}
+
 	public void sendUdpMessage(final byte[] buffer, final int length) {
 		mClient.sendUdpMessage(buffer, length, false);
 	}
@@ -994,6 +1010,7 @@ public class MumbleService extends Service implements OnInitListener {
 
 		// Now observers shouldn't need these anymore.
 		chatMessages.clear();
+		unreadChatMessages.clear();
 		users.clear();
 		messages.clear();
 		channels.clear();
@@ -1212,6 +1229,7 @@ public class MumbleService extends Service implements OnInitListener {
 
 	public void clearChat() {
 		chatMessages.clear();
+		unreadChatMessages.clear();
 		messages.clear();
 		unreadMessages.clear();
 	}

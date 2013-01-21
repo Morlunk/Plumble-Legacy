@@ -918,6 +918,16 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		}
 	}
 	
+	/**
+	 * Updates the chat with latest messages from the service.
+	 */
+	public void updateChat() {
+		for(Spannable spannable : mService.getUnreadChatMessages()) {
+			chatFragment.addChatMessage(spannable);
+		}
+		mService.clearUnreadChatMessages();
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.morlunk.mumbleclient.app.ChannelProvider#sendChannelMessage(java.lang.String)
 	 */
@@ -986,12 +996,12 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     class ChannelServiceObserver extends BaseServiceObserver {
 		@Override
 		public void onMessageReceived(final Message msg) throws RemoteException {
-			reloadChat();
+			updateChat();
 		}
 
 		@Override
 		public void onMessageSent(final Message msg) throws RemoteException {
-			reloadChat();
+			updateChat();
 		}
 		
 		@Override
@@ -1037,12 +1047,12 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 				mService.setDisconnectResponse(remove);
 			}
 			listFragment.removeUser(user);
-			reloadChat();
+			updateChat();
 		}
 
 		@Override
 		public void onUserStateUpdated(final User user, final UserState state) throws RemoteException {
-			reloadChat();
+			updateChat();
 		}
 		
 		@Override
