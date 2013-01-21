@@ -1,11 +1,7 @@
 package com.morlunk.mumbleclient.service;
 
 import net.sf.mumble.MumbleProto.UserState;
-import android.text.Html;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
 import android.text.format.DateUtils;
-import android.text.style.ForegroundColorSpan;
 
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.service.model.Message;
@@ -23,8 +19,8 @@ public class PlumbleChatFormatter {
 		this.service = service;
 	}
 	
-	public Spannable formatMessage(Message msg) {
-		final SpannableStringBuilder sb = new SpannableStringBuilder();
+	public String formatMessage(Message msg) {
+		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
 		sb.append(DateUtils.formatDateTime(
 			service,
@@ -40,8 +36,7 @@ public class PlumbleChatFormatter {
 				targetString = msg.channel.name;
 			else
 				targetString = service.getString(R.string.unknown);
-			sb.append(service.getString(R.string.chat_message_to)+" ");
-			appendNameHighlight(targetString, sb);
+			sb.append(service.getString(R.string.chat_message_to)+" "+getHighlightedString(targetString));
 		} else {
 			if (msg.channelIds > 0) {
 				sb.append("(C) ");
@@ -57,15 +52,15 @@ public class PlumbleChatFormatter {
 			else
 				actorName = msg.actor.name;
 			
-			appendNameHighlight(actorName, sb);
+			sb.append(getHighlightedString(actorName));
 		}
 		sb.append(": ");
-		sb.append(Html.fromHtml(msg.message));
-		return sb;
+		sb.append(msg.message);
+		return sb.toString();
 	}
 	
-	public Spannable formatUserStateUpdate(User user, UserState userState) {
-		final SpannableStringBuilder sb = new SpannableStringBuilder();
+	public String formatUserStateUpdate(User user, UserState userState) {
+		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
 		sb.append(DateUtils.formatDateTime(
 			service,
@@ -75,14 +70,14 @@ public class PlumbleChatFormatter {
 		
 		// Connect action
 		if(user == null) {
-			sb.append(service.getString(R.string.chat_notify_connected, userState.getName()));
-			return sb;
+			sb.append(service.getString(R.string.chat_notify_connected, getHighlightedString(userState.getName())));
+			return sb.toString();
 		}
 		
 		// Disconnect action
 		if(userState == null) {
-			sb.append(service.getString(R.string.chat_notify_disconnected, user.name));
-			return sb;
+			sb.append(service.getString(R.string.chat_notify_disconnected, getHighlightedString(user.name)));
+			return sb.toString();
 		}
 		
 		User actor = null;
@@ -93,8 +88,8 @@ public class PlumbleChatFormatter {
 		// Channel move actions
 		if(userState.hasChannelId() && userState.getChannelId() == service.getCurrentChannel().id) {
 			String actorName = (actor != null) ? actor.name : service.getString(R.string.server);
-			sb.append(service.getString(R.string.chat_notify_moved, user.name, user.getChannel().name, actorName));
-			return sb;
+			sb.append(service.getString(R.string.chat_notify_moved, getHighlightedString(user.name), getHighlightedString(user.getChannel().name), getHighlightedString(actorName)));
+			return sb.toString();
 		}
 		
 		// Mute/deafen actions within the current user's channel
@@ -110,16 +105,16 @@ public class PlumbleChatFormatter {
 					}
 				} else {
 					if(userState.getSelfMute() && userState.getSelfDeaf()) {
-						sb.append(service.getString(R.string.chat_notify_now_muted_deafened, user.name));
+						sb.append(service.getString(R.string.chat_notify_now_muted_deafened, getHighlightedString(user.name)));
 					} else if(userState.getSelfMute()) {
-						sb.append(service.getString(R.string.chat_notify_now_muted, user.name));
+						sb.append(service.getString(R.string.chat_notify_now_muted, getHighlightedString(user.name)));
 					} else if(user.userState == User.USERSTATE_DEAFENED && !userState.getSelfDeaf()){
-						sb.append(service.getString(R.string.chat_notify_now_unmuted_undeafened, user.name));
+						sb.append(service.getString(R.string.chat_notify_now_unmuted_undeafened, getHighlightedString(user.name)));
 					} else {
-						sb.append(service.getString(R.string.chat_notify_now_unmuted, user.name));
+						sb.append(service.getString(R.string.chat_notify_now_unmuted, getHighlightedString(user.name)));
 					}
 				}
-				return sb;
+				return sb.toString();
 			}
 		}
 		
@@ -127,11 +122,10 @@ public class PlumbleChatFormatter {
 	}
 	
 	/**
-	 * Convenience method to insert a span for colouring a string to a SSB. For channel/user names.
+	 * Convenience method to get a colored HTML string. For channel/user names.
 	 */
-	private void appendNameHighlight(String name, SpannableStringBuilder sb) {
-		sb.append(name);
-		sb.setSpan(new ForegroundColorSpan(service.getResources().getColor(R.color.abs__holo_blue_light)), sb.length()-name.length(), sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	private String getHighlightedString(String name) {
+		return "<font color=\"#33b5e5\">"+name+"</font>";
 	}
 
 }

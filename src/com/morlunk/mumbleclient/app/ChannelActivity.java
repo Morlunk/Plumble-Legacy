@@ -34,7 +34,6 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
-import android.text.Spannable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -913,8 +912,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	 */
 	public void reloadChat() {
 		chatFragment.clear();
-		for(Spannable spannable : mService.getChatMessages()) {
-			chatFragment.addChatMessage(spannable);
+		for(String message : mService.getChatMessages()) {
+			chatFragment.addChatMessage(message);
 		}
 	}
 	
@@ -922,8 +921,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	 * Updates the chat with latest messages from the service.
 	 */
 	public void updateChat() {
-		for(Spannable spannable : mService.getUnreadChatMessages()) {
-			chatFragment.addChatMessage(spannable);
+		for(String message : mService.getUnreadChatMessages()) {
+			chatFragment.addChatMessage(message);
 		}
 		mService.clearUnreadChatMessages();
 	}

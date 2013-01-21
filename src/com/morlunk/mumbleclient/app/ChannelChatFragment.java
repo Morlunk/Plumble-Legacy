@@ -5,7 +5,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Html;
-import android.text.Spannable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -92,8 +91,8 @@ public class ChannelChatFragment extends SherlockFragment {
 		return view;
 	}
 	
-	public void addChatMessage(Spannable text) {
-		chatText.append(text);
+	public void addChatMessage(String text) {
+		chatText.append(Html.fromHtml(text));
 		chatText.append(Html.fromHtml("<br>"));
 		
 		chatScroll.post(new Runnable() {

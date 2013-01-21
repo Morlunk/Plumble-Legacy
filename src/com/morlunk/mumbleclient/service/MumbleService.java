@@ -31,7 +31,6 @@ import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.support.v4.app.NotificationCompat;
-import android.text.Spannable;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -333,7 +332,7 @@ public class MumbleService extends Service implements OnInitListener {
 					if(settings.isTextToSpeechEnabled() && !isDeafened())
 						readMessage(msg);
 					
-					Spannable message = chatFormatter.formatMessage(msg);
+					String message = chatFormatter.formatMessage(msg);
 					chatMessages.add(message);
 					unreadChatMessages.add(message);
 					messages.add(msg);
@@ -356,7 +355,7 @@ public class MumbleService extends Service implements OnInitListener {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					Spannable message = chatFormatter.formatMessage(msg);
+					String message = chatFormatter.formatMessage(msg);
 					chatMessages.add(message);
 					unreadChatMessages.add(message);
 					messages.add(msg);
@@ -426,7 +425,7 @@ public class MumbleService extends Service implements OnInitListener {
 					for (int i = 0; i < users.size(); i++) {
 						if (users.get(i).session == userId) {
 							this.user = users.remove(i);
-							Spannable disconnectMessage = chatFormatter.formatUserStateUpdate(user, null);
+							String disconnectMessage = chatFormatter.formatUserStateUpdate(user, null);
 							chatMessages.add(disconnectMessage);
 							unreadChatMessages.add(disconnectMessage);
 							return;
@@ -488,13 +487,13 @@ public class MumbleService extends Service implements OnInitListener {
 
 		@Override
 		public void userStateUpdated(final User user, final UserState state) {
-			final Spannable stateSpannable = chatFormatter.formatUserStateUpdate(user, state);
+			final String stateString = chatFormatter.formatUserStateUpdate(user, state);
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					if(stateSpannable != null && isConnected()) {
-						chatMessages.add(stateSpannable);
-						unreadChatMessages.add(stateSpannable);
+					if(stateString != null && isConnected()) {
+						chatMessages.add(stateString);
+						unreadChatMessages.add(stateString);
 					}
 				}
 
@@ -561,8 +560,8 @@ public class MumbleService extends Service implements OnInitListener {
 	
 	private PlumbleChatFormatter chatFormatter;
 	
-	final List<Spannable> chatMessages = new LinkedList<Spannable>();
-	final List<Spannable> unreadChatMessages = new LinkedList<Spannable>();
+	final List<String> chatMessages = new LinkedList<String>();
+	final List<String> unreadChatMessages = new LinkedList<String>();
 	final List<Message> messages = new LinkedList<Message>();
 	final List<Message> unreadMessages = new LinkedList<Message>();
 	final List<Channel> channels = new ArrayList<Channel>();
@@ -785,11 +784,11 @@ public class MumbleService extends Service implements OnInitListener {
 		mProtocol.sendUserTestMessage(string, chatTarget);
 	}
 
-	public List<Spannable> getChatMessages() {
+	public List<String> getChatMessages() {
 		return Collections.unmodifiableList(chatMessages);
 	}
 
-	public List<Spannable> getUnreadChatMessages() {
+	public List<String> getUnreadChatMessages() {
 		return Collections.unmodifiableList(unreadChatMessages);
 	}
 	
