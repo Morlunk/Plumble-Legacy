@@ -111,7 +111,8 @@ public class DbAdapter {
 	}
 
 	public final void close() {
-		dbHelper.close();
+		if(db.isOpen())
+			dbHelper.close();
 	}
 
 	public final long createServer(
@@ -302,6 +303,9 @@ public class DbAdapter {
 	}
 	
 	public void setCommentSeen(String who, String commentHash) {
+		// First, remove the existence of any other comments by the user.
+		db.delete(TABLE_COMMENTS, COMMENTS_WHO+"=?", new String[] { who });
+		
 		ContentValues values = new ContentValues();
 		values.put(COMMENTS_WHO, who);
 		values.put(COMMENTS_COMMENT, commentHash);

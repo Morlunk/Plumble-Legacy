@@ -13,6 +13,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -31,6 +32,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
@@ -285,8 +287,9 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			// Tie the view to the current user.
 			final User u = this.visibleUserList.get(position);
 			v.setTag(u.session);
-
+			
 			refreshElements(v, u);
+			
 			return v;
 		}
 
@@ -442,22 +445,11 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			localMute.setVisibility(user.localMuted ? View.VISIBLE : View.GONE);
 			
 			if(user.comment != null || user.commentHash != null) {
-				// Launch a new thread to ask the DB whether the user's comment has been seen or not.
-				new AsyncTask<User, Void, Boolean>() {
-
-					@Override
-					protected Boolean doInBackground(User... params) {
-						User commentUser = params[0];
-						dbAdapter.open();
-						boolean commentSeen = dbAdapter.isCommentSeen(commentUser.name, commentUser.commentHash != null ? commentUser.commentHash.toStringUtf8() : commentUser.comment);
-						dbAdapter.close();
-						return commentSeen;
-					}
-					
-					protected void onPostExecute(Boolean result) {
-						comment.setImageResource(result ? R.drawable.ic_comment_seen : R.drawable.ic_comment);	
-					};
-				}.execute(user);
+				// Ask the DB whether the user's comment has been seen or not.
+				dbAdapter.open();
+				boolean commentSeen = dbAdapter.isCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
+				comment.setImageResource(commentSeen ? R.drawable.ic_comment_seen : R.drawable.ic_comment);
+				dbAdapter.close();
 			}
 			
 			comment.setVisibility(user.comment != null || user.commentHash != null ? View.VISIBLE : View.GONE);
