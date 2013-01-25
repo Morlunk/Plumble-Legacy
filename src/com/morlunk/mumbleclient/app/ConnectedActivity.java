@@ -10,7 +10,12 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.text.InputType;
+import android.view.KeyEvent;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.morlunk.mumbleclient.R;
@@ -115,7 +120,6 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 
 	protected void onDisconnected() {
 		final Object response = mService.getDisconnectResponse();
-		final Server server = mService.getConnectedServer();
 		
 		if(response != null) {
 			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
@@ -125,6 +129,18 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 					// Allow password entry
 					final EditText passwordField = new EditText(this);
 					passwordField.setHint(R.string.serverPassword);
+					passwordField.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+					passwordField.setImeOptions(EditorInfo.IME_ACTION_GO);
+					passwordField.setOnEditorActionListener(new OnEditorActionListener() {
+						@Override
+						public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+							if(actionId == EditorInfo.IME_ACTION_GO) {
+								reconnectWithPassword(passwordField.getText().toString());
+								return true;
+							}
+							return false;
+						}
+					});
 					alertBuilder.setView(passwordField);
 
 					alertBuilder.setTitle(reject.getReason());
@@ -132,14 +148,7 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 					alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							// Update server
-							
-							DbAdapter adapter = new DbAdapter(ConnectedActivity.this);
-							adapter.open();
-							adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
-							Server updatedServer = adapter.fetchServer(server.getId()); // Update server object again
-							adapter.close();
-							mService.connectToServer(updatedServer);
+							reconnectWithPassword(passwordField.getText().toString());
 						}
 					});
 					alertBuilder.setOnCancelListener(new OnCancelListener() {
@@ -206,6 +215,17 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 		} else if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_DISCONNECTED){
 			finish();
 		}
+	}
+	
+	private void reconnectWithPassword(String password) {
+		Server server = mService.getConnectedServer();
+		// Update server
+		DbAdapter adapter = new DbAdapter(ConnectedActivity.this);
+		adapter.open();
+		adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), password);
+		Server updatedServer = adapter.fetchServer(server.getId()); // Update server object again
+		adapter.close();
+		mService.connectToServer(updatedServer);
 	}
 
 	@Override
