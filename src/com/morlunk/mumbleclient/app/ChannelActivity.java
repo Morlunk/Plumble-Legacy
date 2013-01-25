@@ -2,6 +2,8 @@ package com.morlunk.mumbleclient.app;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -114,6 +116,14 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      */
     ViewPager mViewPager;
 
+    private Comparator<User> userComparator = new Comparator<User>() {
+		@Override
+		public int compare(final User object1, final User object2) {
+			return object1.name.toLowerCase(Locale.ENGLISH)
+					.compareTo(object2.name.toLowerCase(Locale.ENGLISH));
+		}
+	};
+    
     // Favourites
     private List<Favourite> favourites;
     private MenuItem searchItem;
@@ -889,7 +899,16 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	 */
 	@Override
 	public List<User> getChannelUsers() {
-		return mService.getUserList();
+		List<User> channelUsers = new ArrayList<User>();
+		for(User user : mService.getUserList()) {
+			if(user.getChannel().equals(getChannel())) {
+				channelUsers.add(user);
+			}
+		}
+		
+		Collections.sort(channelUsers, userComparator);
+		
+		return channelUsers;
 	}
 	
 	@Override
