@@ -416,7 +416,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         		mService.getCurrentUser() != null) {
         	updateMuteDeafenMenuItems(mService.isMuted(), mService.isDeafened());
         }
-        	
+        
+        updateFavouriteMenuItem();
         
         return true;
     }
@@ -484,9 +485,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      * Updates the icon and title of the 'favourites' menu icon to represent the channel's favourited status.
      */
     public void updateFavouriteMenuItem() {
-    	if(favouritesItem == null)
+    	if(favouritesItem == null || getChannel() == null)
     		return;
-    	
     	int currentChannel = getChannel().id;
     	
     	boolean isFavouriteChannel = false;
@@ -780,12 +780,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			}
 
 			protected void onPostExecute(Void result) {
-				Toast.makeText(
-						ChannelActivity.this,
-						channelFavourite == null ? R.string.favoriteAdded
-								: R.string.favoriteRemoved, Toast.LENGTH_SHORT)
-						.show();
-
 				favourites = loadFavourites();
 				updateFavouriteMenuItem();
 			};
