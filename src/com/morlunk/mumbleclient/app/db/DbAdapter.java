@@ -23,7 +23,7 @@ public class DbAdapter {
 	public static final String SERVER_PORT = "port";
 	public static final String SERVER_USERNAME = "username";
 	public static final String SERVER_PASSWORD = "password";
-	public static final String TABLE_SERVER_CREATE_SQL = "CREATE TABLE `"+TABLE_SERVER+"` ("
+	public static final String TABLE_SERVER_CREATE_SQL = "CREATE TABLE IF NOT EXISTS `"+TABLE_SERVER+"` ("
 			   + "`"+SERVER_ID+"` INTEGER PRIMARY KEY AUTOINCREMENT,"
 			   + "`"+SERVER_NAME+"` TEXT NOT NULL,"
 			   + "`"+SERVER_HOST+"` TEXT NOT NULL,"
@@ -36,7 +36,7 @@ public class DbAdapter {
 	public static final String FAVOURITES_ID = "_id";
 	public static final String FAVOURITES_CHANNEL = "channel";
 	public static final String FAVOURITES_SERVER = "server";
-	public static final String TABLE_FAVOURITES_CREATE_SQL = "CREATE TABLE `"+TABLE_FAVOURITES+"` ("
+	public static final String TABLE_FAVOURITES_CREATE_SQL = "CREATE TABLE IF NOT EXISTS `"+TABLE_FAVOURITES+"` ("
 			   +"`"+FAVOURITES_ID+"` INTEGER PRIMARY KEY AUTOINCREMENT,"
 			   +"`"+FAVOURITES_CHANNEL+"` TEXT NOT NULL,"
 			   +"`"+FAVOURITES_SERVER+"` INTEGER NOT NULL"
@@ -46,7 +46,7 @@ public class DbAdapter {
 	public static final String TOKENS_ID = "_id";
 	public static final String TOKENS_VALUE = "value";
 	public static final String TOKENS_SERVER = "server";
-	public static final String TABLE_TOKENS_CREATE_SQL = "CREATE TABLE `"+TABLE_TOKENS+"` ("
+	public static final String TABLE_TOKENS_CREATE_SQL = "CREATE TABLE IF NOT EXISTS `"+TABLE_TOKENS+"` ("
 			   +"`"+TOKENS_ID+"` INTEGER PRIMARY KEY AUTOINCREMENT,"
 			   +"`"+TOKENS_VALUE+"` TEXT NOT NULL,"
 			   +"`"+TOKENS_SERVER+"` INTEGER NOT NULL"
@@ -56,7 +56,7 @@ public class DbAdapter {
 	public static final String COMMENTS_WHO = "who";
 	public static final String COMMENTS_COMMENT = "comment";
 	public static final String COMMENTS_SEEN = "seen";
-	public static final String TABLE_COMMENTS_CREATE_SQL = "CREATE TABLE `"+TABLE_COMMENTS+"` ("
+	public static final String TABLE_COMMENTS_CREATE_SQL = "CREATE TABLE IF NOT EXISTS `"+TABLE_COMMENTS+"` ("
 			   +"`"+COMMENTS_WHO+"` TEXT NOT NULL,"
 			   +"`"+COMMENTS_COMMENT+"` TEXT NOT NULL,"
 			   +"`"+COMMENTS_SEEN+"` DATE NOT NULL"
