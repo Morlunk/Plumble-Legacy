@@ -14,7 +14,6 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -32,7 +31,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
-import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
@@ -292,6 +290,13 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			
 			View userView = channelUsersList.getChildAt(userPosition-channelUsersList.getFirstVisiblePosition());
 			
+			// Update comment state
+			if(user.comment != null || user.commentHash != null) {
+				dbAdapter.open();
+				userCommentsSeen.put(user, dbAdapter.isCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment));
+				dbAdapter.close();
+			}
+			
 			if(userView != null && userView.isShown())
 				refreshElements(userView, user);
 		}
@@ -386,6 +391,13 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			
 			@Override
 			public void onClick(View v) {
+				ImageView commentView = (ImageView)v;
+				commentView.setImageResource(R.drawable.ic_comment_seen);
+				
+				dbAdapter.open();
+				dbAdapter.setCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
+				dbAdapter.close();
+				
 				AlertDialog.Builder builder = new AlertDialog.Builder(context);
 				builder.setTitle("Comment");
 				builder.setPositiveButton("Close", null);
