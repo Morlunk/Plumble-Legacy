@@ -245,6 +245,8 @@ public class DbAdapter {
 			cursor.moveToNext();
 		}
 		
+		cursor.close();
+		
 		return tokens;
 	}
 	
@@ -299,7 +301,9 @@ public class DbAdapter {
 	
 	public boolean isCommentSeen(String who, String commentHash) {
 		Cursor cursor = db.query(TABLE_COMMENTS, new String[] { COMMENTS_WHO, COMMENTS_COMMENT, COMMENTS_SEEN }, COMMENTS_WHO+"=? AND "+COMMENTS_COMMENT+"=?", new String[] { who, commentHash }, null, null, null);
-		return cursor.moveToNext();
+		boolean hasNext = cursor.moveToNext();
+		cursor.close();
+		return hasNext;
 	}
 	
 	public void setCommentSeen(String who, String commentHash) {

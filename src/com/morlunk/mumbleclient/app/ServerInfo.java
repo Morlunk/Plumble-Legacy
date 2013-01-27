@@ -16,6 +16,7 @@ import com.actionbarsherlock.app.SherlockDialogFragment;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
+import com.morlunk.mumbleclient.service.MumbleService;
 
 public class ServerInfo extends SherlockDialogFragment {
 	private EditText nameEdit;
@@ -34,10 +35,7 @@ public class ServerInfo extends SherlockDialogFragment {
 		if(getArguments() != null) {
 			long serverId = this.getArguments().getLong("serverId", -1);
 			if(serverId != -1) {
-				DbAdapter adapter = new DbAdapter(activity);
-				adapter.open();
-				server = adapter.fetchServer(serverId);
-				adapter.close();
+				server = MumbleService.getCurrentService().getDatabaseAdapter().fetchServer(serverId);
 			}
 		}
 		
@@ -109,15 +107,13 @@ public class ServerInfo extends SherlockDialogFragment {
 
 		String username = (usernameEdit).getText().toString().trim();
 
-		DbAdapter db = new DbAdapter(getActivity());
-
-		db.open();
+		DbAdapter db = MumbleService.getCurrentService().getDatabaseAdapter();
+		
 		if (server != null) {
 			db.updateServer(server.getId(), name, host, port, username, server.getPassword());
 		} else {
 			db.createServer(name, host, port, username, "");
 		}
-		db.close();
 
 		dismiss();
 		serverListener.serverInfoUpdated();

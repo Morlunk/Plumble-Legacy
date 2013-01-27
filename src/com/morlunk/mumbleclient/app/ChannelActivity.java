@@ -71,6 +71,7 @@ import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
+import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
@@ -89,6 +90,7 @@ interface ChannelProvider {
 	public void setChatTarget(User chatTarget);
 	public void sendChannelMessage(String message);
 	public void sendUserMessage(String string, User chatTarget);
+	public MumbleService getService();
 }
 
 interface TokenDialogFragmentListener {
@@ -442,6 +444,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
             	searchItem.collapseActionView();
 		}
     }
+
+	@Override
+	public MumbleService getService() {
+		return mService;
+	}
     
     /**
      * Creates the channel list spinner with the channel list provided by the service.
@@ -661,15 +668,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	 * Retrieves and sends the access tokens for the active server from the database.
 	 */
 	public void sendAccessTokens() {
-		DbAdapter dbAdapter = new DbAdapter(this);
+		DbAdapter dbAdapter = mService.getDatabaseAdapter();
 		AsyncTask<DbAdapter, Void, Void> accessTask = new AsyncTask<DbAdapter, Void, Void>() {
 
 			@Override
 			protected Void doInBackground(DbAdapter... params) {
 				DbAdapter adapter = params[0];
-				adapter.open();
 				List<String> tokens = adapter.fetchAllTokens(mService.getConnectedServer().getId());
-				adapter.close();
 				mService.sendAccessTokens(tokens);
 				return null;
 			}
@@ -763,16 +768,14 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
 			@Override
 			protected Void doInBackground(Void... params) {
-				DbAdapter dbAdapter = new DbAdapter(ChannelActivity.this);
-				dbAdapter.open();
+				DbAdapter dbAdapter = mService.getDatabaseAdapter();
 
 				if (channelFavourite == null)
 					dbAdapter.createFavourite(mService.getConnectedServer().getId(),
 							channel.id);
 				else
 					dbAdapter.deleteFavourite(channelFavourite.getId());
-
-				dbAdapter.close();
+				
 				return null;
 			}
 
@@ -808,10 +811,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	}
 	
 	public List<Favourite> loadFavourites() {
-        DbAdapter dbAdapter = new DbAdapter(this);
-        dbAdapter.open();
+        DbAdapter dbAdapter = mService.getDatabaseAdapter();
         List<Favourite> favouriteResult = dbAdapter.fetchAllFavourites(mService.getConnectedServer().getId());
-        dbAdapter.close();
         return favouriteResult;
 	}
 	

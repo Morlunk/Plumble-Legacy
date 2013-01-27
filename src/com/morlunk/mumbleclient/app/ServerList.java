@@ -39,7 +39,6 @@ import com.actionbarsherlock.view.MenuItem;
 import com.crittercism.app.Crittercism;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
-import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
@@ -309,10 +308,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		alertBuilder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				DbAdapter adapter = new DbAdapter(ServerList.this);
-				adapter.open();
-				adapter.deleteServer(id);
-				adapter.close();
+				mService.getDatabaseAdapter().deleteServer(id);
 				fillList();
 			}
 		});
@@ -359,10 +355,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	 * @param id
 	 */
 	protected final void connectServer(final long id) {
-		DbAdapter adapter = new DbAdapter(this);
-		adapter.open();
-		Server server = adapter.fetchServer(id);
-		adapter.close();
+		Server server = mService.getDatabaseAdapter().fetchServer(id);
 
 		registerConnectionReceiver();
 		
@@ -406,16 +399,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		super.onPause();
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.morlunk.mumbleclient.app.ConnectedListActivity#onResume()
-	 */
-	@Override
-	protected void onResume() {
-		super.onResume();
-			
-		fillList();
-	}
-
 	@Override
 	protected void onSaveInstanceState(final Bundle outState) {
 		super.onSaveInstanceState(outState);
@@ -431,13 +414,11 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				mService.registerObserver(mServiceObserver);
 			}
 		}
+		fillList();
 	}
 
 	private void fillList() {
-		DbAdapter dbAdapter = new DbAdapter(this);
-		dbAdapter.open();
-		List<Server> servers = dbAdapter.fetchAllServers();
-		dbAdapter.close();
+		List<Server> servers = mService.getDatabaseAdapter().fetchAllServers();
 
 		serverAdapter = new ServerAdapter(this, servers);
 		gridView.setAdapter(serverAdapter);

@@ -227,7 +227,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			final Runnable visibleUsersChangedCallback) {
 			this.context = context;
 			this.visibleUsersChangedCallback = visibleUsersChangedCallback;
-			this.dbAdapter = new DbAdapter(context);
+			this.dbAdapter = MumbleService.getCurrentService().getDatabaseAdapter();
 			
 			// Fetch theme dependent icon
 			Settings settings = Settings.getInstance(context);
@@ -292,9 +292,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			
 			// Update comment state
 			if(user.comment != null || user.commentHash != null) {
-				dbAdapter.open();
 				userCommentsSeen.put(user, dbAdapter.isCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment));
-				dbAdapter.close();
 			}
 			
 			if(userView != null && userView.isShown())
@@ -327,16 +325,12 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			this.users.clear();
 			this.userCommentsSeen.clear();
 			
-			dbAdapter.open();
-			
 			for (User user : newUsers) {
 				this.users.add(user);
 				// Get the user's comment history
 				if(user.comment != null || user.commentHash != null)
 					this.userCommentsSeen.put(user, dbAdapter.isCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment));
 			}
-			
-			dbAdapter.close();
 		}
 		
 		private void refreshElements(final View view, final User user) {
@@ -394,9 +388,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 				ImageView commentView = (ImageView)v;
 				commentView.setImageResource(R.drawable.ic_comment_seen);
 				
-				dbAdapter.open();
 				dbAdapter.setCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
-				dbAdapter.close();
 				
 				AlertDialog.Builder builder = new AlertDialog.Builder(context);
 				builder.setTitle("Comment");

@@ -134,11 +134,9 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 						public void onClick(DialogInterface dialog, int which) {
 							// Update server
 							
-							DbAdapter adapter = new DbAdapter(ConnectedActivity.this);
-							adapter.open();
+							DbAdapter adapter = mService.getDatabaseAdapter();
 							adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
 							Server updatedServer = adapter.fetchServer(server.getId()); // Update server object again
-							adapter.close();
 							mService.connectToServer(updatedServer);
 						}
 					});

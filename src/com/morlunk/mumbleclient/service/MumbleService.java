@@ -44,6 +44,7 @@ import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.ChannelActivity;
+import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
@@ -525,6 +526,7 @@ public class MumbleService extends Service implements OnInitListener {
 	private MumbleConnection mClient;
 	private MumbleProtocol mProtocol;
 
+	private DbAdapter dbAdapter;
 	private Settings settings;
 	private Server connectedServer;
 	
@@ -577,6 +579,10 @@ public class MumbleService extends Service implements OnInitListener {
 	 */
 	public static MumbleService getCurrentService() {
 		return currentService;
+	}
+	
+	public DbAdapter getDatabaseAdapter() {
+		return dbAdapter;
 	}
 	
 	public Server getConnectedServer() {
@@ -744,6 +750,9 @@ public class MumbleService extends Service implements OnInitListener {
 		chatFormatter = new PlumbleChatFormatter(this);
 		
 		currentService = this;
+		
+		dbAdapter = new DbAdapter(this);
+		dbAdapter.open();
 	}
 	
 	@Override
@@ -754,6 +763,8 @@ public class MumbleService extends Service implements OnInitListener {
 		hideNotification();
 
 		Log.i(Globals.LOG_TAG, "MumbleService: Destroyed");
+		
+		dbAdapter.close();
 	}
 
 	@Override
