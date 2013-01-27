@@ -2,8 +2,10 @@ package com.morlunk.mumbleclient.app;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import net.sf.mumble.MumbleProto.RequestBlob;
 import android.app.Activity;
@@ -12,6 +14,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -29,6 +32,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
@@ -86,7 +90,6 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 	
 	protected ListView channelUsersList;
 	private UserListAdapter usersAdapter;
-	private TextView noUsersText;
 
 	private User selectedUser;
 	
@@ -107,12 +110,16 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		usersAdapter.refreshUser(user);
 	}
 	
+	public void updateUserTalking(User user) {
+		usersAdapter.refreshTalkingState(user);
+	}
+	
 	/**
 	 * Removes the user from the channel list.
 	 * @param user
 	 */
 	public void removeUser(User user) {
-		usersAdapter.removeUser(user.session);
+		usersAdapter.removeUser(user);
 	}
 	
 	/* (non-Javadoc)
@@ -126,7 +133,6 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		// Get the UI views
 		channelUsersList = (ListView) view.findViewById(R.id.channelUsers);
 		channelUsersList.setOnItemClickListener(this);
-		noUsersText = (TextView) view.findViewById(R.id.noUsersText);
 		
 		return view;
 	}
@@ -155,7 +161,6 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		usersAdapter = new UserListAdapter(getActivity(), null);
 		channelUsersList.setAdapter(usersAdapter);
 		registerForContextMenu(channelUsersList);
-		channelUsersList.setEmptyView(noUsersText);
 	}
 	
 	/* (non-Javadoc)
@@ -211,6 +216,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		private final Context context;
 		private final DbAdapter dbAdapter;
 		private final List<User> users = new ArrayList<User>();
+		private final Map<User, Boolean> userCommentsSeen = new HashMap<User, Boolean>();
 
 		private final Runnable visibleUsersChangedCallback;
 
@@ -246,6 +252,11 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		}
 		
 		@Override
+		public int getViewTypeCount() {
+			return 1;
+		}
+		
+		@Override
 		public final View getView(final int position, View v, final ViewGroup parent) {
 			// All views are the same.
 			if (v == null) {
@@ -273,23 +284,34 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			super.notifyDataSetChanged();
 		}
 		
-		public void refreshUser(User user) {
-			int userPosition = users.indexOf(user);
+		public void refreshUser(User user) {			
+			if(!users.contains(user))
+				return;
 			
-			if(userPosition < 0)
-				return; // Exit if user to refresh is not found.
+			int userPosition = users.indexOf(user);
 			
 			View userView = channelUsersList.getChildAt(userPosition-channelUsersList.getFirstVisiblePosition());
 			
 			if(userView != null && userView.isShown())
 				refreshElements(userView, user);
+		}
+		
+		public void refreshTalkingState(User user) {
+			if(!users.contains(user))
+				return;
 			
-			users.set(userPosition, user);
+			int userPosition = users.indexOf(user);
+			
+			View userView = channelUsersList.getChildAt(userPosition-channelUsersList.getFirstVisiblePosition());
+			
+			if(userView != null && userView.isShown())
+				refreshTalkingState(userView, user);
+			
 		}
 
-		public void removeUser(final int id) {
-			User user = users.get(id);
-			users.remove(id);
+		public void removeUser(final User user) {
+			users.remove(user);
+			userCommentsSeen.remove(user);
 
 			if (user != null) {
 				notifyDataSetChanged();
@@ -298,19 +320,44 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 
 		public void setUsers(final List<User> newUsers) {
 			this.users.clear();
+			this.userCommentsSeen.clear();
+			
+			dbAdapter.open();
+			
 			for (User user : newUsers) {
 				this.users.add(user);
+				// Get the user's comment history
+				if(user.comment != null || user.commentHash != null)
+					this.userCommentsSeen.put(user, dbAdapter.isCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment));
 			}
+			
+			dbAdapter.close();
 		}
 		
 		private void refreshElements(final View view, final User user) {
 			final TextView name = (TextView) view.findViewById(R.id.userRowName);
-			final ImageView state = (ImageView) view.findViewById(R.id.userRowState);
 			final ImageView comment = (ImageView) view.findViewById(R.id.commentState);
 			final ImageView localMute = (ImageView) view.findViewById(R.id.localMuteState);
 			final ImageView chatActive = (ImageView) view.findViewById(R.id.activeChatState);
 			
 			name.setText(user.name);
+			
+			refreshTalkingState(view, user);
+			
+			localMute.setVisibility(user.localMuted ? View.VISIBLE : View.GONE);
+			
+			if(user.comment != null || user.commentHash != null)
+				comment.setImageResource(userCommentsSeen.get(user) ? R.drawable.ic_comment_seen : R.drawable.ic_comment);
+			
+			comment.setVisibility(user.comment != null || user.commentHash != null ? View.VISIBLE : View.GONE);
+			comment.setOnClickListener(new OnCommentClickListener(user));
+			
+			chatActive.setImageDrawable(chatDrawable);
+			chatActive.setVisibility(user.equals(selectedUser) ? View.VISIBLE : View.GONE);
+		}
+		
+		private void refreshTalkingState(final View view, final User user) {
+			final ImageView state = (ImageView) view.findViewById(R.id.userRowState);
 
 			switch (user.userState) {
 			case User.USERSTATE_DEAFENED:
@@ -326,72 +373,56 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 					state.setImageResource(R.drawable.ic_talking_off);
 				}
 			}
+		}
+		
+
+		private class OnCommentClickListener implements OnClickListener {
 			
-			localMute.setVisibility(user.localMuted ? View.VISIBLE : View.GONE);
+			private User user;
 			
-			if(user.comment != null || user.commentHash != null) {
-				// Ask the DB whether the user's comment has been seen or not.
-				dbAdapter.open();
-				boolean commentSeen = dbAdapter.isCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
-				comment.setImageResource(commentSeen ? R.drawable.ic_comment_seen : R.drawable.ic_comment);
-				dbAdapter.close();
+			public OnCommentClickListener(User user) {
+				this.user = user;
 			}
 			
-			comment.setVisibility(user.comment != null || user.commentHash != null ? View.VISIBLE : View.GONE);
-			comment.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				AlertDialog.Builder builder = new AlertDialog.Builder(context);
+				builder.setTitle("Comment");
+				builder.setPositiveButton("Close", null);
+				final WebView webView = new WebView(context);
+				webView.loadDataWithBaseURL("", "<center>Retrieving...</center>", "text/html", "utf-8", "");
+				builder.setView(webView);
 				
-				@Override
-				public void onClick(View v) {
-					if(user.comment != null || user.commentHash != null) {
-						comment.setImageResource(R.drawable.ic_comment_seen);
-						dbAdapter.open();
-						dbAdapter.setCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
-						dbAdapter.close();
-					}
+				final AlertDialog dialog = builder.show();
+				
+				if(user.comment != null) {
+					webView.loadDataWithBaseURL("", user.comment, "text/html", "utf-8", "");
+				} else if(user.commentHash != null) {
+					// Retrieve comment from blob
+					final RequestBlob.Builder blobBuilder = RequestBlob.newBuilder();
+					blobBuilder.addSessionComment(user.session);
 					
-					AlertDialog.Builder builder = new AlertDialog.Builder(context);
-					builder.setTitle("Comment");
-					builder.setPositiveButton("Close", null);
-					final WebView webView = new WebView(context);
-					webView.loadDataWithBaseURL("", "<center>Retrieving...</center>", "text/html", "utf-8", "");
-					builder.setView(webView);
-					
-					final AlertDialog dialog = builder.show();
-					
-					if(user.comment != null) {
-						webView.loadDataWithBaseURL("", user.comment, "text/html", "utf-8", "");
-					} else if(user.commentHash != null) {
-						// Retrieve comment from blob
-						final RequestBlob.Builder blobBuilder = RequestBlob.newBuilder();
-						blobBuilder.addSessionComment(user.session);
-						
-						new AsyncTask<Void, Void, Void>() {
-							@Override
-							protected Void doInBackground(Void... params) {
-								MumbleService.getCurrentService().sendTcpMessage(MessageType.RequestBlob, blobBuilder);
-								// TODO fix. This is messy, we're polling until we get a comment response.
-								while(user.comment == null && dialog.isShowing()) {
-									try {
-										Thread.sleep(100);
-									} catch (InterruptedException e) {
-										e.printStackTrace();
-									}
+					new AsyncTask<Void, Void, Void>() {
+						@Override
+						protected Void doInBackground(Void... params) {
+							MumbleService.getCurrentService().sendTcpMessage(MessageType.RequestBlob, blobBuilder);
+							// TODO fix. This is messy, we're polling until we get a comment response.
+							while(user.comment == null && dialog.isShowing()) {
+								try {
+									Thread.sleep(100);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
 								}
-								return null;
 							}
-							
-							protected void onPostExecute(Void result) {
-								webView.loadDataWithBaseURL("", user.comment, "text/html", "utf-8", "");
-							};
-						}.execute();
-					}
+							return null;
+						}
+						
+						protected void onPostExecute(Void result) {
+							webView.loadDataWithBaseURL("", user.comment, "text/html", "utf-8", "");
+						};
+					}.execute();
 				}
-			});
-			
-			chatActive.setImageDrawable(chatDrawable);
-			chatActive.setVisibility(user.equals(selectedUser) ? View.VISIBLE : View.GONE);
-			
-			view.invalidate();
+			}
 		}
 	}
 }

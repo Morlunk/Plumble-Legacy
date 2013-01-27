@@ -1055,7 +1055,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
 		@Override
 		public void onUserAdded(final User user) throws RemoteException {
-			listFragment.updateUser(user);
+			if(mService.isConnected())
+				listFragment.updateChannel();
 		}
 
 		@Override
@@ -1076,6 +1077,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		@Override
 		public void onUserUpdated(User user) throws RemoteException {
 			listFragment.updateUser(user);
+		}
+		
+		@Override
+		public void onUserTalkingUpdated(User user) {
+			listFragment.updateUserTalking(user);
 		}
 		
 		/* (non-Javadoc)

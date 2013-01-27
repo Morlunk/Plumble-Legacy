@@ -79,16 +79,16 @@ public class MumbleService extends Service implements OnInitListener {
 
 		@Override
 		public void setTalkState(final User user, final int talkState) {
+			user.talkingState = talkState;
+			
 			handler.post(new ServiceProtocolMessage() {
 				@Override
-				public void process() {
-					user.talkingState = talkState;
-				}
+				public void process() { }
 
 				@Override
 				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
-					observer.onUserUpdated(user);
+					observer.onUserTalkingUpdated(user);
 				}
 			});
 		}
