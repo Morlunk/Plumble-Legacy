@@ -38,10 +38,11 @@
 
                 <ImageButton
                     android:id="@+id/server_row_delete"
+                    style="@style/Plumble.BorderlessButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="?android:attr/selectableItemBackground"
                     android:src="@drawable/ic_action_delete_light" />
+
             </LinearLayout>
         
         <RelativeLayout
