@@ -92,7 +92,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="left|center_vertical" >
+                android:gravity="left|center_vertical"
+                android:paddingBottom="4dp">
 
                 <ImageView
                     android:layout_width="wrap_content"
@@ -107,16 +108,58 @@
                     android:text="@string/serverHost"
                     android:textColor="#808080" />
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="left|center_vertical" >
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginRight="5dp"
+                    android:src="@drawable/ic_server_location" />
+
+                <TextView
+                    android:id="@+id/server_row_location"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Somewhere"
+                    android:textColor="#808080" />
+            </LinearLayout>
         </LinearLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
 
             <Button
                 android:id="@+id/server_row_button1"
                 style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
+                android:layout_toLeftOf="@+id/verticalSeparator"
                 android:text="@string/connect"
                 android:textColor="@color/abs__holo_blue_light"
                 android:textSize="14sp" />
+
+            <View
+                android:id="@+id/verticalSeparator"
+                android:layout_width="0.5dp"
+                android:layout_height="25dp"
+                android:layout_centerInParent="true"
+                android:background="@color/cardOutline" />
+
+            <Button
+                android:id="@+id/server_row_button2"
+                style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:layout_toRightOf="@+id/verticalSeparator"
+                android:text="@string/ping"
+                android:textColor="@color/abs__holo_blue_light"
+                android:textSize="14sp" />
+        </RelativeLayout>
     </LinearLayout>
 
 </LinearLayout>

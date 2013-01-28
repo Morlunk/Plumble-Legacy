@@ -202,11 +202,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			boolean requestExists = infoResponses.containsKey(server.getId());
 			boolean requestFailure = requestExists && infoResponse == null;
 			
-			if(!requestExists && !requestFailure && !pingedServers.contains(server)) {
-				pingedServers.add(server);
-				pingServerInfo(server);
-			}
-			
 			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
 			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
 			
@@ -218,12 +213,28 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			
 			addressText.setText(server.getHost()+":"+server.getPort());
 			
+			TextView locationText = (TextView) view.findViewById(R.id.server_row_location);
+			locationText.setText(server.getCountry());
+			
 			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
 			
 			button1.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
 					connectPublicServer(server);
+				}
+			});
+			
+			Button pingButton = (Button) view.findViewById(R.id.server_row_button2);
+			pingButton.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					// Refresh server on manual ping
+					infoResponses.remove(server.getId());
+					pingedServers.add(server);
+					pingServerInfo(server);
+					notifyDataSetChanged();
 				}
 			});
 			
@@ -261,7 +272,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			
 			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
 			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
-			serverInfoProgressBar.setVisibility(!requestExists ? View.VISIBLE : View.INVISIBLE);
+			serverInfoProgressBar.setVisibility(!requestExists && pingedServers.contains(server) ? View.VISIBLE : View.GONE);
 			
 			
 			if(infoResponse != null) {

@@ -15,5 +15,5 @@
 		android:verticalSpacing="10dp"
 		android:horizontalSpacing="10dp"
 		android:stretchMode="columnWidth"
-		android:layout_margin="10dp"/>
+		android:fastScrollEnabled="true"/>
 </LinearLayout>
