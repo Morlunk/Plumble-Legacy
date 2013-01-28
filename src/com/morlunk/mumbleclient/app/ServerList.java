@@ -227,6 +227,34 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				}
 			});
 			
+			ImageButton favoriteButton = (ImageButton)view.findViewById(R.id.server_row_favorite);
+			
+			favoriteButton.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v) {
+					AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ServerList.this);
+					
+					// Allow username entry
+					final EditText usernameField = new EditText(ServerList.this);
+					usernameField.setHint(R.string.serverUsername);
+					alertBuilder.setView(usernameField);
+
+					alertBuilder.setTitle(R.string.addFavorite);
+					
+					alertBuilder.setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							mService.getDatabaseAdapter().createServer(server.getName(), server.getHost(), server.getPort(), usernameField.getText().toString(), "");
+							getSupportActionBar().setSelectedNavigationItem(0);
+						}
+					});
+					
+					alertBuilder.show();
+				}
+				
+			});
+			
 			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
 			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
 			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
@@ -320,6 +348,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	private BaseAdapter serverAdapter;
 	@SuppressLint("UseSparseArrays") // We use Map instead of SparseArray so we can contain null values for keys.
 	private Map<Integer, ServerInfoResponse> infoResponses = new HashMap<Integer, ServerInfoResponse>();
+	private boolean bound = false;
 	
 	@Override
 	public final boolean onCreateOptionsMenu(final Menu menu) {
@@ -461,7 +490,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		usernameField.setHint(R.string.serverUsername);
 		alertBuilder.setView(usernameField);
 
-		alertBuilder.setTitle(R.string.serverUsername);
+		alertBuilder.setTitle(R.string.connectToServer);
 		
 		alertBuilder.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
 			@Override
@@ -498,6 +527,9 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			
 			@Override
 			public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+				if(!bound)
+					return false;
+				
 				switch (itemPosition) {
 				case 0:
 					// Favorites
@@ -551,6 +583,9 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				mService.registerObserver(mServiceObserver);
 			}
 		}
+		
+		bound = true;
+		
 		fillFavoritesList();
 	}
 

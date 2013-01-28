@@ -20,10 +20,14 @@
             android:paddingLeft="18dp"
             android:paddingRight="18dp"
             android:paddingTop="10dp" >
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
                 <TextView
                     android:id="@+id/server_row_name"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-light"
                     android:gravity="left|center_vertical"
@@ -31,7 +35,17 @@
                     android:textColor="#808080"
                     android:textSize="24sp" 
                     android:ellipsize="end"
-                    android:lines="1"/>
+                    android:lines="1"
+                    android:layout_weight="1"/>
+
+                <ImageButton
+                    android:id="@+id/server_row_favorite"
+                    style="@style/Plumble.BorderlessButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_action_favorite_dark" />
+                
+                </LinearLayout>
         
         <RelativeLayout
             android:id="@+id/server_row_info"
