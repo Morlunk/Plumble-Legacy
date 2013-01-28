@@ -23,8 +23,10 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.database.DataSetObserver;
@@ -656,7 +658,25 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	class PublicServerFetchTask extends AsyncTask<Void, Void, List<PublicServer>> {
 		
 		private static final String MUMBLE_PUBLIC_URL = "http://www.mumble.info/list2.cgi";
-
+		private ProgressDialog dialog;
+		
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			gridView.setAdapter(null);
+			
+			dialog = new ProgressDialog(ServerList.this);
+			dialog.setMessage(getString(R.string.loading));
+			dialog.setIndeterminate(true);
+			dialog.setOnCancelListener(new OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					cancel(true);
+				}
+			});
+			dialog.show();
+		}
+		
 		@Override
 		protected List<PublicServer> doInBackground(Void... params) {
 			try {
@@ -700,6 +720,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				serverAdapter = new PublicServerAdapter(ServerList.this, result);
 				gridView.setAdapter(serverAdapter);
 			}
+			dialog.hide();
 		}
 		
 		private PublicServer readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {			
