@@ -200,7 +200,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			boolean requestExists = infoResponses.containsKey(server.getId());
 			boolean requestFailure = requestExists && infoResponse == null;
 			
-			if(!requestExists && !requestFailure) {
+			if(!requestExists && !requestFailure && !pingedServers.contains(server)) {
 				pingedServers.add(server);
 				pingServerInfo(server);
 			}
@@ -456,12 +456,12 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		
 		// Allow username entry
 		final EditText usernameField = new EditText(this);
-		usernameField.setHint(R.string.serverPassword);
+		usernameField.setHint(R.string.serverUsername);
 		alertBuilder.setView(usernameField);
 
 		alertBuilder.setTitle(R.string.serverUsername);
 		
-		alertBuilder.setPositiveButton(R.string.retry, new DialogInterface.OnClickListener() {
+		alertBuilder.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				PublicServer newServer = server;
