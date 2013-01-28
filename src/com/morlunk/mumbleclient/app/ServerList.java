@@ -23,9 +23,11 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.pm.ApplicationInfo;
 import android.database.DataSetObserver;
 import android.os.AsyncTask;
@@ -39,6 +41,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -52,6 +55,7 @@ import com.actionbarsherlock.view.MenuItem;
 import com.crittercism.app.Crittercism;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
+import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.PublicServer;
 import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
@@ -192,25 +196,25 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			
 			final PublicServer server = getItem(position);
 			
-			/*
 			ServerInfoResponse infoResponse = infoResponses.get(server.getId());
 			// If there is a null value for the server info (rather than none at all), the request must have failed.
 			boolean requestExists = infoResponses.containsKey(server.getId());
 			boolean requestFailure = requestExists && infoResponse == null;
-			*/
+			
+			if(!requestExists) {
+				pingServerInfo(server);
+			}
 			
 			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
-			TextView userText = (TextView) view.findViewById(R.id.server_row_user);
 			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
 			
 			if(server.getName().equals("")) {
-				nameText.setText(server.getIp());
+				nameText.setText(server.getHost());
 			} else {
 				nameText.setText(server.getName());
 			}
 			
-			userText.setVisibility(View.GONE);
-			addressText.setText(server.getIp()+":"+server.getPort());
+			addressText.setText(server.getHost()+":"+server.getPort());
 			
 			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
 			Button button2 = (Button) view.findViewById(R.id.server_row_button2);
@@ -218,13 +222,13 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			button1.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					//connectServer(server.getId());
+					connectPublicServer(server);
 				}
 			});
 			button2.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					//editServer(server.getId());
+					editServer(server.getId());
 				}
 			});
 			
@@ -234,12 +238,12 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
 			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
 			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
-			/*
+			
 			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
 			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
 			serverInfoProgressBar.setVisibility(!requestExists ? View.VISIBLE : View.INVISIBLE);
-			*/
-			/*
+			
+			
 			if(infoResponse != null) {
 				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");
 				serverUsersText.setText(infoResponse.getCurrentUsers()+"/"+infoResponse.getMaximumUsers());
@@ -247,7 +251,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				serverVersionText.setText(R.string.offline);
 				serverUsersText.setText("");
 			}
-			*/
 			
 			return view;
 		}
@@ -450,6 +453,38 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		connectionIntent.setAction(MumbleService.ACTION_CONNECT);
 		connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
 		startService(connectionIntent);
+	}
+
+	/**
+	 * Starts connecting to a public server.
+	 *
+	 * @param id
+	 */
+	protected final void connectPublicServer(final PublicServer server) {
+		
+		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+		
+		// Allow username entry
+		final EditText usernameField = new EditText(this);
+		usernameField.setHint(R.string.serverPassword);
+		alertBuilder.setView(usernameField);
+
+		alertBuilder.setTitle(R.string.serverUsername);
+		
+		alertBuilder.setPositiveButton(R.string.retry, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				PublicServer newServer = server;
+				newServer.setUsername(usernameField.getText().toString());
+				registerConnectionReceiver();
+				Intent connectionIntent = new Intent(ServerList.this, MumbleService.class);
+				connectionIntent.setAction(MumbleService.ACTION_CONNECT);
+				connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
+				startService(connectionIntent);
+			}
+		});
+		
+		alertBuilder.show();
 	}
 
 	@Override
@@ -686,9 +721,12 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			String region = parser.getAttributeValue(null, "region");
 			String url = parser.getAttributeValue(null, "url");
 			
+			// Generate unique ID
+			int id = 100+parser.getLineNumber();
+			
 			parser.nextTag();
 			
-			PublicServer server = new PublicServer(name, ca, continentCode, country, countryCode, ip, Integer.parseInt(port), region, url);
+			PublicServer server = new PublicServer(id, name, ca, continentCode, country, countryCode, ip, Integer.parseInt(port), region, url);
 			
 			return server;
 		}

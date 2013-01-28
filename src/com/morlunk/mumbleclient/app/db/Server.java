@@ -12,6 +12,8 @@ public class Server implements Parcelable {
 	private String username;
 	private String password;
 	
+	protected Server() {}
+	
 	protected Server(Integer id,
 			String name,
 			String host,
@@ -57,6 +59,10 @@ public class Server implements Parcelable {
 
 	public String getPassword() {
 		return password;
+	}
+
+	public void setUsername(String string) {
+		this.username = string;
 	}
 
 	@Override
