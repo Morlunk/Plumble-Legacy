@@ -23,11 +23,9 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.pm.ApplicationInfo;
 import android.database.DataSetObserver;
 import android.os.AsyncTask;
@@ -55,7 +53,6 @@ import com.actionbarsherlock.view.MenuItem;
 import com.crittercism.app.Crittercism;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
-import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.PublicServer;
 import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
@@ -190,7 +187,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			if(v == null) {
 				LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				view = inflater.inflate(
-					R.layout.server_list_row,
+					R.layout.public_server_list_row,
 					null);
 			}
 			
@@ -217,7 +214,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			addressText.setText(server.getHost()+":"+server.getPort());
 			
 			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
-			Button button2 = (Button) view.findViewById(R.id.server_row_button2);
 			
 			button1.setOnClickListener(new OnClickListener() {
 				@Override
@@ -225,15 +221,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 					connectPublicServer(server);
 				}
 			});
-			button2.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					editServer(server.getId());
-				}
-			});
-			
-			ImageButton deleteButton = (ImageButton) view.findViewById(R.id.server_row_delete);
-			deleteButton.setVisibility(View.GONE);
 			
 			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
 			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
