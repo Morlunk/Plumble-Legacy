@@ -38,6 +38,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
@@ -171,6 +172,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	
 	private class PublicServerAdapter extends ArrayAdapter<PublicServer> {
 		private Context context;
+		private List<PublicServer> pingedServers = new ArrayList<PublicServer>();
 
 		public PublicServerAdapter(Context context, List<PublicServer> servers) {
 			super(context, android.R.id.text1, servers);
@@ -198,7 +200,8 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			boolean requestExists = infoResponses.containsKey(server.getId());
 			boolean requestFailure = requestExists && infoResponse == null;
 			
-			if(!requestExists) {
+			if(!requestExists && !requestFailure) {
+				pingedServers.add(server);
 				pingServerInfo(server);
 			}
 			
@@ -312,7 +315,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	
 	private ServerServiceObserver mServiceObserver;
 	private GridView gridView;
-	private ServerAdapter serverAdapter;
+	private BaseAdapter serverAdapter;
 	@SuppressLint("UseSparseArrays") // We use Map instead of SparseArray so we can contain null values for keys.
 	private Map<Integer, ServerInfoResponse> infoResponses = new HashMap<Integer, ServerInfoResponse>();
 	
@@ -693,8 +696,10 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		protected void onPostExecute(List<PublicServer> result) {
 			super.onPostExecute(result);
 			
-			if(result != null)
-				gridView.setAdapter(new PublicServerAdapter(ServerList.this, result));
+			if(result != null) {
+				serverAdapter = new PublicServerAdapter(ServerList.this, result);
+				gridView.setAdapter(serverAdapter);
+			}
 		}
 		
 		private PublicServer readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {			
