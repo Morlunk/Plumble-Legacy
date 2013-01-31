@@ -104,4 +104,8 @@
     <string name="chat_notify_connected">%s połączony.</string>
     <string name="chat_notify_disconnected">%s rozłączony.</string>
     <string name="unknown">Nieznany</string>
+    <string name="server_list_title_favorite">Ulubione</string>
+    <string name="server_list_title_lan">LAN</string>
+    <string name="server_list_title_public_internet">Serwery publiczne</string>
+    <string name="ping">Ping</string>
 </resources>
