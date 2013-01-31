@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item android:id="@+id/menu_add_server_item" android:title="@string/add" android:icon="@drawable/ic_action_add_dark" android:showAsAction="ifRoom"></item>
-    <item android:id="@+id/menu_preferences" android:title="@string/preferences" android:showAsAction="never" android:icon="@drawable/ic_action_settings"></item>
+    <item android:id="@+id/menu_filter_server_item" android:title="@string/filter" android:icon="@drawable/ic_action_sort" android:showAsAction="ifRoom"></item><item android:id="@+id/menu_preferences" android:title="@string/preferences" android:showAsAction="never" android:icon="@drawable/ic_action_settings"></item>
+    
     
 
 </menu>

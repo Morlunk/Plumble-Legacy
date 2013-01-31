@@ -12,6 +12,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,7 +176,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	private class PublicServerAdapter extends ArrayAdapter<PublicServer> {
 		private Context context;
 		private List<PublicServer> pingedServers = new ArrayList<PublicServer>();
-
+		
 		public PublicServerAdapter(Context context, List<PublicServer> servers) {
 			super(context, android.R.id.text1, servers);
 			this.context = context;
@@ -195,12 +196,9 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 					null);
 			}
 			
-			final PublicServer server = getItem(position);
+			final View rowView = view;
 			
-			ServerInfoResponse infoResponse = infoResponses.get(server.getId());
-			// If there is a null value for the server info (rather than none at all), the request must have failed.
-			boolean requestExists = infoResponses.containsKey(server.getId());
-			boolean requestFailure = requestExists && infoResponse == null;
+			final PublicServer server = getItem(position);
 			
 			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
 			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
@@ -233,8 +231,13 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 					// Refresh server on manual ping
 					infoResponses.remove(server.getId());
 					pingedServers.add(server);
-					pingServerInfo(server);
-					notifyDataSetChanged();
+					pingServerInfo(server, new Runnable() {
+						@Override
+						public void run() {
+							if(rowView != null)
+								updatePingProgress(server, rowView);
+						}
+					});
 				}
 			});
 			
@@ -265,6 +268,16 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				}
 				
 			});
+			updatePingProgress(server, view);
+			
+			return view;
+		}
+		
+		private void updatePingProgress(Server server, View view) {
+			ServerInfoResponse infoResponse = infoResponses.get(server.getId());
+			// If there is a null value for the server info (rather than none at all), the request must have failed.
+			boolean requestExists = infoResponses.containsKey(server.getId());
+			boolean requestFailure = requestExists && infoResponse == null;
 			
 			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
 			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
@@ -282,8 +295,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				serverVersionText.setText(R.string.offline);
 				serverUsersText.setText("");
 			}
-			
-			return view;
 		}
 	}
 
@@ -347,7 +358,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			super.onPostExecute(result);
 			
 			infoResponses.put(server.getId(), result);
-			serverAdapter.notifyDataSetChanged();
 		}
 		
 	}
@@ -443,8 +453,16 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	 * @see ServerInfoResponse
 	 * @param server The server to ping.
 	 */
-	private void pingServerInfo(Server server) {
-		new ServerInfoTask().execute(server);
+	private void pingServerInfo(Server server, final Runnable onCompleted) {
+		ServerInfoTask task = new ServerInfoTask() {
+			protected void onPostExecute(ServerInfoResponse result) {
+				super.onPostExecute(result);
+				
+				if(onCompleted != null)
+					onCompleted.run();
+			};
+		};
+		task.execute(server);
 	}
 	
 	private void registerConnectionReceiver() {
@@ -592,12 +610,24 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		if (mServiceObserver != null) {
 			if (!checkConnectionState()) {
 				mService.registerObserver(mServiceObserver);
+				
+				switch (getSupportActionBar().getSelectedNavigationIndex()) {
+				case 0:
+					// Favorites
+					fillFavoritesList();
+					break;
+				case 1:
+					// LAN
+					break;
+				case 2:
+					// Public
+					fillPublicList();
+					break;
+				}
 			}
 		}
 		
 		bound = true;
-		
-		fillFavoritesList();
 	}
 
 	private void fillFavoritesList() {
@@ -609,7 +639,12 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		// Clear and reload server ping responses
 		infoResponses.clear();
 		for(Server server : servers) {
-			pingServerInfo(server);
+			pingServerInfo(server, new Runnable() {
+				@Override
+				public void run() {
+					serverAdapter.notifyDataSetChanged();
+				}
+			});
 		}
 	}
 	

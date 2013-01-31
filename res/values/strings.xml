@@ -108,4 +108,5 @@
     <string name="server_list_title_lan">LAN</string>
     <string name="server_list_title_public_internet">Public Internet</string>
     <string name="ping">Ping</string>
+    <string name="filter">Filter</string>
 </resources>
