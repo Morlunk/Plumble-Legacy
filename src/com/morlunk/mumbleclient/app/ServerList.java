@@ -361,12 +361,45 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		}
 		
 	}
+	
+	private class SortClickListener implements DialogInterface.OnClickListener {
+
+		private Comparator<PublicServer> nameComparator = new Comparator<PublicServer>() {
+			@Override
+			public int compare(PublicServer lhs, PublicServer rhs) {
+				return lhs.getName().compareTo(rhs.getName());
+			}
+		};
+
+		private Comparator<PublicServer> countryComparator = new Comparator<PublicServer>() {
+			@Override
+			public int compare(PublicServer lhs, PublicServer rhs) {
+				return lhs.getCountry().compareTo(rhs.getCountry());
+			}
+		};
+		
+		
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			@SuppressWarnings("unchecked")
+			ArrayAdapter<PublicServer> arrayAdapter = (ArrayAdapter<PublicServer>) serverAdapter;
+			if(which == SORT_NAME) {
+				arrayAdapter.sort(nameComparator);
+			} else if(which == SORT_COUNTRY) {
+				arrayAdapter.sort(countryComparator);
+			}
+		}
+	}
 
 	private static final String STATE_WAIT_CONNECTION = "com.morlunk.mumbleclient.ServerList.WAIT_CONNECTION";
+
+	private static final int SORT_NAME = 0;
+	private static final int SORT_COUNTRY = 1;
 	
 	private ServerServiceObserver mServiceObserver;
 	private GridView gridView;
 	private BaseAdapter serverAdapter;
+	private MenuItem sortMenuItem;
 	@SuppressLint("UseSparseArrays") // We use Map instead of SparseArray so we can contain null values for keys.
 	private Map<Integer, ServerInfoResponse> infoResponses = new HashMap<Integer, ServerInfoResponse>();
 	private boolean bound = false;
@@ -375,6 +408,11 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	public final boolean onCreateOptionsMenu(final Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		getSupportMenuInflater().inflate(R.menu.activity_server_list, menu);
+		sortMenuItem = menu.findItem(R.id.menu_sort_server_item);
+		
+		// Only enable sort for public server list.
+		sortMenuItem.setVisible(getSupportActionBar().getSelectedNavigationIndex() == 2);
+		
 		return true;
 	}
 	
@@ -383,6 +421,9 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		switch (item.getItemId()) {
 		case R.id.menu_add_server_item:
 			addServer();
+			return true;
+		case R.id.menu_sort_server_item:
+			showSortDialog();
 			return true;
 		case R.id.menu_preferences:
 			final Intent prefs = new Intent(this, Preferences.class);
@@ -393,6 +434,12 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		}
 	}
 	
+	private void showSortDialog() {
+		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+		alertBuilder.setTitle(R.string.sortBy);
+		alertBuilder.setItems(new String[] { getString(R.string.name), getString(R.string.country)}, new SortClickListener());
+		alertBuilder.show();
+	}
 
 	private void addServer() {
 		ServerInfo infoDialog = new ServerInfo();
@@ -558,6 +605,9 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			public boolean onNavigationItemSelected(int itemPosition, long itemId) {
 				if(!bound)
 					return false;
+				
+				// Only enable sort for public server list.
+				sortMenuItem.setVisible(itemPosition == 2);
 				
 				switch (itemPosition) {
 				case 0:

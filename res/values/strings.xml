@@ -108,5 +108,8 @@
     <string name="server_list_title_lan">LAN</string>
     <string name="server_list_title_public_internet">Public Internet</string>
     <string name="ping">Ping</string>
-    <string name="filter">Filter</string>
+    <string name="sort">Sort</string>
+    <string name="sortBy">Sort by…</string>
+    <string name="name">Name</string>
+    <string name="country">Country</string>
 </resources>
