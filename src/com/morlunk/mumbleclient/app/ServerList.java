@@ -607,7 +607,8 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 					return false;
 				
 				// Only enable sort for public server list.
-				sortMenuItem.setVisible(itemPosition == 2);
+				if(sortMenuItem != null)
+					sortMenuItem.setVisible(itemPosition == 2);
 				
 				switch (itemPosition) {
 				case 0:
@@ -660,21 +661,21 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		if (mServiceObserver != null) {
 			if (!checkConnectionState()) {
 				mService.registerObserver(mServiceObserver);
-				
-				switch (getSupportActionBar().getSelectedNavigationIndex()) {
-				case 0:
-					// Favorites
-					fillFavoritesList();
-					break;
-				case 1:
-					// LAN
-					break;
-				case 2:
-					// Public
-					fillPublicList();
-					break;
-				}
 			}
+		}
+		
+		switch (getSupportActionBar().getSelectedNavigationIndex()) {
+		case 0:
+			// Favorites
+			fillFavoritesList();
+			break;
+		case 1:
+			// LAN
+			break;
+		case 2:
+			// Public
+			fillPublicList();
+			break;
 		}
 		
 		bound = true;
