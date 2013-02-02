@@ -10,8 +10,8 @@ public class PublicServer extends Server {
 	private String region;
 	private String url;
 	
-	public PublicServer(int id, String name, String ca, String continentCode, String country, String countryCode, String ip, Integer port, String region, String url) {				
-		super(id, name, ip, port, "", "");
+	public PublicServer(String name, String ca, String continentCode, String country, String countryCode, String ip, Integer port, String region, String url) {				
+		super(-1, name, ip, port, "", "");
 		this.ca = ca;
 		this.continentCode = continentCode;
 		this.country = country;

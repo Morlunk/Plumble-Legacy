@@ -22,7 +22,6 @@ import junit.framework.Assert;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -81,315 +80,6 @@ interface ServerInfoListener {
  *
  */
 public class ServerList extends ConnectedListActivity implements ServerInfoListener {
-	private class ServerAdapter extends ArrayAdapter<Server> {
-		private Context context;
-
-		public ServerAdapter(Context context, List<Server> servers) {
-			super(context, android.R.id.text1, servers);
-			this.context = context;
-		}
-		
-		@Override
-		public long getItemId(int position) {
-			return getItem(position).getId();
-		}
-
-		@Override
-		public final View getView(
-			final int position,
-			final View v,
-			final ViewGroup parent) {
-			View view = v;
-			
-			if(v == null) {
-				LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				view = inflater.inflate(
-					R.layout.server_list_row,
-					null);
-			}
-			
-			final Server server = getItem(position);
-			
-			ServerInfoResponse infoResponse = infoResponses.get(server.getId());
-			// If there is a null value for the server info (rather than none at all), the request must have failed.
-			boolean requestExists = infoResponses.containsKey(server.getId());
-			boolean requestFailure = requestExists && infoResponse == null;
-
-			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
-			TextView userText = (TextView) view.findViewById(R.id.server_row_user);
-			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
-			
-			if(server.getName().equals("")) {
-				nameText.setText(server.getHost());
-			} else {
-				nameText.setText(server.getName());
-			}
-			
-			userText.setText(server.getUsername());
-			addressText.setText(server.getHost()+":"+server.getPort());
-			
-			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
-			Button button2 = (Button) view.findViewById(R.id.server_row_button2);
-			
-			button1.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					connectServer(server.getId());
-				}
-			});
-			button2.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					editServer(server.getId());
-				}
-			});
-			
-			ImageButton deleteButton = (ImageButton) view.findViewById(R.id.server_row_delete);
-			deleteButton.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					deleteServer(server.getId());
-				}
-			});
-			
-			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
-			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
-			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
-			
-			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
-			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
-			serverInfoProgressBar.setVisibility(!requestExists ? View.VISIBLE : View.INVISIBLE);
-
-			if(infoResponse != null) {
-				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");
-				serverUsersText.setText(infoResponse.getCurrentUsers()+"/"+infoResponse.getMaximumUsers());
-			} else if(requestFailure) {
-				serverVersionText.setText(R.string.offline);
-				serverUsersText.setText("");
-			}
-			
-			return view;
-		}
-	}
-	
-	private class PublicServerAdapter extends ArrayAdapter<PublicServer> {
-		private Context context;
-		private List<PublicServer> pingedServers = new ArrayList<PublicServer>();
-		
-		public PublicServerAdapter(Context context, List<PublicServer> servers) {
-			super(context, android.R.id.text1, servers);
-			this.context = context;
-		}
-
-		@Override
-		public final View getView(
-			final int position,
-			final View v,
-			final ViewGroup parent) {
-			View view = v;
-			
-			if(v == null) {
-				LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				view = inflater.inflate(
-					R.layout.public_server_list_row,
-					null);
-			}
-			
-			final View rowView = view;
-			
-			final PublicServer server = getItem(position);
-			
-			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
-			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
-			
-			if(server.getName().equals("")) {
-				nameText.setText(server.getHost());
-			} else {
-				nameText.setText(server.getName());
-			}
-			
-			addressText.setText(server.getHost()+":"+server.getPort());
-			
-			TextView locationText = (TextView) view.findViewById(R.id.server_row_location);
-			locationText.setText(server.getCountry());
-			
-			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
-			
-			button1.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					connectPublicServer(server);
-				}
-			});
-			
-			Button pingButton = (Button) view.findViewById(R.id.server_row_button2);
-			pingButton.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					// Refresh server on manual ping
-					infoResponses.remove(server.getId());
-					pingedServers.add(server);
-					pingServerInfo(server, new Runnable() {
-						@Override
-						public void run() {
-							if(rowView != null)
-								updatePingProgress(server, rowView);
-						}
-					});
-				}
-			});
-			
-			ImageButton favoriteButton = (ImageButton)view.findViewById(R.id.server_row_favorite);
-			
-			favoriteButton.setOnClickListener(new OnClickListener() {
-
-				@Override
-				public void onClick(View v) {
-					AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ServerList.this);
-					
-					// Allow username entry
-					final EditText usernameField = new EditText(ServerList.this);
-					usernameField.setHint(R.string.serverUsername);
-					alertBuilder.setView(usernameField);
-
-					alertBuilder.setTitle(R.string.addFavorite);
-					
-					alertBuilder.setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							mService.getDatabaseAdapter().createServer(server.getName(), server.getHost(), server.getPort(), usernameField.getText().toString(), "");
-							getSupportActionBar().setSelectedNavigationItem(0);
-						}
-					});
-					
-					alertBuilder.show();
-				}
-				
-			});
-			updatePingProgress(server, view);
-			
-			return view;
-		}
-		
-		private void updatePingProgress(Server server, View view) {
-			ServerInfoResponse infoResponse = infoResponses.get(server.getId());
-			// If there is a null value for the server info (rather than none at all), the request must have failed.
-			boolean requestExists = infoResponses.containsKey(server.getId());
-			boolean requestFailure = requestExists && infoResponse == null;
-			
-			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
-			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
-			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
-			
-			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
-			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
-			serverInfoProgressBar.setVisibility(!requestExists && pingedServers.contains(server) ? View.VISIBLE : View.GONE);
-			
-			
-			if(infoResponse != null) {
-				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");
-				serverUsersText.setText(infoResponse.getCurrentUsers()+"/"+infoResponse.getMaximumUsers());
-			} else if(requestFailure) {
-				serverVersionText.setText(R.string.offline);
-				serverUsersText.setText("");
-			}
-		}
-	}
-
-	private class ServerServiceObserver extends BaseServiceObserver {
-		@Override
-		public void onConnectionStateChanged(final int state)
-			throws RemoteException {
-			checkConnectionState();
-		}
-	}
-	
-	private class ServerInfoTask extends AsyncTask<Server, Void, ServerInfoResponse> {
-		
-		private Server server;
-		
-		@Override
-		protected ServerInfoResponse doInBackground(Server... params) {
-			server = params[0];
-			try {
-				InetAddress host = InetAddress.getByName(server.getHost());
-				
-				// Create ping message
-				ByteBuffer buffer = ByteBuffer.allocate(12);
-				buffer.putInt(0); // Request type
-				buffer.putLong((long)server.getId()); // Identifier
-				DatagramPacket requestPacket = new DatagramPacket(buffer.array(), 12, host, server.getPort());
-				
-				// Send packet and wait for response
-				DatagramSocket socket = new DatagramSocket();
-				socket.setSoTimeout(1000);
-				socket.setReceiveBufferSize(1024);
-				socket.send(requestPacket);
-				
-				byte[] responseBuffer = new byte[24];
-				DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
-				try {
-					socket.receive(responsePacket);
-				} catch (SocketTimeoutException e) {
-					return null;
-				}
-				
-				ServerInfoResponse response = new ServerInfoResponse(responseBuffer);
-								
-				Log.i(Globals.LOG_TAG, "DEBUG: Server version: "+response.getVersionString()+"\nUsers: "+response.getCurrentUsers()+"/"+response.getMaximumUsers());
-				
-				return response;
-				
-			} catch (UnknownHostException e) {
-				e.printStackTrace();
-			} catch (SocketException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-			return null;
-		}
-		
-		@Override
-		protected void onPostExecute(ServerInfoResponse result) {
-			super.onPostExecute(result);
-			
-			infoResponses.put(server.getId(), result);
-		}
-		
-	}
-	
-	private class SortClickListener implements DialogInterface.OnClickListener {
-
-		private Comparator<PublicServer> nameComparator = new Comparator<PublicServer>() {
-			@Override
-			public int compare(PublicServer lhs, PublicServer rhs) {
-				return lhs.getName().compareTo(rhs.getName());
-			}
-		};
-
-		private Comparator<PublicServer> countryComparator = new Comparator<PublicServer>() {
-			@Override
-			public int compare(PublicServer lhs, PublicServer rhs) {
-				return lhs.getCountry().compareTo(rhs.getCountry());
-			}
-		};
-		
-		
-		@Override
-		public void onClick(DialogInterface dialog, int which) {
-			@SuppressWarnings("unchecked")
-			ArrayAdapter<PublicServer> arrayAdapter = (ArrayAdapter<PublicServer>) serverAdapter;
-			if(which == SORT_NAME) {
-				arrayAdapter.sort(nameComparator);
-			} else if(which == SORT_COUNTRY) {
-				arrayAdapter.sort(countryComparator);
-			}
-		}
-	}
 
 	private static final String STATE_WAIT_CONNECTION = "com.morlunk.mumbleclient.ServerList.WAIT_CONNECTION";
 
@@ -400,8 +90,10 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	private GridView gridView;
 	private BaseAdapter serverAdapter;
 	private MenuItem sortMenuItem;
-	@SuppressLint("UseSparseArrays") // We use Map instead of SparseArray so we can contain null values for keys.
-	private Map<Integer, ServerInfoResponse> infoResponses = new HashMap<Integer, ServerInfoResponse>();
+	private List<PublicServer> publicServers;
+	
+	private Map<Server, ServerInfoResponse> infoResponses = new HashMap<Server, ServerInfoResponse>();
+	
 	private boolean bound = false;
 	
 	@Override
@@ -700,12 +392,413 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	}
 	
 	private void fillPublicList() {
-		new PublicServerFetchTask().execute();
+		if(publicServers == null)
+			new PublicServerFetchTask().execute();
+		else {
+			serverAdapter = new PublicServerAdapter(this, publicServers);
+			gridView.setAdapter(serverAdapter);
+		}
 	}
 
 	@Override
 	public void serverInfoUpdated() {
 		fillFavoritesList();
+	}
+	
+	private class ServerAdapter extends ArrayAdapter<Server> {
+		private Context context;
+
+		public ServerAdapter(Context context, List<Server> servers) {
+			super(context, android.R.id.text1, servers);
+			this.context = context;
+		}
+		
+		@Override
+		public long getItemId(int position) {
+			return getItem(position).getId();
+		}
+
+		@Override
+		public final View getView(
+			final int position,
+			final View v,
+			final ViewGroup parent) {
+			View view = v;
+			
+			if(v == null) {
+				LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				view = inflater.inflate(
+					R.layout.server_list_row,
+					null);
+			}
+			
+			final Server server = getItem(position);
+			
+			ServerInfoResponse infoResponse = infoResponses.get(server);
+			// If there is a null value for the server info (rather than none at all), the request must have failed.
+			boolean requestExists = infoResponse != null;
+			boolean requestFailure = infoResponse != null && infoResponse.isDummy();
+
+			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
+			TextView userText = (TextView) view.findViewById(R.id.server_row_user);
+			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
+			
+			if(server.getName().equals("")) {
+				nameText.setText(server.getHost());
+			} else {
+				nameText.setText(server.getName());
+			}
+			
+			userText.setText(server.getUsername());
+			addressText.setText(server.getHost()+":"+server.getPort());
+			
+			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
+			Button button2 = (Button) view.findViewById(R.id.server_row_button2);
+			
+			button1.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					connectServer(server.getId());
+				}
+			});
+			button2.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					editServer(server.getId());
+				}
+			});
+			
+			ImageButton deleteButton = (ImageButton) view.findViewById(R.id.server_row_delete);
+			deleteButton.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					deleteServer(server.getId());
+				}
+			});
+			
+			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
+			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
+			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
+			
+			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
+			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
+			serverInfoProgressBar.setVisibility(!requestExists ? View.VISIBLE : View.INVISIBLE);
+
+			if(infoResponse != null && !requestFailure) {
+				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");
+				serverUsersText.setText(infoResponse.getCurrentUsers()+"/"+infoResponse.getMaximumUsers());
+			} else if(requestFailure) {
+				serverVersionText.setText(R.string.offline);
+				serverUsersText.setText("");
+			}
+			
+			return view;
+		}
+	}
+	
+	private class PublicServerAdapter extends ArrayAdapter<PublicServer> {
+		private Context context;
+		
+		public PublicServerAdapter(Context context, List<PublicServer> servers) {
+			super(context, android.R.id.text1, servers);
+			this.context = context;
+		}
+
+		@Override
+		public final View getView(
+			final int position,
+			final View v,
+			final ViewGroup parent) {
+			View view = v;
+			
+			if(v == null) {
+				LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				view = inflater.inflate(
+					R.layout.public_server_list_row,
+					null);
+			}
+			
+			final View rowView = view;
+			
+			final PublicServer server = getItem(position);
+			
+			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
+			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
+			
+			if(server.getName().equals("")) {
+				nameText.setText(server.getHost());
+			} else {
+				nameText.setText(server.getName());
+			}
+			
+			addressText.setText(server.getHost()+":"+server.getPort());
+			
+			TextView locationText = (TextView) view.findViewById(R.id.server_row_location);
+			locationText.setText(server.getCountry());
+			
+			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
+			
+			button1.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					connectPublicServer(server);
+				}
+			});
+			
+			Button pingButton = (Button) view.findViewById(R.id.server_row_button2);
+			pingButton.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					// Refresh server on manual ping
+					infoResponses.remove(server.getId());
+					updatePingProgress(server, rowView);
+					pingServerInfo(server, new Runnable() {
+						@Override
+						public void run() {
+							if(rowView != null)
+								updatePingProgress(server, rowView);
+						}
+					});
+				}
+			});
+			
+			ImageButton favoriteButton = (ImageButton)view.findViewById(R.id.server_row_favorite);
+			
+			favoriteButton.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v) {
+					AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ServerList.this);
+					
+					// Allow username entry
+					final EditText usernameField = new EditText(ServerList.this);
+					usernameField.setHint(R.string.serverUsername);
+					alertBuilder.setView(usernameField);
+
+					alertBuilder.setTitle(R.string.addFavorite);
+					
+					alertBuilder.setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							mService.getDatabaseAdapter().createServer(server.getName(), server.getHost(), server.getPort(), usernameField.getText().toString(), "");
+							getSupportActionBar().setSelectedNavigationItem(0);
+						}
+					});
+					
+					alertBuilder.show();
+				}
+				
+			});
+			updatePingProgress(server, view);
+			
+			return view;
+		}
+		
+		private void updatePingProgress(Server server, View view) {
+			ServerInfoResponse infoResponse = infoResponses.get(server);
+			// If there is a null value for the server info (rather than none at all), the request must have failed.
+			boolean requestExists = infoResponse != null;
+			boolean requestFailure = infoResponse != null && infoResponse.isDummy();
+			
+			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
+			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
+			
+			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
+			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
+			
+			
+			if(infoResponse != null && !requestFailure) {
+				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");
+				serverUsersText.setText(infoResponse.getCurrentUsers()+"/"+infoResponse.getMaximumUsers());
+			} else if(requestFailure) {
+				serverVersionText.setText(R.string.offline);
+				serverUsersText.setText("");
+			}
+		}
+	}
+
+	private class ServerServiceObserver extends BaseServiceObserver {
+		@Override
+		public void onConnectionStateChanged(final int state)
+			throws RemoteException {
+			checkConnectionState();
+		}
+	}
+	
+	private class ServerInfoTask extends AsyncTask<Server, Void, ServerInfoResponse> {
+		
+		private Server server;
+		
+		@Override
+		protected ServerInfoResponse doInBackground(Server... params) {
+			server = params[0];
+			try {
+				InetAddress host = InetAddress.getByName(server.getHost());
+				
+				// Create ping message
+				ByteBuffer buffer = ByteBuffer.allocate(12);
+				buffer.putInt(0); // Request type
+				buffer.putLong((long)server.getId()); // Identifier
+				DatagramPacket requestPacket = new DatagramPacket(buffer.array(), 12, host, server.getPort());
+				
+				// Send packet and wait for response
+				DatagramSocket socket = new DatagramSocket();
+				socket.setSoTimeout(1000);
+				socket.setReceiveBufferSize(1024);
+				socket.send(requestPacket);
+				
+				byte[] responseBuffer = new byte[24];
+				DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
+				try {
+					socket.receive(responsePacket);
+				} catch (SocketTimeoutException e) {
+					return new ServerInfoResponse(); // Return dummy
+				}
+				
+				ServerInfoResponse response = new ServerInfoResponse(responseBuffer);
+								
+				Log.i(Globals.LOG_TAG, "DEBUG: Server version: "+response.getVersionString()+"\nUsers: "+response.getCurrentUsers()+"/"+response.getMaximumUsers());
+				
+				return response;
+				
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			} catch (SocketException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(ServerInfoResponse result) {
+			super.onPostExecute(result);
+			
+			infoResponses.put(server, result);
+		}
+		
+	}
+	
+	class PublicServerFetchTask extends AsyncTask<Void, Void, List<PublicServer>> {
+		
+		private static final String MUMBLE_PUBLIC_URL = "http://www.mumble.info/list2.cgi";
+		private ProgressDialog dialog;
+		
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			gridView.setAdapter(null);
+			
+			dialog = new ProgressDialog(ServerList.this);
+			dialog.setMessage(getString(R.string.loading));
+			dialog.setIndeterminate(true);
+			dialog.setOnCancelListener(new OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					cancel(true);
+				}
+			});
+			dialog.show();
+		}
+		
+		@Override
+		protected List<PublicServer> doInBackground(Void... params) {
+			try {
+				// Fetch XML from server
+				URL url = new URL(MUMBLE_PUBLIC_URL);
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("GET");
+				connection.addRequestProperty("version", Globals.PROTOCOL_VERSION_STRING);
+				connection.connect();
+				InputStream stream = connection.getInputStream();				
+				
+				XmlPullParser parser = Xml.newPullParser();
+				parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+				parser.setInput(stream, "UTF-8");
+				parser.nextTag();
+				
+				List<PublicServer> serverList = new ArrayList<PublicServer>();
+				
+				parser.require(XmlPullParser.START_TAG, null, "servers");
+				while(parser.next() != XmlPullParser.END_TAG) {
+			        if (parser.getEventType() != XmlPullParser.START_TAG) {
+			            continue;
+			        }
+			        
+			        serverList.add(readEntry(parser));
+				}
+				parser.require(XmlPullParser.END_TAG, null, "servers");
+				
+				return serverList;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(List<PublicServer> result) {
+			super.onPostExecute(result);
+			
+			if(result != null) {
+				publicServers = result;
+				serverAdapter = new PublicServerAdapter(ServerList.this, result);
+				gridView.setAdapter(serverAdapter);
+			}
+			dialog.hide();
+		}
+		
+		private PublicServer readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {			
+			String name = parser.getAttributeValue(null, "name");
+			String ca = parser.getAttributeValue(null, "ca");
+			String continentCode = parser.getAttributeValue(null, "continent_code");
+			String country = parser.getAttributeValue(null, "country");
+			String countryCode = parser.getAttributeValue(null, "country_code");
+			String ip = parser.getAttributeValue(null, "ip");
+			String port = parser.getAttributeValue(null, "port");
+			String region = parser.getAttributeValue(null, "region");
+			String url = parser.getAttributeValue(null, "url");
+			
+			parser.nextTag();
+			
+			PublicServer server = new PublicServer(name, ca, continentCode, country, countryCode, ip, Integer.parseInt(port), region, url);
+			
+			return server;
+		}
+		
+	}
+	
+	private class SortClickListener implements DialogInterface.OnClickListener {
+
+		private Comparator<PublicServer> nameComparator = new Comparator<PublicServer>() {
+			@Override
+			public int compare(PublicServer lhs, PublicServer rhs) {
+				return lhs.getName().compareTo(rhs.getName());
+			}
+		};
+
+		private Comparator<PublicServer> countryComparator = new Comparator<PublicServer>() {
+			@Override
+			public int compare(PublicServer lhs, PublicServer rhs) {
+				return lhs.getCountry().compareTo(rhs.getCountry());
+			}
+		};
+		
+		
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			@SuppressWarnings("unchecked")
+			ArrayAdapter<PublicServer> arrayAdapter = (ArrayAdapter<PublicServer>) serverAdapter;
+			if(which == SORT_NAME) {
+				arrayAdapter.sort(nameComparator);
+			} else if(which == SORT_COUNTRY) {
+				arrayAdapter.sort(countryComparator);
+			}
+		}
 	}
 	
 	class ServerSpinnerAdapter implements SpinnerAdapter {
@@ -783,97 +876,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		public View getDropDownView(int position, View convertView,
 				ViewGroup parent) {
 			return getView(position, convertView, parent);
-		}
-		
-	}
-	
-	class PublicServerFetchTask extends AsyncTask<Void, Void, List<PublicServer>> {
-		
-		private static final String MUMBLE_PUBLIC_URL = "http://www.mumble.info/list2.cgi";
-		private ProgressDialog dialog;
-		
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			gridView.setAdapter(null);
-			
-			dialog = new ProgressDialog(ServerList.this);
-			dialog.setMessage(getString(R.string.loading));
-			dialog.setIndeterminate(true);
-			dialog.setOnCancelListener(new OnCancelListener() {
-				@Override
-				public void onCancel(DialogInterface dialog) {
-					cancel(true);
-				}
-			});
-			dialog.show();
-		}
-		
-		@Override
-		protected List<PublicServer> doInBackground(Void... params) {
-			try {
-				// Fetch XML from server
-				URL url = new URL(MUMBLE_PUBLIC_URL);
-				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-				connection.setRequestMethod("GET");
-				connection.addRequestProperty("version", Globals.PROTOCOL_VERSION_STRING);
-				connection.connect();
-				InputStream stream = connection.getInputStream();				
-				
-				XmlPullParser parser = Xml.newPullParser();
-				parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-				parser.setInput(stream, "UTF-8");
-				parser.nextTag();
-				
-				List<PublicServer> serverList = new ArrayList<PublicServer>();
-				
-				parser.require(XmlPullParser.START_TAG, null, "servers");
-				while(parser.next() != XmlPullParser.END_TAG) {
-			        if (parser.getEventType() != XmlPullParser.START_TAG) {
-			            continue;
-			        }
-			        
-			        serverList.add(readEntry(parser));
-				}
-				parser.require(XmlPullParser.END_TAG, null, "servers");
-				
-				return serverList;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
-		
-		@Override
-		protected void onPostExecute(List<PublicServer> result) {
-			super.onPostExecute(result);
-			
-			if(result != null) {
-				serverAdapter = new PublicServerAdapter(ServerList.this, result);
-				gridView.setAdapter(serverAdapter);
-			}
-			dialog.hide();
-		}
-		
-		private PublicServer readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {			
-			String name = parser.getAttributeValue(null, "name");
-			String ca = parser.getAttributeValue(null, "ca");
-			String continentCode = parser.getAttributeValue(null, "continent_code");
-			String country = parser.getAttributeValue(null, "country");
-			String countryCode = parser.getAttributeValue(null, "country_code");
-			String ip = parser.getAttributeValue(null, "ip");
-			String port = parser.getAttributeValue(null, "port");
-			String region = parser.getAttributeValue(null, "region");
-			String url = parser.getAttributeValue(null, "url");
-			
-			// Generate unique ID
-			int id = 100+parser.getLineNumber();
-			
-			parser.nextTag();
-			
-			PublicServer server = new PublicServer(id, name, ca, continentCode, country, countryCode, ip, Integer.parseInt(port), region, url);
-			
-			return server;
 		}
 		
 	}

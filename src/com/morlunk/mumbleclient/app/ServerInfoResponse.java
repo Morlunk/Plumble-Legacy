@@ -8,12 +8,18 @@ import java.nio.ByteBuffer;
  * @author morlunk
  */
 public class ServerInfoResponse {
+	
 	private long identifier;
 	private int version;
 	private int currentUsers;
 	private int maximumUsers;
 	private int allowedBandwidth;
 	
+	/**
+	 * Whether or not this server info response represents a failure to retrieve a response. Used to efficiently denote failed responses.
+	 */
+	private boolean dummy = false;
+		
 	/**
 	 * Creates a ServerInfoResponse object with the bytes obtained from the server.
 	 * @param response The response to the UDP pings sent by the server.
@@ -34,6 +40,13 @@ public class ServerInfoResponse {
 		this.currentUsers = currentUsers;
 		this.maximumUsers = maximumUsers;
 		this.allowedBandwidth = allowedBandwidth;
+	}
+	
+	/**
+	 * Instantiating a ServerInfoResponse with no data will cause it to be considered a 'dummy' response by its handler.
+	 */
+	public ServerInfoResponse() {
+		this.dummy = true;
 	}
 	
 	public long getIdentifier() {
@@ -59,5 +72,9 @@ public class ServerInfoResponse {
 
 	public int getAllowedBandwidth() {
 		return allowedBandwidth;
+	}
+
+	public boolean isDummy() {
+		return dummy;
 	}
 }
