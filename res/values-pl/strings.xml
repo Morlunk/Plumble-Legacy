@@ -108,4 +108,8 @@
     <string name="server_list_title_lan">LAN</string>
     <string name="server_list_title_public_internet">Serwery publiczne</string>
     <string name="ping">Ping</string>
+    <string name="sort">Sortuj</string>
+    <string name="sortBy">Sortuj po…</string>
+    <string name="name">Nazwie</string>
+    <string name="country">Kraju</string>
 </resources>
