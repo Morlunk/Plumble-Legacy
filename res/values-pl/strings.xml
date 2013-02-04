@@ -104,12 +104,14 @@
     <string name="chat_notify_connected">%s połączony.</string>
     <string name="chat_notify_disconnected">%s rozłączony.</string>
     <string name="unknown">Nieznany</string>
-    <string name="server_list_title_favorite">Ulubione</string>
+    <string name="server_list_title_favorite">ULUBIONE</string>
     <string name="server_list_title_lan">LAN</string>
-    <string name="server_list_title_public_internet">Serwery publiczne</string>
+    <string name="server_list_title_public_internet">SERWERY PUBLICZNE</string>
     <string name="ping">Ping</string>
     <string name="sort">Sortuj</string>
     <string name="sortBy">Sortuj po…</string>
     <string name="name">Nazwie</string>
     <string name="country">Kraju</string>
+    <string name="share">Udostępnij</string>
+    <string name="shareMessage">Dołącz na ten serwer z Plumble! %s</string>
 </resources>
