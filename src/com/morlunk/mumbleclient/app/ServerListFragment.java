@@ -4,10 +4,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +20,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageButton;
+import android.widget.PopupMenu;
+import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -63,6 +68,7 @@ public class ServerListFragment extends SherlockFragment {
 			Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_server_list, container, false);
 		serverGrid = (GridView) view.findViewById(R.id.serverGrid);
+		registerForContextMenu(serverGrid);
 		return view;
 	}
 	
@@ -80,7 +86,7 @@ public class ServerListFragment extends SherlockFragment {
 		}
 		return super.onOptionsItemSelected(item);
 	}
-
+	
 	private void addServer() {
 		ServerInfo infoDialog = new ServerInfo();
 		infoDialog.show(getFragmentManager(), "serverInfo");
@@ -92,6 +98,17 @@ public class ServerListFragment extends SherlockFragment {
 		args.putLong("serverId", id);
 		infoDialog.setArguments(args);
 		infoDialog.show(getFragmentManager(), "serverInfo");
+	}
+	
+	private void shareServer(Server server) {
+		// Build Mumble server URL
+		String serverUrl = "mumble://"+server.getHost()+":"+server.getPort()+"/";
+		
+		Intent intent = new Intent();
+		intent.setAction(Intent.ACTION_SEND);
+		intent.putExtra(Intent.EXTRA_TEXT, getString(R.string.shareMessage, serverUrl));
+		intent.setType("text/plain");
+		startActivity(intent);
 	}
 	
 	private void deleteServer(final Server server) {
@@ -169,7 +186,6 @@ public class ServerListFragment extends SherlockFragment {
 			addressText.setText(server.getHost()+":"+server.getPort());
 			
 			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
-			Button button2 = (Button) view.findViewById(R.id.server_row_button2);
 			
 			button1.setOnClickListener(new OnClickListener() {
 				@Override
@@ -177,19 +193,42 @@ public class ServerListFragment extends SherlockFragment {
 					connectHandler.connectToServer(server);
 				}
 			});
-			button2.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					editServer(server.getId());
-				}
-			});
 			
-			ImageButton deleteButton = (ImageButton) view.findViewById(R.id.server_row_delete);
-			deleteButton.setOnClickListener(new OnClickListener() {
+			ImageButton moreButton = (ImageButton) view.findViewById(R.id.server_row_more);
+			moreButton.setOnClickListener(new OnClickListener() {
 				
+				@SuppressLint("NewApi")
 				@Override
 				public void onClick(View v) {
-					deleteServer(server);
+					if(VERSION.SDK_INT >= 11) {
+						PopupMenu popupMenu = new PopupMenu(getContext(), v);
+						android.view.MenuInflater inflater = popupMenu.getMenuInflater();
+						inflater.inflate(R.menu.popup_server_row, popupMenu.getMenu());
+						ServerPopupMenuItemClickListener listener = new ServerPopupMenuItemClickListener(server);
+						popupMenu.setOnMenuItemClickListener(listener);
+						popupMenu.show();
+					} else {
+						// Create dialog because PopupMenu is API 11+
+						AlertDialog.Builder optionsBuilder = new AlertDialog.Builder(getContext());
+						optionsBuilder.setItems(new CharSequence[] { getString(R.string.edit), getString(R.string.share), getString(R.string.delete)},
+								new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								switch (which) {
+								case 0:
+									editServer(server.getId());
+									break;
+								case 1:
+									shareServer(server);
+									break;
+								case 2:
+									deleteServer(server);
+									break;
+								}
+							}
+						});
+						optionsBuilder.show();
+					}
 				}
 			});
 			
@@ -210,6 +249,30 @@ public class ServerListFragment extends SherlockFragment {
 			}
 			
 			return view;
+		}
+	}
+	
+	private class ServerPopupMenuItemClickListener implements OnMenuItemClickListener {
+		
+		private Server server;
+		
+		public ServerPopupMenuItemClickListener(Server server) {
+			this.server = server;
+		}
+		
+		public boolean onMenuItemClick(android.view.MenuItem item) {
+			switch (item.getItemId()) {
+			case R.id.menu_edit_item:
+				editServer(server.getId());
+				return true;
+			case R.id.menu_share_item:
+				shareServer(server);
+				return true;
+			case R.id.menu_delete_item:
+				deleteServer(server);
+				return true;
+			}
+			return false;
 		}
 	}
 }

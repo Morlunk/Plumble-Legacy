@@ -13,9 +13,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
@@ -54,6 +52,7 @@ interface ServerInfoListener {
 interface ServerConnectHandler {
 	public void connectToServer(Server server);
 	public void connectToPublicServer(PublicServer server);
+	public void publicServerFavourited();
 }
 
 /**
@@ -72,6 +71,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	private ServerServiceObserver mServiceObserver;
 	private ServerListFragment serverListFragment;
 	private PublicServerListFragment publicServerListFragment;
+	private ViewPager pager;
 	
 	@Override
 	public final boolean onCreateOptionsMenu(final Menu menu) {
@@ -216,7 +216,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				
 		setContentView(R.layout.activity_server_list);
 		
-		ViewPager pager = (ViewPager) findViewById(R.id.pager);
+		pager = (ViewPager) findViewById(R.id.pager);
 		ServerListPagerAdapter pagerAdapter = new ServerListPagerAdapter(getSupportFragmentManager());
 		pager.setAdapter(pagerAdapter);
 		pager.setOffscreenPageLimit(10);
@@ -225,7 +225,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			@Override
 			public void onPageSelected(int position) {
 				switch (position) {
-				case 2:
+				case 1:
 					fillPublicList();
 					break;
 				}
@@ -357,6 +357,11 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	public void serverInfoUpdated() {
 		fillFavoritesList();
 	}
+	
+	public void publicServerFavourited() {
+		fillFavoritesList();
+		pager.setCurrentItem(0, true);
+	};
 
 	private class ServerServiceObserver extends BaseServiceObserver {
 		@Override
@@ -374,7 +379,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 
 		@Override
 		public int getCount() {
-			return 3;
+			return 2;
 		}
 
 		@Override
@@ -383,8 +388,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			case 0:
 				return serverListFragment;
 			case 1:
-				return new Fragment();
-			case 2:
 				return publicServerListFragment;
 			default:
 				return null;
@@ -397,8 +400,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			case 0:
 				return getString(R.string.server_list_title_favorite);
 			case 1:
-				return getString(R.string.server_list_title_lan);
-			case 2:
 				return getString(R.string.server_list_title_public_internet);
 			}
 			return null;
@@ -413,23 +414,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	private class PublicServerFetchTask extends AsyncTask<Void, Void, List<PublicServer>> {
 		
 		private static final String MUMBLE_PUBLIC_URL = "http://www.mumble.info/list2.cgi";
-		private ProgressDialog dialog;
-		
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			
-			dialog = new ProgressDialog(ServerList.this);
-			dialog.setMessage(getString(R.string.loading));
-			dialog.setIndeterminate(true);
-			dialog.setOnCancelListener(new OnCancelListener() {
-				@Override
-				public void onCancel(DialogInterface dialog) {
-					cancel(true);
-				}
-			});
-			dialog.show();
-		}
 		
 		@Override
 		protected List<PublicServer> doInBackground(Void... params) {
@@ -464,12 +448,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				e.printStackTrace();
 			}
 			return null;
-		}
-		
-		@Override
-		protected void onPostExecute(List<PublicServer> result) {
-			super.onPostExecute(result);
-			dialog.hide();
 		}
 		
 		private PublicServer readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {			

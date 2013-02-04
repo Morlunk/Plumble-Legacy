@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
     tools:ignore="NewApi" >
 
     <LinearLayout
+        android:id="@+id/server_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/card_background"
-        android:orientation="vertical">
+        android:orientation="vertical" >
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -19,76 +19,58 @@
             android:paddingBottom="10dp"
             android:paddingLeft="18dp"
             android:paddingRight="18dp"
-            android:paddingTop="10dp">
+            android:paddingTop="10dp" >
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/server_row_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:gravity="left|center_vertical"
+                android:lines="1"
+                android:ellipsize="end"
+                android:text="@string/serverHost"
+                android:textColor="#808080"
+                android:textSize="24sp" />
+
+            <RelativeLayout
+                android:id="@+id/server_row_info"
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:paddingBottom="2dp" >
 
                 <TextView
-                    android:id="@+id/server_row_name"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:fontFamily="sans-serif-light"
-                    android:gravity="left|center_vertical"
-                    android:text="@string/serverHost"
-                    android:textColor="#808080"
-                    android:textSize="24sp" />
-
-                <ImageButton
-                    android:id="@+id/server_row_delete"
-                    style="@style/Plumble.BorderlessButton"
+                    android:id="@+id/server_row_version_status"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/ic_action_delete_light" />
+                    android:layout_height="match_parent"
+                    android:fontFamily="sans-serif-light"
+                    android:gravity="center_vertical"
+                    android:text="Online (1.2.3)"
+                    android:textColor="#808080"
+                    android:visibility="invisible" />
 
-            </LinearLayout>
-        
-        <RelativeLayout
-            android:id="@+id/server_row_info"
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:paddingBottom="2dp">
-            
-            <TextView 
-                android:id="@+id/server_row_version_status"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:fontFamily="sans-serif-light"
-                android:textColor="#808080"
-                android:singleLine="true"
-				android:ellipsize="marquee"
-				android:marqueeRepeatLimit="marquee_forever"
-				android:focusable="false"
-				android:scrollHorizontally="true"
-                android:text="Online (1.2.3)"
-                android:visibility="invisible"/>
-            
-            <TextView 
-                android:id="@+id/server_row_usercount"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:fontFamily="sans-serif-light"
-                android:textColor="#808080"
-                android:singleLine="true"
-				android:ellipsize="marquee"
-				android:marqueeRepeatLimit="marquee_forever"
-				android:focusable="false"
-				android:scrollHorizontally="true"
-                android:text="15/100"
-                android:layout_alignParentRight="true"
-                android:visibility="invisible"/>
+                <TextView
+                    android:id="@+id/server_row_usercount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentRight="true"
+                    android:ellipsize="marquee"
+                    android:focusable="false"
+                    android:fontFamily="sans-serif-light"
+                    android:gravity="center_vertical"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:text="15/100"
+                    android:textColor="#808080"
+                    android:visibility="invisible" />
 
-            <ProgressBar
-                android:id="@+id/server_row_ping_progress"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_centerHorizontal="true" />
-
-        </RelativeLayout>
+                <ProgressBar
+                    android:id="@+id/server_row_ping_progress"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_centerHorizontal="true" />
+            </RelativeLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -130,37 +112,24 @@
             </LinearLayout>
         </LinearLayout>
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-
             <Button
                 android:id="@+id/server_row_button1"
                 style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
-                android:layout_toLeftOf="@+id/verticalSeparator"
                 android:text="@string/connect"
                 android:textColor="@color/abs__holo_blue_light"
                 android:textSize="14sp" />
-
-            <View
-                android:id="@+id/verticalSeparator"
-                android:layout_width="0.5dp"
-                android:layout_height="25dp"
-                android:layout_centerInParent="true"
-                android:background="@color/cardOutline" />
-
-            <Button
-                android:id="@+id/server_row_button2"
-                style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:layout_toRightOf="@+id/verticalSeparator"
-                android:text="@string/edit"
-                android:textColor="@color/abs__holo_blue_light"
-                android:textSize="14sp" />
-        </RelativeLayout>
     </LinearLayout>
 
-</LinearLayout>
+    <ImageButton
+        android:id="@+id/server_row_more"
+        style="@style/Plumble.BorderlessButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/server_card"
+        android:layout_alignRight="@id/server_card"
+        android:src="@drawable/ic_action_more" 
+        android:padding="5dp"/>
+
+</RelativeLayout>

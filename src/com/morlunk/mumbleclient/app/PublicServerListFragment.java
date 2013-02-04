@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
@@ -38,6 +39,7 @@ public class PublicServerListFragment extends SherlockFragment {
 	
 	private ServerConnectHandler connectHandler;
 	private GridView serverGrid;
+	private ProgressBar serverProgress;
 	private PublicServerAdapter serverAdapter;
 	
 	@Override
@@ -63,6 +65,8 @@ public class PublicServerListFragment extends SherlockFragment {
 			Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_server_list, container, false);
 		serverGrid = (GridView) view.findViewById(R.id.serverGrid);
+		serverProgress = (ProgressBar) view.findViewById(R.id.serverProgress);
+		serverProgress.setVisibility(View.VISIBLE);
 		return view;
 	}
 	
@@ -82,6 +86,7 @@ public class PublicServerListFragment extends SherlockFragment {
 	}
 	
 	public void setServers(List<PublicServer> servers) {
+		serverProgress.setVisibility(View.GONE);
 		serverAdapter = new PublicServerAdapter(getActivity(), servers);
 		serverGrid.setAdapter(serverAdapter);
 	}
@@ -179,7 +184,7 @@ public class PublicServerListFragment extends SherlockFragment {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							MumbleService.getCurrentService().getDatabaseAdapter().createServer(server.getName(), server.getHost(), server.getPort(), usernameField.getText().toString(), "");
-							//getSupportActionBar().setSelectedNavigationItem(0);
+							connectHandler.publicServerFavourited();
 						}
 					});
 					
