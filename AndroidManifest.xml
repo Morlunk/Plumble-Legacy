@@ -28,6 +28,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            	<category android:name="android.intent.category.DEFAULT" />
+           		<category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="mumble"/>
+            </intent-filter>
         </activity>
         <activity android:name=".app.ServerInfo" android:parentActivityName=".app.ServerList"/>
 		<provider android:name=".app.ChannelSearchProvider" android:authorities="com.morlunk.mumbleclient.app.ChannelSearchProvider" android:exported="false"></provider>

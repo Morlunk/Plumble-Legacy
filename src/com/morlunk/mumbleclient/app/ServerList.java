@@ -18,6 +18,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -238,6 +239,43 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			public void onPageScrollStateChanged(int arg0) {
 			}
 		});
+		
+		if(getIntent().getAction() == Intent.ACTION_VIEW) {
+			// Load mumble:// links
+			final Uri data = getIntent().getData();
+			final Server server = parseServerUri(data); // Create mock server entry from intent data
+			
+			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+			alertBuilder.setTitle(R.string.connectToServer);
+			
+			// Build a string of the server details
+			StringBuilder serverInfoBuilder = new StringBuilder();
+			serverInfoBuilder.append(getString(R.string.serverHost)+": "+server.getHost()+"\n");
+			serverInfoBuilder.append(getString(R.string.serverPort)+": "+server.getPort()+"\n");
+			if(!server.getUsername().equals(""))
+				serverInfoBuilder.append(getString(R.string.serverUsername)+": "+server.getUsername()+"\n");
+			if(!server.getPassword().equals(""))
+				serverInfoBuilder.append(getString(R.string.serverPassword)+": "+server.getPassword()+"\n");
+			alertBuilder.setMessage(serverInfoBuilder.toString());
+			
+			// Show alert dialog prompting the user to specify a username if needed.
+			final EditText usernameField = new EditText(this);
+			if(server.getUsername().equals("")) {
+				usernameField.setHint(R.string.serverUsername);
+				alertBuilder.setView(usernameField);
+			}
+			
+			alertBuilder.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					if(!usernameField.getText().toString().equals(""))
+						server.setUsername(usernameField.getText().toString());
+					connectToServer(server);
+				}
+			});
+			
+			alertBuilder.show();
+		}
 	}
 
 	@Override
@@ -271,6 +309,31 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		
 		if(serverListFragment != null && serverListFragment.isAdded())
 			fillFavoritesList();
+	}
+	
+	private Server parseServerUri(Uri data) {
+		String host = data.getHost();
+		String userInfo = data.getUserInfo();
+		
+		// Password and username can be in format user:pass@example.com. Deal with this.
+		String username = "";
+		String password = "";
+		if(userInfo != null && !userInfo.equals("")) {
+			if(userInfo.split(":").length == 2) {
+				String[] userInfoArray = userInfo.split(":");
+				username = userInfoArray[0];
+				password = userInfoArray[1];
+			} else {
+				username = userInfo;
+			}
+		}
+		
+		int port = data.getPort();
+		if(port == -1)
+			port = 64738;
+		
+		Server server = new Server(-1, "", host, port, username, password);
+		return server;
 	}
 
 	private void fillFavoritesList() {

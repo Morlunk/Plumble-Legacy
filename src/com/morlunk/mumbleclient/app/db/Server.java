@@ -14,7 +14,7 @@ public class Server implements Parcelable {
 	
 	protected Server() {}
 	
-	protected Server(Integer id,
+	public Server(Integer id,
 			String name,
 			String host,
 			Integer port,
@@ -63,6 +63,10 @@ public class Server implements Parcelable {
 
 	public void setUsername(String string) {
 		this.username = string;
+	}
+
+	public void setPassword(String string) {
+		this.password = string;
 	}
 
 	@Override
