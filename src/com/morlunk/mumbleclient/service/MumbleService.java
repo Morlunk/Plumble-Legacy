@@ -588,6 +588,13 @@ public class MumbleService extends Service implements OnInitListener {
 	public Server getConnectedServer() {
 		return connectedServer;
 	}
+	
+	/**
+	 * @return True if the connected server does not have a database representation; hence, 'public'.
+	 */
+	public boolean isConnectedServerPublic() {
+		return connectedServer.getId() == -1;
+	}
 
 	public boolean canSpeak() {
 		return mProtocol != null && mProtocol.canSpeak;

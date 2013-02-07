@@ -291,7 +291,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			View userView = channelUsersList.getChildAt(userPosition-channelUsersList.getFirstVisiblePosition());
 			
 			// Update comment state
-			if(user.comment != null || user.commentHash != null) {
+			if(user.comment != null || user.commentHash != null && !MumbleService.getCurrentService().isConnectedServerPublic()) {
 				userCommentsSeen.put(user, dbAdapter.isCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment));
 			}
 			
@@ -328,7 +328,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			for (User user : newUsers) {
 				this.users.add(user);
 				// Get the user's comment history
-				if(user.comment != null || user.commentHash != null)
+				if(user.comment != null || user.commentHash != null && !MumbleService.getCurrentService().isConnectedServerPublic())
 					this.userCommentsSeen.put(user, dbAdapter.isCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment));
 			}
 		}
@@ -349,7 +349,8 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 				comment.setImageResource(userCommentsSeen.get(user) ? R.drawable.ic_comment_seen : R.drawable.ic_comment);
 			
 			comment.setVisibility(user.comment != null || user.commentHash != null ? View.VISIBLE : View.GONE);
-			comment.setOnClickListener(new OnCommentClickListener(user));
+			if(MumbleService.getCurrentService() != null && !MumbleService.getCurrentService().isConnectedServerPublic())
+				comment.setOnClickListener(new OnCommentClickListener(user));
 			
 			chatActive.setImageDrawable(chatDrawable);
 			chatActive.setVisibility(user.equals(selectedUser) ? View.VISIBLE : View.GONE);

@@ -392,6 +392,23 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	}
     }
     
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+    	// Only show favourites and access tokens (DB-related) if the connected server has a DB representation (non-public).
+    	MenuItem favouriteToggleItem = menu.findItem(R.id.menu_favorite_button);
+    	MenuItem favouritesViewItem = menu.findItem(R.id.menu_view_favorites_button);
+    	MenuItem accessTokensItem = menu.findItem(R.id.menu_access_tokens_button);
+    	
+    	if(mService != null &&
+    			mService.getConnectedServer() != null) {
+    		favouriteToggleItem.setVisible(!mService.isConnectedServerPublic());
+    		favouritesViewItem.setVisible(!mService.isConnectedServerPublic());
+    		accessTokensItem.setVisible(!mService.isConnectedServerPublic());
+    	}
+    	
+    	return super.onPrepareOptionsMenu(menu);
+    }
+    
     @TargetApi(Build.VERSION_CODES.HONEYCOMB) 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -408,7 +425,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         	searchItem.setVisible(false);
         }
         
-        favouritesItem = menu.findItem(R.id.menu_favorite_button);
         mutedButton = menu.findItem(R.id.menu_mute_button);
         deafenedButton = menu.findItem(R.id.menu_deafen_button);
         
@@ -416,8 +432,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         		mService.getCurrentUser() != null) {
         	updateMuteDeafenMenuItems(mService.isMuted(), mService.isDeafened());
         }
-        
-        updateFavouriteMenuItem();
+
+        favouritesItem = menu.findItem(R.id.menu_favorite_button);
+        if(mService != null && !mService.isConnectedServerPublic())
+        	updateFavouriteMenuItem();
         
         return true;
     }
@@ -639,8 +657,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		// Send access tokens after connection.
 		sendAccessTokens();
 		
-        // Load favourites
-        favourites = loadFavourites();
+        // Load favourites if is non-public server
+        if(!mService.isConnectedServerPublic())
+        	favourites = loadFavourites();
         
 		// Load channel spinner
         loadChannelSpinner();
@@ -865,7 +884,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		getSupportActionBar().setSelectedNavigationItem(channelAdapter.availableChannels.indexOf(channel));
         
         // Update favourites icon
-		updateFavouriteMenuItem();
+		if(!mService.isConnectedServerPublic())
+			updateFavouriteMenuItem();
 	}
 	
 	/* (non-Javadoc)
