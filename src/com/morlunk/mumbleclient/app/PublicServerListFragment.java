@@ -207,7 +207,7 @@ public class PublicServerListFragment extends SherlockFragment {
 			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
 			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
 			
-			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
+			serverVersionText.setVisibility(pingedServers.contains(server) && !requestExists ? View.INVISIBLE : View.VISIBLE);
 			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
 			serverInfoProgressBar.setVisibility(pingedServers.contains(server) && !requestExists ? View.VISIBLE : View.INVISIBLE);
 			
@@ -217,6 +217,8 @@ public class PublicServerListFragment extends SherlockFragment {
 			} else if(requestFailure) {
 				serverVersionText.setText(R.string.offline);
 				serverUsersText.setText("");
+			} else {
+				serverVersionText.setText(R.string.noServerInfo);
 			}
 			
 			return view;

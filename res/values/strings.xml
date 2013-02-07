@@ -114,4 +114,5 @@
     <string name="country">Country</string>
     <string name="share">Share</string>
     <string name="shareMessage">Join this Mumble server with Plumble! %s</string>
+    <string name="noServerInfo">Ping to fetch info</string>
 </resources>

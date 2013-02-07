@@ -61,9 +61,8 @@
                 android:fontFamily="sans-serif-light"
                 android:textColor="#808080"
 				android:focusable="false"
-                android:text="Online (1.2.3)"
-                android:lines="1"
-                android:visibility="invisible"/>
+                android:text="@string/noServerInfo"
+                android:lines="1"/>
             
             <TextView 
                 android:id="@+id/server_row_usercount"
@@ -78,8 +77,7 @@
 				android:focusable="false"
 				android:scrollHorizontally="true"
                 android:text="15/100"
-                android:layout_alignParentRight="true"
-                android:visibility="invisible"/>
+                android:layout_alignParentRight="true"/>
 
                 <ProgressBar
                     android:id="@+id/server_row_ping_progress"
