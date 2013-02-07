@@ -1,5 +1,6 @@
 package com.morlunk.mumbleclient.app;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -104,6 +105,7 @@ public class PublicServerListFragment extends SherlockFragment {
 	
 	private class PublicServerAdapter extends ArrayAdapter<PublicServer> {
 		private Map<PublicServer, ServerInfoResponse> infoResponses = new HashMap<PublicServer, ServerInfoResponse>();
+		private List<PublicServer> pingedServers = new ArrayList<PublicServer>();
 		
 		public PublicServerAdapter(Context context, List<PublicServer> servers) {
 			super(context, android.R.id.text1, servers);
@@ -154,7 +156,10 @@ public class PublicServerListFragment extends SherlockFragment {
 				@Override
 				public void onClick(View v) {
 					// Refresh server on manual ping
+					if(!pingedServers.contains(server))
+						pingedServers.add(server);
 					infoResponses.remove(server.getId());
+					notifyDataSetChanged();
 					new ServerInfoTask() {
 						protected void onPostExecute(ServerInfoResponse result) {
 							super.onPostExecute(result);
@@ -200,10 +205,11 @@ public class PublicServerListFragment extends SherlockFragment {
 			
 			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
 			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
+			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
 			
 			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
 			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
-			
+			serverInfoProgressBar.setVisibility(pingedServers.contains(server) && !requestExists ? View.VISIBLE : View.INVISIBLE);
 			
 			if(infoResponse != null && !requestFailure) {
 				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");

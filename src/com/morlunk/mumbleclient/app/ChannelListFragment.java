@@ -386,10 +386,11 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			@Override
 			public void onClick(View v) {
 				ImageView commentView = (ImageView)v;
-				commentView.setImageResource(R.drawable.ic_comment_seen);
 
-				if(MumbleService.getCurrentService() != null && !MumbleService.getCurrentService().isConnectedServerPublic())
+				if(MumbleService.getCurrentService() != null && !MumbleService.getCurrentService().isConnectedServerPublic()) {
+					commentView.setImageResource(R.drawable.ic_comment_seen);
 					dbAdapter.setCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
+				}
 				
 				AlertDialog.Builder builder = new AlertDialog.Builder(context);
 				builder.setTitle("Comment");
