@@ -5,7 +5,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.TextWatcher;
+import android.text.util.Linkify;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +22,7 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.service.model.User;
 
@@ -109,6 +114,12 @@ public class ChannelChatFragment extends SherlockFragment {
 		if(text == null || text.equals("")) {
 			return;
 		}
+		
+		// Linkify (convert pasted links to spannable) and convert back to HTML
+		Spannable spanText = new SpannableString(text);
+		Linkify.addLinks(spanText, Linkify.WEB_URLS);
+		text = Html.toHtml(spanText);
+		text = text.substring("<p dir=\"ltr\">".length(), text.length()-"</p>".length()-1); // Remove paragraph tags
 		
 		AsyncTask<String, Void, Void> messageTask = new AsyncTask<String, Void, Void>() {
 			
