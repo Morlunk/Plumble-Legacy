@@ -349,8 +349,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 				comment.setImageResource(userCommentsSeen.get(user) ? R.drawable.ic_comment_seen : R.drawable.ic_comment);
 			
 			comment.setVisibility(user.comment != null || user.commentHash != null ? View.VISIBLE : View.GONE);
-			if(MumbleService.getCurrentService() != null && !MumbleService.getCurrentService().isConnectedServerPublic())
-				comment.setOnClickListener(new OnCommentClickListener(user));
+			comment.setOnClickListener(new OnCommentClickListener(user));
 			
 			chatActive.setImageDrawable(chatDrawable);
 			chatActive.setVisibility(user.equals(selectedUser) ? View.VISIBLE : View.GONE);
@@ -388,8 +387,9 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			public void onClick(View v) {
 				ImageView commentView = (ImageView)v;
 				commentView.setImageResource(R.drawable.ic_comment_seen);
-				
-				dbAdapter.setCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
+
+				if(MumbleService.getCurrentService() != null && !MumbleService.getCurrentService().isConnectedServerPublic())
+					dbAdapter.setCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment);
 				
 				AlertDialog.Builder builder = new AlertDialog.Builder(context);
 				builder.setTitle("Comment");
