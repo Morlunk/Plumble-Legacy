@@ -95,13 +95,12 @@ public class MumbleService extends Service implements OnInitListener {
 		}
 
 		@Override
-		public void setMuted(final User user, final boolean muted) {
+		public void setSelfMuted(final User user, final boolean muted) {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					user.userState = muted ? User.USERSTATE_MUTED : User.USERSTATE_NONE;
-					user.muted = muted;
-					user.deafened = false;
+					user.selfMuted = muted;
+					user.selfDeafened = false;
 					updateNotificationState(user);
 					
 					// Update other clients about mute status
@@ -110,8 +109,8 @@ public class MumbleService extends Service implements OnInitListener {
 						public void run() {
 							final UserState.Builder us = UserState.newBuilder();
 							us.setSession(user.session);
-							us.setSelfMute(user.muted);
-							us.setSelfDeaf(user.deafened);
+							us.setSelfMute(user.selfMuted);
+							us.setSelfDeaf(user.selfDeafened);
 							mClient.sendTcpMessage(MessageType.UserState, us);
 						}
 					}).start();
@@ -126,13 +125,12 @@ public class MumbleService extends Service implements OnInitListener {
 		}
 
 		@Override
-		public void setDeafened(final User user, final boolean deafened) {
+		public void setSelfDeafened(final User user, final boolean deafened) {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					user.userState = deafened ? User.USERSTATE_DEAFENED : User.USERSTATE_NONE;
-					user.deafened = deafened;
-					user.muted = deafened;
+					user.selfDeafened = deafened;
+					user.selfMuted = deafened;
 					updateNotificationState(user);
 					
 					// Update other clients about deafened status
@@ -141,8 +139,8 @@ public class MumbleService extends Service implements OnInitListener {
 						public void run() {
 							final UserState.Builder us = UserState.newBuilder();
 							us.setSession(user.session);
-							us.setSelfMute(user.muted);
-							us.setSelfDeaf(user.deafened);
+							us.setSelfMute(user.selfMuted);
+							us.setSelfDeaf(user.selfDeafened);
 							mClient.sendTcpMessage(MessageType.UserState, us);
 						}
 					}).start();
@@ -718,11 +716,11 @@ public class MumbleService extends Service implements OnInitListener {
 	}
 	
 	public boolean isDeafened() {
-		return mProtocol.currentUser.deafened;
+		return mProtocol.currentUser.selfDeafened;
 	}
 	
 	public boolean isMuted() {
-		return mProtocol.currentUser.muted;
+		return mProtocol.currentUser.selfMuted;
 	}
 
 	public void joinChannel(final int channelId) {
@@ -857,21 +855,21 @@ public class MumbleService extends Service implements OnInitListener {
 	
 	public void setMuted(final boolean state) {
 		if(mAudioHost != null && mProtocol != null && mProtocol.currentUser != null) {
-			mAudioHost.setMuted(mProtocol.currentUser, state);
+			mAudioHost.setSelfMuted(mProtocol.currentUser, state);
 			settings.setMutedAndDeafened(state, false);
 		}
 	}
 	
 	public void setDeafened(final boolean state) {
 		if(mAudioHost != null && mProtocol != null && mProtocol.currentUser != null) {
-			mAudioHost.setDeafened(mProtocol.currentUser, state);
+			mAudioHost.setSelfDeafened(mProtocol.currentUser, state);
 			settings.setMutedAndDeafened(state, state);
 		}
 	}
 	
 	public void updateNotificationState(User user) {
-		boolean muted = user.muted;
-		boolean deafened = user.deafened;
+		boolean muted = user.selfMuted;
+		boolean deafened = user.selfDeafened;
 
 		String status = null;
 		if (muted && !deafened) {

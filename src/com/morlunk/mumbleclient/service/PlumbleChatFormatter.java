@@ -108,7 +108,7 @@ public class PlumbleChatFormatter {
 						sb.append(service.getString(R.string.chat_notify_now_muted_deafened, getHighlightedString(user.name)));
 					} else if(userState.getSelfMute()) {
 						sb.append(service.getString(R.string.chat_notify_now_muted, getHighlightedString(user.name)));
-					} else if(user.userState == User.USERSTATE_DEAFENED && !userState.getSelfDeaf()){
+					} else if(user.selfDeafened && !userState.getSelfDeaf()){
 						sb.append(service.getString(R.string.chat_notify_now_unmuted_undeafened, getHighlightedString(user.name)));
 					} else {
 						sb.append(service.getString(R.string.chat_notify_now_unmuted, getHighlightedString(user.name)));

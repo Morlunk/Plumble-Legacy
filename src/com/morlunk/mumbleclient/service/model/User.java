@@ -24,21 +24,19 @@ public class User implements Parcelable {
 	public static final int TALKINGSTATE_SHOUTING = 2;
 	public static final int TALKINGSTATE_WHISPERING = 3;
 
-	public static final int USERSTATE_NONE = 0;
-	public static final int USERSTATE_MUTED = 1;
-	public static final int USERSTATE_DEAFENED = 2;
-
 	public int session;
 	public String name;
 	public String comment;
 	public ByteString commentHash;
 	public float averageAvailable;
 	public int talkingState;
-	public int userState;
 	public boolean isCurrent;
-
-	public boolean muted;
-	public boolean deafened;
+	
+	public boolean selfMuted;
+	public boolean selfDeafened;
+	public boolean suppressed;
+	public boolean serverMuted;
+	public boolean serverDeafened;
 	
 	public boolean localMuted = false;
 
@@ -104,7 +102,7 @@ public class User implements Parcelable {
 		dest.writeString(commentHash != null ? commentHash.toStringUtf8() : "");
 		dest.writeFloat(averageAvailable);
 		dest.writeInt(talkingState);
-		dest.writeBooleanArray(new boolean[] { isCurrent, muted, deafened });
+		dest.writeBooleanArray(new boolean[] { isCurrent, selfMuted, selfDeafened, suppressed, serverMuted, serverDeafened });
 		dest.writeParcelable(channel, 0);
 	}
 
@@ -118,11 +116,14 @@ public class User implements Parcelable {
 		commentHash = ByteString.copyFromUtf8(in.readString());
 		averageAvailable = in.readFloat();
 		talkingState = in.readInt();
-		final boolean[] boolArr = new boolean[3];
+		final boolean[] boolArr = new boolean[6];
 		in.readBooleanArray(boolArr);
 		isCurrent = boolArr[0];
-		muted = boolArr[1];
-		deafened = boolArr[2];
+		selfMuted = boolArr[1];
+		selfDeafened = boolArr[2];
+		suppressed = boolArr[3];
+		serverMuted = boolArr[4];
+		serverDeafened = boolArr[5];
 		channel = in.readParcelable(null);
 	}
 }

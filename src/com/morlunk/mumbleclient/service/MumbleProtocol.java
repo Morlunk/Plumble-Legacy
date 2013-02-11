@@ -264,30 +264,24 @@ public class MumbleProtocol {
 
 			if (us.hasSelfDeaf() || us.hasSelfMute()) {
 				if (us.getSelfDeaf()) {
-					user.userState = User.USERSTATE_DEAFENED;
-				} else if (us.getSelfMute()) {
-					user.userState = User.USERSTATE_MUTED;
-				} else {
-					user.userState = User.USERSTATE_NONE;
+					user.selfDeafened = us.getSelfDeaf();
+				}
+				if (us.getSelfMute()) {
+					user.selfMuted = us.getSelfMute();
 				}
 			}
 
 			if (us.hasMute()) {
-				user.muted = us.getMute();
-				user.userState = user.muted ? User.USERSTATE_MUTED
-					: User.USERSTATE_NONE;
+				user.serverMuted = us.getMute();
 			}
 
 			if (us.hasDeaf()) {
-				user.deafened = us.getDeaf();
-				user.muted |= user.deafened;
-				user.userState = user.deafened ? User.USERSTATE_DEAFENED
-					: (user.muted ? User.USERSTATE_MUTED : User.USERSTATE_NONE);
+				user.serverDeafened = us.getDeaf();
+				user.serverMuted |= user.serverDeafened;
 			}
 
 			if (us.hasSuppress()) {
-				user.userState = us.getSuppress() ? User.USERSTATE_MUTED
-					: User.USERSTATE_NONE;
+				user.suppressed = us.getSuppress();
 			}
 
 			if (us.hasName()) {

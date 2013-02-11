@@ -357,15 +357,18 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		
 		private void refreshTalkingState(final View view, final User user) {
 			final ImageView state = (ImageView) view.findViewById(R.id.userRowState);
-
-			switch (user.userState) {
-			case User.USERSTATE_DEAFENED:
+			
+			if(user.selfDeafened) {
 				state.setImageResource(R.drawable.ic_deafened);
-				break;
-			case User.USERSTATE_MUTED:
+			} else if(user.selfMuted) {
 				state.setImageResource(R.drawable.ic_muted);
-				break;
-			default:
+			} else if(user.serverDeafened) {
+				state.setImageResource(R.drawable.ic_server_deafened);
+			} else if(user.serverMuted) {
+				state.setImageResource(R.drawable.ic_server_muted);
+			} else if(user.suppressed) {
+				state.setImageResource(R.drawable.ic_suppressed);
+			} else {
 				if (user.talkingState == AudioOutputHost.STATE_TALKING) {
 					state.setImageResource(R.drawable.ic_talking_on);
 				} else {
