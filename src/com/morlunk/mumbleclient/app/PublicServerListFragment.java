@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -164,7 +165,7 @@ public class PublicServerListFragment extends SherlockFragment {
 						activePingCount--;
 						Log.d(Globals.LOG_TAG, "DEBUG: Servers remaining in queue: "+activePingCount);
 					};
-				}.execute(server);
+				}.executeOnExecutor(Executors.newCachedThreadPool(), server);
 			}
 			
 			ImageButton favoriteButton = (ImageButton)view.findViewById(R.id.server_row_favorite);
