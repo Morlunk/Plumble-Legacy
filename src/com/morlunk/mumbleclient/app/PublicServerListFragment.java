@@ -1,6 +1,5 @@
 package com.morlunk.mumbleclient.app;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +10,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -27,6 +27,7 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.PublicServer;
 import com.morlunk.mumbleclient.service.MumbleService;
@@ -38,10 +39,13 @@ import com.morlunk.mumbleclient.service.MumbleService;
  */
 public class PublicServerListFragment extends SherlockFragment {
 	
+	public static final int MAX_ACTIVE_PINGS = 50;
+	
 	private ServerConnectHandler connectHandler;
 	private GridView serverGrid;
 	private ProgressBar serverProgress;
 	private PublicServerAdapter serverAdapter;
+	private int activePingCount = 0;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -105,7 +109,6 @@ public class PublicServerListFragment extends SherlockFragment {
 	
 	private class PublicServerAdapter extends ArrayAdapter<PublicServer> {
 		private Map<PublicServer, ServerInfoResponse> infoResponses = new HashMap<PublicServer, ServerInfoResponse>();
-		private List<PublicServer> pingedServers = new ArrayList<PublicServer>();
 		
 		public PublicServerAdapter(Context context, List<PublicServer> servers) {
 			super(context, android.R.id.text1, servers);
@@ -150,25 +153,19 @@ public class PublicServerListFragment extends SherlockFragment {
 				}
 			});
 			
-			Button pingButton = (Button) view.findViewById(R.id.server_row_button2);
-			pingButton.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					// Refresh server on manual ping
-					if(!pingedServers.contains(server))
-						pingedServers.add(server);
-					infoResponses.remove(server.getId());
-					notifyDataSetChanged();
-					new ServerInfoTask() {
-						protected void onPostExecute(ServerInfoResponse result) {
-							super.onPostExecute(result);
-							infoResponses.put(server, result);
-							notifyDataSetChanged();
-						};
-					}.execute(server);
-				}
-			});
+			// Ping server if available
+			if(!infoResponses.containsKey(server) && activePingCount < MAX_ACTIVE_PINGS) {
+				activePingCount++;
+				new ServerInfoTask() {
+					protected void onPostExecute(ServerInfoResponse result) {
+						super.onPostExecute(result);
+						infoResponses.put(server, result);
+						notifyDataSetChanged();
+						activePingCount--;
+						Log.d(Globals.LOG_TAG, "DEBUG: Servers remaining in queue: "+activePingCount);
+					};
+				}.execute(server);
+			}
 			
 			ImageButton favoriteButton = (ImageButton)view.findViewById(R.id.server_row_favorite);
 			
@@ -207,9 +204,9 @@ public class PublicServerListFragment extends SherlockFragment {
 			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
 			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
 			
-			serverVersionText.setVisibility(pingedServers.contains(server) && !requestExists ? View.INVISIBLE : View.VISIBLE);
-			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
-			serverInfoProgressBar.setVisibility(pingedServers.contains(server) && !requestExists ? View.VISIBLE : View.INVISIBLE);
+			serverVersionText.setVisibility(!requestFailure && !requestExists ? View.INVISIBLE : View.VISIBLE);
+			serverUsersText.setVisibility(!requestFailure && !requestExists ? View.INVISIBLE : View.VISIBLE);
+			serverInfoProgressBar.setVisibility(!requestExists ? View.VISIBLE : View.INVISIBLE);
 			
 			if(infoResponse != null && !requestFailure) {
 				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");
