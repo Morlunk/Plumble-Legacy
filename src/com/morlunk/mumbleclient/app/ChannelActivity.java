@@ -38,6 +38,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -1059,8 +1060,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		@Override
 		public void onChannelUpdated(Channel channel) throws RemoteException {
-			if(mService.isConnected())
-				loadChannelSpinner(); // Reload channel spinner if connected
+			if(mService.isConnected() && channelAdapter != null)
+				channelAdapter.updateChannel(channel);
 		}
 		
 		@Override
@@ -1111,9 +1112,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 class ChannelSpinnerAdapter implements SpinnerAdapter {
 		
 		List<Channel> availableChannels;
+		SparseArray<View> channelViews;
 		
 		public ChannelSpinnerAdapter(List<Channel> availableChannels) {
 			this.availableChannels = availableChannels;
+			this.channelViews = new SparseArray<View>();
 		}
 		
 		/* (non-Javadoc)
@@ -1228,11 +1231,8 @@ class ChannelSpinnerAdapter implements SpinnerAdapter {
 				ViewGroup parent) {
 			View view = convertView;
 
-			Channel channel = getItem(position);
-			
-			DisplayMetrics metrics = getResources().getDisplayMetrics();
-
 			// Use rowHeight provided by settings, convert to dp.
+			DisplayMetrics metrics = getResources().getDisplayMetrics();
 			int rowHeight = settings.getChannelListRowHeight();
 			int rowHeightDp = (int)(rowHeight * metrics.density + 0.5f);
 
@@ -1245,6 +1245,16 @@ class ChannelSpinnerAdapter implements SpinnerAdapter {
 				v_params.height = rowHeightDp;
 				view.setLayoutParams(v_params);
 			}
+
+			Channel channel = getItem(position);
+			updateChannelView(view, channel);
+			channelViews.put(channel.id, view);
+
+			return view;
+		}
+		
+		private void updateChannelView(View view, Channel channel) {
+			DisplayMetrics metrics = getResources().getDisplayMetrics();
 
 			ImageView returnImage = (ImageView) view.findViewById(R.id.return_image);
 
@@ -1287,8 +1297,20 @@ class ChannelSpinnerAdapter implements SpinnerAdapter {
 			spinnerCount.setText("(" + channel.userCount + ")");
 			spinnerCount.setTextColor(getResources().getColor(
 			channel.userCount > 0 ? R.color.abs__holo_blue_light : R.color.abs__primary_text_holo_dark));
-
-			return view;
+		}
+		
+		/**
+		 * If the passed channel is present in the ChannelAdapter, update it with the latest data.
+		 * @param channel The updated channel whose representation in the spinner should be updated.
+		 */
+		public void updateChannel(Channel channel) {
+			if(!availableChannels.contains(channel))
+				return;
+			
+			View channelView = channelViews.get(channel.id);
+			
+			if(channelView != null && channelView.isShown())
+				updateChannelView(channelView, channel);
 		}
 		
 	}

@@ -573,6 +573,7 @@ public class MumbleService extends Service implements OnInitListener {
 
 	/**
 	 * Gets the current mumble service (the last one spawned).
+	 * This is /such/ a bad design pattern to be using with Android services. FIXME
 	 * @return
 	 */
 	public static MumbleService getCurrentService() {
