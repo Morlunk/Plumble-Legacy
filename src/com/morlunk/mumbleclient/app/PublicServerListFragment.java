@@ -4,12 +4,14 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.AsyncTask;
+import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -115,6 +117,7 @@ public class PublicServerListFragment extends SherlockFragment {
 			super(context, android.R.id.text1, servers);
 		}
 
+		@SuppressLint("NewApi")
 		@Override
 		public final View getView(
 			final int position,
@@ -157,7 +160,7 @@ public class PublicServerListFragment extends SherlockFragment {
 			// Ping server if available
 			if(!infoResponses.containsKey(server) && activePingCount < MAX_ACTIVE_PINGS) {
 				activePingCount++;
-				new ServerInfoTask() {
+				ServerInfoTask task = new ServerInfoTask() {
 					protected void onPostExecute(ServerInfoResponse result) {
 						super.onPostExecute(result);
 						infoResponses.put(server, result);
@@ -165,7 +168,13 @@ public class PublicServerListFragment extends SherlockFragment {
 						activePingCount--;
 						Log.d(Globals.LOG_TAG, "DEBUG: Servers remaining in queue: "+activePingCount);
 					};
-				}.executeOnExecutor(Executors.newCachedThreadPool(), server);
+				};
+				
+				// Execute on parallel threads if API >= 11. RACE CAR THREADING, WOOOOOOOOOOOOOOOOOOOOOO
+				if(VERSION.SDK_INT >= 11)
+					task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, server);
+				else
+					task.execute(server);
 			}
 			
 			ImageButton favoriteButton = (ImageButton)view.findViewById(R.id.server_row_favorite);
