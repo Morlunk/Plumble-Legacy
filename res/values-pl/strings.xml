@@ -114,4 +114,7 @@
     <string name="country">Kraju</string>
     <string name="share">Udostępnij</string>
     <string name="shareMessage">Dołącz na ten serwer z Plumble! %s</string>
+    <string name="noServerInfo">Użyj Ping, aby zebrać informacje</string>
+    <string name="status_notify_muted_and_deafened">Ogłuszony oraz wyciszony mikrofon.</string>
+    <string name="status_notify_muted">Wyciszony mikrofon</string>
 </resources>
