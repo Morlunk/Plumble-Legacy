@@ -115,4 +115,6 @@
     <string name="share">Share</string>
     <string name="shareMessage">Join this Mumble server with Plumble! %s</string>
     <string name="noServerInfo">Ping to fetch info</string>
+    <string name="status_notify_muted_and_deafened">Muted and deafened.</string>
+    <string name="status_notify_muted">Muted.</string>
 </resources>

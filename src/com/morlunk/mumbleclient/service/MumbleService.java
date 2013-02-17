@@ -874,9 +874,9 @@ public class MumbleService extends Service implements OnInitListener {
 
 		String status = null;
 		if (muted && !deafened) {
-			status = "Muted.";
+			status = getString(R.string.status_notify_muted);
 		} else if (deafened && muted) {
-			status = "Muted and deafened.";
+			status = getString(R.string.status_notify_muted_and_deafened);
 		}
 
 		mStatusNotificationBuilder.setTicker(status);
@@ -1061,8 +1061,8 @@ public class MumbleService extends Service implements OnInitListener {
 		Intent deafenIntent = new Intent(this, MumbleNotificationService.class);
 		deafenIntent.putExtra(MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_KEY, MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_DEAFEN);
 		
-		builder.addAction(R.drawable.ic_action_microphone, "Mute", PendingIntent.getService(this, 0, muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
-		builder.addAction(R.drawable.ic_action_headphones, "Deafen", PendingIntent.getService(this, 1, deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+		builder.addAction(R.drawable.ic_action_microphone, getString(R.string.mute), PendingIntent.getService(this, 0, muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+		builder.addAction(R.drawable.ic_action_headphones, getString(R.string.deafen), PendingIntent.getService(this, 1, deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
 		
 		Intent channelListIntent = new Intent(
 			MumbleService.this,
