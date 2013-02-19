@@ -160,11 +160,13 @@ public class PublicServerListFragment extends SherlockFragment {
 			// Ping server if available
 			if(!infoResponses.containsKey(server) && activePingCount < MAX_ACTIVE_PINGS) {
 				activePingCount++;
+				final View serverView = view; // Create final instance of view for use in asynctask
 				ServerInfoTask task = new ServerInfoTask() {
 					protected void onPostExecute(ServerInfoResponse result) {
 						super.onPostExecute(result);
 						infoResponses.put(server, result);
-						notifyDataSetChanged();
+						if(serverView != null && serverView.isShown())
+							updateInfoResponseView(serverView, server);
 						activePingCount--;
 						Log.d(Globals.LOG_TAG, "DEBUG: Servers remaining in queue: "+activePingCount);
 					};
@@ -205,6 +207,12 @@ public class PublicServerListFragment extends SherlockFragment {
 				
 			});
 			
+			updateInfoResponseView(view, server);
+			
+			return view;
+		}
+		
+		private void updateInfoResponseView(View view, PublicServer server) {
 			ServerInfoResponse infoResponse = infoResponses.get(server);
 			// If there is a null value for the server info (rather than none at all), the request must have failed.
 			boolean requestExists = infoResponse != null;
@@ -227,8 +235,6 @@ public class PublicServerListFragment extends SherlockFragment {
 			} else {
 				serverVersionText.setText(R.string.noServerInfo);
 			}
-			
-			return view;
 		}
 	}
 	
