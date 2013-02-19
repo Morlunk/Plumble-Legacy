@@ -72,10 +72,6 @@
                 android:fontFamily="sans-serif-light"
                 android:textColor="#808080"
                 android:singleLine="true"
-				android:ellipsize="marquee"
-				android:marqueeRepeatLimit="marquee_forever"
-				android:focusable="false"
-				android:scrollHorizontally="true"
                 android:text="15/100"
                 android:layout_alignParentRight="true"/>
 

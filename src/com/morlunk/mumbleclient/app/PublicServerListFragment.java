@@ -133,6 +133,7 @@ public class PublicServerListFragment extends SherlockFragment {
 			}
 			
 			final PublicServer server = getItem(position);
+			view.setTag(server);
 			
 			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
 			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
@@ -165,7 +166,7 @@ public class PublicServerListFragment extends SherlockFragment {
 					protected void onPostExecute(ServerInfoResponse result) {
 						super.onPostExecute(result);
 						infoResponses.put(server, result);
-						if(serverView != null && serverView.isShown())
+						if(serverView != null && serverView.isShown() && serverView.getTag() == server)
 							updateInfoResponseView(serverView, server);
 						activePingCount--;
 						Log.d(Globals.LOG_TAG, "DEBUG: Servers remaining in queue: "+activePingCount);
