@@ -6,7 +6,9 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.TextWatcher;
+import android.text.util.Linkify;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -92,8 +94,8 @@ public class ChannelChatFragment extends SherlockFragment {
 		return view;
 	}
 	
-	public void addChatMessage(Spannable text) {
-		chatText.append(text);
+	public void addChatMessage(String text) {
+		chatText.append(Html.fromHtml(text));
 		chatText.append(Html.fromHtml("<br>"));
 		
 		chatScroll.post(new Runnable() {
@@ -110,6 +112,12 @@ public class ChannelChatFragment extends SherlockFragment {
 		if(text == null || text.equals("")) {
 			return;
 		}
+		
+		// Linkify (convert pasted links to spannable) and convert back to HTML
+		Spannable spanText = new SpannableString(text);
+		Linkify.addLinks(spanText, Linkify.WEB_URLS);
+		text = Html.toHtml(spanText);
+		text = text.substring("<p dir=\"ltr\">".length(), text.length()-"</p>".length()-1); // Remove paragraph tags
 		
 		AsyncTask<String, Void, Void> messageTask = new AsyncTask<String, Void, Void>() {
 			

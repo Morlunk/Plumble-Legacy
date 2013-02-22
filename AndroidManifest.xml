@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.morlunk.mumbleclient"
     android:installLocation="auto"
-    android:versionCode="29"
-    android:versionName="1.6.0" >
+    android:versionCode="33"
+    android:versionName="1.8.0" >
 
     <uses-sdk
         android:minSdkVersion="7"
@@ -28,11 +28,17 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            	<category android:name="android.intent.category.DEFAULT" />
+           		<category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="mumble"/>
+            </intent-filter>
         </activity>
         <activity android:name=".wizard.PlumbleWizard"/>
         <activity android:name=".app.ServerInfo" android:parentActivityName=".app.ServerList"/>
 		<provider android:name=".app.ChannelSearchProvider" android:authorities="com.morlunk.mumbleclient.app.ChannelSearchProvider" android:exported="false"></provider>
-        <activity android:name=".app.ChannelActivity" android:launchMode="singleInstance">
+        <activity android:name=".app.ChannelActivity" android:launchMode="singleTop">
             <intent-filter>
             	<action android:name="android.intent.action.SEARCH" />
         	</intent-filter>

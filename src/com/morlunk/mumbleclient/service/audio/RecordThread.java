@@ -117,20 +117,20 @@ public class RecordThread implements Runnable, Observer {
 		}
 	}
 
-	@TargetApi(11)
+	@TargetApi(16)
 	@Override
 	public final void run() {
 		final boolean running = true;
 		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 		
-		int audioSource = MediaRecorder.AudioSource.MIC;
+		int audioSource = MediaRecorder.AudioSource.DEFAULT;
 		
 		if(callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
 			audioSource = (MediaRecorder.AudioSource.MIC);
 		} else if(callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
 			audioSource = (MediaRecorder.AudioSource.DEFAULT);
 		}
-		
+				
 		AudioRecord ar = null;
 		try {
 			ar = new AudioRecord(audioSource,
@@ -138,7 +138,15 @@ public class RecordThread implements Runnable, Observer {
 				AudioFormat.CHANNEL_IN_MONO,
 				AudioFormat.ENCODING_PCM_16BIT,
 				64 * 1024);
-
+			
+			/*
+			if(VERSION.SDK_INT >= 16 && AcousticEchoCanceler.isAvailable()) {
+				// Setup echo cancellation
+				Log.d(Globals.LOG_TAG, "Enabled echo cancellation.");
+				AcousticEchoCanceler.create(ar.getAudioSessionId());
+			}
+			*/
+			
 			if (ar.getState() != AudioRecord.STATE_INITIALIZED) {
 				return;
 			}

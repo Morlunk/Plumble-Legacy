@@ -12,7 +12,9 @@ public class Server implements Parcelable {
 	private String username;
 	private String password;
 	
-	protected Server(Integer id,
+	protected Server() {}
+	
+	public Server(Integer id,
 			String name,
 			String host,
 			Integer port,
@@ -57,6 +59,14 @@ public class Server implements Parcelable {
 
 	public String getPassword() {
 		return password;
+	}
+
+	public void setUsername(String string) {
+		this.username = string;
+	}
+
+	public void setPassword(String string) {
+		this.password = string;
 	}
 
 	@Override

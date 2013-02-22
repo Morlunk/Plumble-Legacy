@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:divider="?android:attr/dividerHorizontal"
+    android:showDividers="middle"
+    tools:context=".ChannelActivity"
+    android:orientation="horizontal" >
+    <fragment android:id="@+id/chat_fragment"
+        android:name="com.morlunk.mumbleclient.app.ChannelChatFragment"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"/>
+    <LinearLayout android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_weight="1"
+    	android:divider="?android:attr/dividerVertical"
+    	android:showDividers="middle">
+
+    	<fragment
+    	    android:id="@+id/list_fragment"
+    	    android:name="com.morlunk.mumbleclient.app.ChannelListFragment"
+    	    android:layout_width="match_parent"
+    	    android:layout_height="0dp" 
+            android:layout_weight="1"/>
+    	
+    <RelativeLayout
+        android:id="@+id/pushview"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:visibility="gone"
+        >
+    
+    <View 
+        android:id="@+id/pushgradient"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/record_gradient"
+        android:layout_alignParentBottom="true"
+        android:visibility="invisible"/>
+    
+    <Button
+        android:id="@+id/pushtotalk"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:paddingTop="8dp"
+        android:text="@string/ptt"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:textSize="14sp"
+        android:gravity="top|center_horizontal"
+        android:background="@null"/>
+
+    <CheckBox
+        android:id="@+id/pushtotalk_toggle"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="8dp"
+        android:layout_alignTop="@+id/pushtotalk" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:paddingBottom="8dp"
+        android:text="@string/pushToTalkHint"
+        android:textSize="10sp" />
+    </RelativeLayout>
+    </LinearLayout>
+
+</LinearLayout>

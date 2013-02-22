@@ -93,13 +93,19 @@
 	<string name="colorizechannelsSum">Włącza i wyłącza kolorowanie wyróżniające główne oraz aktywne kanały.</string>
 	<string name="colorthreshold">Próg alternatywnego koloru</string>
 	<string name="colorthresholdSum">Jeżeli liczba użytkowników przekroczy ustaloną wartość, kanał zostanie oznaczony kolorem czerwonym.</string>
-	<string name="chatNotifications">Powiadomienia Czatu</string>
+	<string name="chatNotifications">Powiadomienia czatu</string>
 	<string name="chatNotificationsSum">Wyświetlaj powiadomienia, gdy ktoś napisze wiadomość.</string>
-	<string name="certificateGenerate">Generowanie Certyfikatu</string>
+	<string name="certificateGenerate">Generowanie certyfikatu</string>
 	<string name="certificateGenerateSum">Generuje nowy własnoręcznie podpisany certyfikat Plumble. Zalecane dla początkujących.</string>
-	<string name="pttSettings">Konfiguracja Aktywacji Przyciskiem</string>
+	<string name="pttSettings">Konfiguracja aktywacji przyciskiem</string>
 	<string name="pttSettingsSum">Konfiguruje aktywację przyciskiem, gdy jest włączona.</string>
-	<string name="voiceActivitySettings">Konfiguracja Aktywacji Głosowej</string>
+	<string name="voiceActivitySettings">Konfiguracja aktywacji głosowej</string>
 	<string name="voiceActivitySettingsSum">Konfiguruje aktywację głosową, gdy jest włączona.</string>
 	<string name="audioOutput">Wyjście Dźwięku</string>
+	<string name="disableOpus">Wyłącz kodek Opus</string>
+	<string name="disableOpusSum">Wyłącza wsparcie kodeka Opus dla serwerów w wersji 1.2.4. Zaznacz jeżeli masz problemy z dźwiękiem na serwerach w wersji 1.2.4.</string>
+	<string name="hidePtt">Ukryj pasek aktywacji przyciskiem</string>
+	<string name="hidePttSum">Ukrywa pasek aktywacji przyciskiem. Ukryj go jeżeli korzystasz ze sprzętowego przycisku lub gorących narożników.</string>
+    <string name="useTts">Tekst-Na-Mowę</string>
+    <string name="useTtsSum">Aktywuje Tekst-Na-Mowę dla przychdzących wiadomości.</string>
 </resources>

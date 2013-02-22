@@ -31,7 +31,7 @@ import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.support.v4.app.NotificationCompat;
-import android.text.Spannable;
+import android.text.Html;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -44,6 +44,7 @@ import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.ChannelActivity;
+import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
@@ -79,28 +80,27 @@ public class MumbleService extends Service implements OnInitListener {
 
 		@Override
 		public void setTalkState(final User user, final int talkState) {
+			user.talkingState = talkState;
+			
 			handler.post(new ServiceProtocolMessage() {
 				@Override
-				public void process() {
-					user.talkingState = talkState;
-				}
+				public void process() { }
 
 				@Override
 				protected void broadcast(final BaseServiceObserver observer)
 					throws RemoteException {
-					observer.onUserUpdated(user);
+					observer.onUserTalkingUpdated(user);
 				}
 			});
 		}
 
 		@Override
-		public void setMuted(final User user, final boolean muted) {
+		public void setSelfMuted(final User user, final boolean muted) {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					user.userState = muted ? User.USERSTATE_MUTED : User.USERSTATE_NONE;
-					user.muted = muted;
-					user.deafened = false;
+					user.selfMuted = muted;
+					user.selfDeafened = false;
 					updateNotificationState(user);
 					
 					// Update other clients about mute status
@@ -109,8 +109,8 @@ public class MumbleService extends Service implements OnInitListener {
 						public void run() {
 							final UserState.Builder us = UserState.newBuilder();
 							us.setSession(user.session);
-							us.setSelfMute(user.muted);
-							us.setSelfDeaf(user.deafened);
+							us.setSelfMute(user.selfMuted);
+							us.setSelfDeaf(user.selfDeafened);
 							mClient.sendTcpMessage(MessageType.UserState, us);
 						}
 					}).start();
@@ -125,13 +125,12 @@ public class MumbleService extends Service implements OnInitListener {
 		}
 
 		@Override
-		public void setDeafened(final User user, final boolean deafened) {
+		public void setSelfDeafened(final User user, final boolean deafened) {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					user.userState = deafened ? User.USERSTATE_DEAFENED : User.USERSTATE_NONE;
-					user.deafened = deafened;
-					user.muted = deafened;
+					user.selfDeafened = deafened;
+					user.selfMuted = deafened;
 					updateNotificationState(user);
 					
 					// Update other clients about deafened status
@@ -140,8 +139,8 @@ public class MumbleService extends Service implements OnInitListener {
 						public void run() {
 							final UserState.Builder us = UserState.newBuilder();
 							us.setSession(user.session);
-							us.setSelfMute(user.muted);
-							us.setSelfDeaf(user.deafened);
+							us.setSelfMute(user.selfMuted);
+							us.setSelfDeaf(user.selfDeafened);
 							mClient.sendTcpMessage(MessageType.UserState, us);
 						}
 					}).start();
@@ -200,12 +199,12 @@ public class MumbleService extends Service implements OnInitListener {
 
 		@Override
 		public void setError(final Object reject) {
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					rejectResponse = reject;
-				}
-			});
+			rejectResponse = reject;
+		}
+
+		@Override
+		public boolean hasError() {
+			return rejectResponse != null;
 		}
 	}
 
@@ -333,7 +332,8 @@ public class MumbleService extends Service implements OnInitListener {
 					if(settings.isTextToSpeechEnabled() && !isDeafened())
 						readMessage(msg);
 					
-					chatMessages.add(chatFormatter.formatMessage(msg));
+					String message = chatFormatter.formatMessage(msg);
+					postChatMessage(message);
 					messages.add(msg);
 					
 					if(settings.isChatNotifyEnabled() && !activityVisible) {
@@ -354,7 +354,8 @@ public class MumbleService extends Service implements OnInitListener {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					chatMessages.add(chatFormatter.formatMessage(msg));
+					String message = chatFormatter.formatMessage(msg);
+					postChatMessage(message);
 					messages.add(msg);
 				}
 
@@ -422,6 +423,8 @@ public class MumbleService extends Service implements OnInitListener {
 					for (int i = 0; i < users.size(); i++) {
 						if (users.get(i).session == userId) {
 							this.user = users.remove(i);
+							String disconnectMessage = chatFormatter.formatUserStateUpdate(user, null);
+							postChatMessage(disconnectMessage);
 							return;
 						}
 					}
@@ -481,12 +484,13 @@ public class MumbleService extends Service implements OnInitListener {
 
 		@Override
 		public void userStateUpdated(final User user, final UserState state) {
+			final String stateString = chatFormatter.formatUserStateUpdate(user, state);
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					Spannable stateSpannable = chatFormatter.formatUserStateUpdate(user, state);
-					if(stateSpannable != null && isConnected())
-						chatMessages.add(stateSpannable);
+					if(isConnected()) {
+						postChatMessage(stateString);
+					}
 				}
 
 				@Override
@@ -520,6 +524,7 @@ public class MumbleService extends Service implements OnInitListener {
 	private MumbleConnection mClient;
 	private MumbleProtocol mProtocol;
 
+	private DbAdapter dbAdapter;
 	private Settings settings;
 	private Server connectedServer;
 	
@@ -552,7 +557,8 @@ public class MumbleService extends Service implements OnInitListener {
 	
 	private PlumbleChatFormatter chatFormatter;
 	
-	final List<Spannable> chatMessages = new LinkedList<Spannable>();
+	final List<String> chatMessages = new LinkedList<String>();
+	final List<String> unreadChatMessages = new LinkedList<String>();
 	final List<Message> messages = new LinkedList<Message>();
 	final List<Message> unreadMessages = new LinkedList<Message>();
 	final List<Channel> channels = new ArrayList<Channel>();
@@ -567,14 +573,26 @@ public class MumbleService extends Service implements OnInitListener {
 
 	/**
 	 * Gets the current mumble service (the last one spawned).
+	 * This is /such/ a bad design pattern to be using with Android services. FIXME
 	 * @return
 	 */
 	public static MumbleService getCurrentService() {
 		return currentService;
 	}
 	
+	public DbAdapter getDatabaseAdapter() {
+		return dbAdapter;
+	}
+	
 	public Server getConnectedServer() {
 		return connectedServer;
+	}
+	
+	/**
+	 * @return True if the connected server does not have a database representation; hence, 'public'.
+	 */
+	public boolean isConnectedServerPublic() {
+		return connectedServer.getId() == -1;
 	}
 
 	public boolean canSpeak() {
@@ -699,11 +717,11 @@ public class MumbleService extends Service implements OnInitListener {
 	}
 	
 	public boolean isDeafened() {
-		return mProtocol.currentUser.deafened;
+		return mProtocol.currentUser.selfDeafened;
 	}
 	
 	public boolean isMuted() {
-		return mProtocol.currentUser.muted;
+		return mProtocol.currentUser.selfMuted;
 	}
 
 	public void joinChannel(final int channelId) {
@@ -738,6 +756,9 @@ public class MumbleService extends Service implements OnInitListener {
 		chatFormatter = new PlumbleChatFormatter(this);
 		
 		currentService = this;
+		
+		dbAdapter = new DbAdapter(this);
+		dbAdapter.open();
 	}
 	
 	@Override
@@ -748,6 +769,8 @@ public class MumbleService extends Service implements OnInitListener {
 		hideNotification();
 
 		Log.i(Globals.LOG_TAG, "MumbleService: Destroyed");
+		
+		dbAdapter.close();
 	}
 
 	@Override
@@ -775,8 +798,16 @@ public class MumbleService extends Service implements OnInitListener {
 		mProtocol.sendUserTestMessage(string, chatTarget);
 	}
 
-	public List<Spannable> getChatMessages() {
+	public List<String> getChatMessages() {
 		return Collections.unmodifiableList(chatMessages);
+	}
+
+	public List<String> getUnreadChatMessages() {
+		return Collections.unmodifiableList(unreadChatMessages);
+	}
+	
+	public void clearUnreadChatMessages() {
+		unreadChatMessages.clear();
 	}
 
 	public void sendUdpMessage(final byte[] buffer, final int length) {
@@ -825,25 +856,27 @@ public class MumbleService extends Service implements OnInitListener {
 	
 	public void setMuted(final boolean state) {
 		if(mAudioHost != null && mProtocol != null && mProtocol.currentUser != null) {
-			mAudioHost.setMuted(mProtocol.currentUser, state);
+			mAudioHost.setSelfMuted(mProtocol.currentUser, state);
+			settings.setMutedAndDeafened(state, false);
 		}
 	}
 	
 	public void setDeafened(final boolean state) {
 		if(mAudioHost != null && mProtocol != null && mProtocol.currentUser != null) {
-			mAudioHost.setDeafened(mProtocol.currentUser, state);
+			mAudioHost.setSelfDeafened(mProtocol.currentUser, state);
+			settings.setMutedAndDeafened(state, state);
 		}
 	}
 	
 	public void updateNotificationState(User user) {
-		boolean muted = user.muted;
-		boolean deafened = user.deafened;
+		boolean muted = user.selfMuted;
+		boolean deafened = user.selfDeafened;
 
 		String status = null;
 		if (muted && !deafened) {
-			status = "Muted.";
+			status = getString(R.string.status_notify_muted);
 		} else if (deafened && muted) {
-			status = "Muted and deafened.";
+			status = getString(R.string.status_notify_muted_and_deafened);
 		}
 
 		mStatusNotificationBuilder.setTicker(status);
@@ -965,7 +998,13 @@ public class MumbleService extends Service implements OnInitListener {
 		}
 
 		if (mClient != null && mClientThread != null) {
-			mClient.disconnect();
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					mClient.disconnect();
+				}
+			}).start();
+			
 			try {
 				mClientThread.join();
 			} catch (final InterruptedException e) {
@@ -984,6 +1023,7 @@ public class MumbleService extends Service implements OnInitListener {
 
 		// Now observers shouldn't need these anymore.
 		chatMessages.clear();
+		unreadChatMessages.clear();
 		users.clear();
 		messages.clear();
 		channels.clear();
@@ -1008,9 +1048,9 @@ public class MumbleService extends Service implements OnInitListener {
 	void showNotification() {
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setSmallIcon(R.drawable.ic_stat_notify);
-		builder.setTicker("Plumble Connected");
-		builder.setContentTitle("Plumble");
-		builder.setContentText("Connected.");
+		builder.setTicker(getResources().getString(R.string.plumbleConnected));
+		builder.setContentTitle(getResources().getString(R.string.app_name));
+		builder.setContentText(getResources().getString(R.string.connected));			
 		builder.setPriority(Notification.PRIORITY_HIGH);
 		builder.setOngoing(true);
 		
@@ -1021,8 +1061,8 @@ public class MumbleService extends Service implements OnInitListener {
 		Intent deafenIntent = new Intent(this, MumbleNotificationService.class);
 		deafenIntent.putExtra(MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_KEY, MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_DEAFEN);
 		
-		builder.addAction(R.drawable.ic_action_microphone, "Mute", PendingIntent.getService(this, 0, muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
-		builder.addAction(R.drawable.ic_action_headphones, "Deafen", PendingIntent.getService(this, 1, deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+		builder.addAction(R.drawable.ic_action_microphone, getString(R.string.mute), PendingIntent.getService(this, 0, muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+		builder.addAction(R.drawable.ic_action_headphones, getString(R.string.deafen), PendingIntent.getService(this, 1, deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
 		
 		Intent channelListIntent = new Intent(
 			MumbleService.this,
@@ -1045,12 +1085,13 @@ public class MumbleService extends Service implements OnInitListener {
 		
 		Message lastMessage = unreadMessages.get(unreadMessages.size()-1);
 		
-		mStatusNotificationBuilder.setTicker(((lastMessage.actor != null && lastMessage.actor.name != null) ? lastMessage.actor.name : "Server") +": "+lastMessage.message);
+		mStatusNotificationBuilder.setTicker(((lastMessage.actor != null && lastMessage.actor.name != null) ? lastMessage.actor.name : getString(R.string.server)) +": "+Html.fromHtml(lastMessage.message).toString());
 		
 		NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
 		
 		for(Message message : unreadMessages) {
-			inboxStyle.addLine(((lastMessage.actor != null && lastMessage.actor.name != null) ? lastMessage.actor.name : "Server")+": "+message.message);
+			inboxStyle.addLine(((message.actor != null && message.actor.name != null) ? message.actor.name : getString(R.string.server))+": "
+						+Html.fromHtml(message.message).toString()); // Escapes HTML
 		}
 		
 		mStatusNotificationBuilder.setStyle(inboxStyle);
@@ -1074,6 +1115,14 @@ public class MumbleService extends Service implements OnInitListener {
 		
 		notificationManager.notify(STATUS_NOTIFICATION_ID, notificationCompat);
 	}
+	
+	public void postChatMessage(String message) {
+		if(message == null)
+			return;
+		
+		chatMessages.add(message);
+		unreadChatMessages.add(message);
+	}
 
 	/**
 	 * TTS
@@ -1096,13 +1145,13 @@ public class MumbleService extends Service implements OnInitListener {
 		StringBuilder ttsText = new StringBuilder();
 		
 		if(msg.channelIds > 0) {
-			ttsText.append("Channel ");
+			ttsText.append(getString(R.string.channel)+" ");
 		}
 		
 		if(msg.actor != null)
 			ttsText.append(msg.actor.name);
 		else
-			ttsText.append("Server");
+			ttsText.append(getString(R.string.server));
 		
 		ttsText.append(": ");
 		ttsText.append(msg.message);
@@ -1182,6 +1231,11 @@ public class MumbleService extends Service implements OnInitListener {
 		case MumbleConnectionHost.STATE_CONNECTED:
 			serviceState = synced ? CONNECTION_STATE_CONNECTED
 				: CONNECTION_STATE_SYNCHRONIZING;
+			if(settings.isDeafened()) {
+				setDeafened(true);
+			} else if(settings.isMuted()) {
+				setMuted(true);
+			}
 			break;
 		case MumbleConnectionHost.STATE_DISCONNECTED:
 			serviceState = CONNECTION_STATE_DISCONNECTED;
@@ -1193,5 +1247,12 @@ public class MumbleService extends Service implements OnInitListener {
 		if (oldState != serviceState) {
 			broadcastState();
 		}
+	}
+
+	public void clearChat() {
+		chatMessages.clear();
+		unreadChatMessages.clear();
+		messages.clear();
+		unreadMessages.clear();
 	}
 }

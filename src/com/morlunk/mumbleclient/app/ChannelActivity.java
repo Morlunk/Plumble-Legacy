@@ -2,6 +2,8 @@ package com.morlunk.mumbleclient.app;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -31,11 +33,12 @@ import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
-import android.text.Spannable;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -69,6 +72,7 @@ import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
+import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
@@ -87,6 +91,7 @@ interface ChannelProvider {
 	public void setChatTarget(User chatTarget);
 	public void sendChannelMessage(String message);
 	public void sendUserMessage(String string, User chatTarget);
+	public MumbleService getService();
 }
 
 interface TokenDialogFragmentListener {
@@ -114,6 +119,14 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      */
     ViewPager mViewPager;
 
+    private Comparator<User> userComparator = new Comparator<User>() {
+		@Override
+		public int compare(final User object1, final User object2) {
+			return object1.name.toLowerCase(Locale.ENGLISH)
+					.compareTo(object2.name.toLowerCase(Locale.ENGLISH));
+		}
+	};
+    
     // Favourites
     private List<Favourite> favourites;
     private MenuItem searchItem;
@@ -241,7 +254,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
             // of the app.
             mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
             // Set up the ViewPager with the sections adapter.
-            mViewPager.setAdapter(mSectionsPagerAdapter);
             mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
 				
 				@Override
@@ -271,6 +283,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		        listFragment = new ChannelListFragment();
 		        chatFragment = new ChannelChatFragment();
 			}
+            
+            mViewPager.setAdapter(mSectionsPagerAdapter);
         } else {
         	// Otherwise, create tablet UI.
 	        listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
@@ -331,8 +345,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     @Override
     protected void onSaveInstanceState(Bundle outState) {
     	super.onSaveInstanceState(outState);
-    	getSupportFragmentManager().putFragment(outState, ChannelListFragment.class.getName(), listFragment);
-    	getSupportFragmentManager().putFragment(outState, ChannelChatFragment.class.getName(), chatFragment);
+    	
+    	if(mViewPager != null) {
+    		getSupportFragmentManager().putFragment(outState, ChannelListFragment.class.getName(), listFragment);
+    		getSupportFragmentManager().putFragment(outState, ChannelChatFragment.class.getName(), chatFragment);
+    	}
 		outState.putParcelable(SAVED_STATE_VISIBLE_CHANNEL, visibleChannel);
 		
 		if(chatTarget != null)
@@ -367,8 +384,30 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	if(settings.getCallMode().equals(Settings.ARRAY_CALL_MODE_VOICE))
     		setProximityEnabled(false);
     	
-    	if(mService != null)
+    	if(mService != null) {
         	mService.setActivityVisible(false);
+        	
+        	// Turn off push to talk when rotating so it doesn't get stuck on.
+        	if(settings.isPushToTalk())
+        		mService.setRecording(false);
+    	}
+    }
+    
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+    	// Only show favourites and access tokens (DB-related) if the connected server has a DB representation (non-public).
+    	MenuItem favouriteToggleItem = menu.findItem(R.id.menu_favorite_button);
+    	MenuItem favouritesViewItem = menu.findItem(R.id.menu_view_favorites_button);
+    	MenuItem accessTokensItem = menu.findItem(R.id.menu_access_tokens_button);
+    	
+    	if(mService != null &&
+    			mService.getConnectedServer() != null) {
+    		favouriteToggleItem.setVisible(!mService.isConnectedServerPublic());
+    		favouritesViewItem.setVisible(!mService.isConnectedServerPublic());
+    		accessTokensItem.setVisible(!mService.isConnectedServerPublic());
+    	}
+    	
+    	return super.onPrepareOptionsMenu(menu);
     }
     
     @TargetApi(Build.VERSION_CODES.HONEYCOMB) 
@@ -387,7 +426,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         	searchItem.setVisible(false);
         }
         
-        favouritesItem = menu.findItem(R.id.menu_favorite_button);
         mutedButton = menu.findItem(R.id.menu_mute_button);
         deafenedButton = menu.findItem(R.id.menu_deafen_button);
         
@@ -395,7 +433,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         		mService.getCurrentUser() != null) {
         	updateMuteDeafenMenuItems(mService.isMuted(), mService.isDeafened());
         }
-        	
+
+        favouritesItem = menu.findItem(R.id.menu_favorite_button);
+        if(mService != null && !mService.isConnectedServerPublic())
+        	updateFavouriteMenuItem();
         
         return true;
     }
@@ -423,6 +464,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
             	searchItem.collapseActionView();
 		}
     }
+
+	@Override
+	public MumbleService getService() {
+		return mService;
+	}
     
     /**
      * Creates the channel list spinner with the channel list provided by the service.
@@ -458,9 +504,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      * Updates the icon and title of the 'favourites' menu icon to represent the channel's favourited status.
      */
     public void updateFavouriteMenuItem() {
-    	if(favouritesItem == null)
+    	if(favouritesItem == null || getChannel() == null)
     		return;
-    	
     	int currentChannel = getChannel().id;
     	
     	boolean isFavouriteChannel = false;
@@ -512,6 +557,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			return true;
 		case R.id.menu_view_favorites_button:
 			showFavouritesDialog();
+			return true;
+		case R.id.menu_clear_chat:
+			mService.clearChat();
+			chatFragment.clear();
 			return true;
 		case R.id.menu_search:
 			return false;
@@ -609,33 +658,16 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		// Send access tokens after connection.
 		sendAccessTokens();
 		
-        // Load favourites
-        favourites = loadFavourites();
+        // Load favourites if is non-public server
+        if(!mService.isConnectedServerPublic())
+        	favourites = loadFavourites();
         
 		// Load channel spinner
         loadChannelSpinner();
 		
 		// If we don't have visible channel selected, get the last stored channel from preferences.
 		// Setting channel also synchronizes the UI so we don't need to do it manually.
-		if (visibleChannel == null) {
-			int lastChannelId = settings.getLastChannel(mService.getConnectedServer().getId());
-			
-			Channel lastChannel = findChannelById(lastChannelId);
-			
-			if(lastChannel != null) {
-				new AsyncTask<Channel, Void, Void>() {
-					
-					@Override
-					protected Void doInBackground(Channel... params) {
-						mService.joinChannel(params[0].id);
-						return null;
-					}
-					
-				}.execute(lastChannel);
-			} else {
-				setVisibleChannel(mService.getCurrentChannel());
-			}
-		} else {
+		if (visibleChannel != null) {
 			// Re-select visible channel. Necessary after a rotation is
 			// performed or the app is suspended.
 			if (mService.getChannelList().contains(visibleChannel)) {
@@ -647,7 +679,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		reloadChat();
 		
 		// Start recording for voice activity, as there is no push to talk button.
-		if(settings.isVoiceActivity()) {
+		if(settings.isVoiceActivity() && !mService.isRecording()) {
 			mService.setRecording(true);
 		}
 	}
@@ -656,15 +688,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	 * Retrieves and sends the access tokens for the active server from the database.
 	 */
 	public void sendAccessTokens() {
-		DbAdapter dbAdapter = new DbAdapter(this);
+		DbAdapter dbAdapter = mService.getDatabaseAdapter();
 		AsyncTask<DbAdapter, Void, Void> accessTask = new AsyncTask<DbAdapter, Void, Void>() {
 
 			@Override
 			protected Void doInBackground(DbAdapter... params) {
 				DbAdapter adapter = params[0];
-				adapter.open();
 				List<String> tokens = adapter.fetchAllTokens(mService.getConnectedServer().getId());
-				adapter.close();
 				mService.sendAccessTokens(tokens);
 				return null;
 			}
@@ -701,6 +731,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	@Override
 	protected void onSynchronizing() {
 		showProgressDialog(R.string.connectionProgressSynchronizingMessage);
+	}
+	
+	@Override
+	protected void onDisconnected() {
+		super.onDisconnected();
 	}
 	
 	/* (non-Javadoc)
@@ -753,26 +788,18 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
 			@Override
 			protected Void doInBackground(Void... params) {
-				DbAdapter dbAdapter = new DbAdapter(ChannelActivity.this);
-				dbAdapter.open();
+				DbAdapter dbAdapter = mService.getDatabaseAdapter();
 
 				if (channelFavourite == null)
 					dbAdapter.createFavourite(mService.getConnectedServer().getId(),
 							channel.id);
 				else
 					dbAdapter.deleteFavourite(channelFavourite.getId());
-
-				dbAdapter.close();
+				
 				return null;
 			}
 
 			protected void onPostExecute(Void result) {
-				Toast.makeText(
-						ChannelActivity.this,
-						channelFavourite == null ? R.string.favoriteAdded
-								: R.string.favoriteRemoved, Toast.LENGTH_SHORT)
-						.show();
-
 				favourites = loadFavourites();
 				updateFavouriteMenuItem();
 			};
@@ -798,10 +825,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	}
 	
 	public List<Favourite> loadFavourites() {
-        DbAdapter dbAdapter = new DbAdapter(this);
-        dbAdapter.open();
+        DbAdapter dbAdapter = mService.getDatabaseAdapter();
         List<Favourite> favouriteResult = dbAdapter.fetchAllFavourites(mService.getConnectedServer().getId());
-        dbAdapter.close();
         return favouriteResult;
 	}
 	
@@ -860,13 +885,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		getSupportActionBar().setSelectedNavigationItem(channelAdapter.availableChannels.indexOf(channel));
         
         // Update favourites icon
-		updateFavouriteMenuItem();
-		
-		// Update last channel in settings
-		int channelId = channel.id;
-		if(settings.getLastChannel(mService.getConnectedServer().getId()) != channelId) {
-			settings.setLastChannel(mService.getConnectedServer().getId(), channel.id); // Cache the last channel
-		}
+		if(!mService.isConnectedServerPublic())
+			updateFavouriteMenuItem();
 	}
 	
 	/* (non-Javadoc)
@@ -895,7 +915,16 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	 */
 	@Override
 	public List<User> getChannelUsers() {
-		return mService.getUserList();
+		List<User> channelUsers = new ArrayList<User>();
+		for(User user : mService.getUserList()) {
+			if(user.getChannel().equals(getChannel())) {
+				channelUsers.add(user);
+			}
+		}
+		
+		Collections.sort(channelUsers, userComparator);
+		
+		return channelUsers;
 	}
 	
 	@Override
@@ -918,9 +947,19 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	 */
 	public void reloadChat() {
 		chatFragment.clear();
-		for(Spannable spannable : mService.getChatMessages()) {
-			chatFragment.addChatMessage(spannable);
+		for(String message : mService.getChatMessages()) {
+			chatFragment.addChatMessage(message);
 		}
+	}
+	
+	/**
+	 * Updates the chat with latest messages from the service.
+	 */
+	public void updateChat() {
+		for(String message : mService.getUnreadChatMessages()) {
+			chatFragment.addChatMessage(message);
+		}
+		mService.clearUnreadChatMessages();
 	}
 	
 	/* (non-Javadoc)
@@ -955,7 +994,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to one of the primary
      * sections of the app.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
     	
         public SectionsPagerAdapter(FragmentManager fragmentManager) {
             super(fragmentManager);
@@ -991,12 +1030,12 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     class ChannelServiceObserver extends BaseServiceObserver {
 		@Override
 		public void onMessageReceived(final Message msg) throws RemoteException {
-			reloadChat();
+			updateChat();
 		}
 
 		@Override
 		public void onMessageSent(final Message msg) throws RemoteException {
-			reloadChat();
+			updateChat();
 		}
 		
 		@Override
@@ -1021,18 +1060,19 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		@Override
 		public void onChannelUpdated(Channel channel) throws RemoteException {
-			if(mService.isConnected())
-				loadChannelSpinner(); // Reload channel spinner if connected
+			if(mService.isConnected() && channelAdapter != null)
+				channelAdapter.updateChannel(channel);
 		}
 		
 		@Override
 		public void onCurrentUserUpdated() throws RemoteException {
-			updateMuteDeafenMenuItems(mService.getCurrentUser().muted, mService.getCurrentUser().deafened);
+			updateMuteDeafenMenuItems(mService.getCurrentUser().selfMuted, mService.getCurrentUser().selfDeafened);
 		}
 
 		@Override
 		public void onUserAdded(final User user) throws RemoteException {
-			listFragment.updateUser(user);
+			if(mService.isConnected())
+				listFragment.updateChannel();
 		}
 
 		@Override
@@ -1042,16 +1082,22 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 				mService.setDisconnectResponse(remove);
 			}
 			listFragment.removeUser(user);
+			updateChat();
 		}
 
 		@Override
 		public void onUserStateUpdated(final User user, final UserState state) throws RemoteException {
-			reloadChat();
+			updateChat();
 		}
 		
 		@Override
 		public void onUserUpdated(User user) throws RemoteException {
 			listFragment.updateUser(user);
+		}
+		
+		@Override
+		public void onUserTalkingUpdated(User user) {
+			listFragment.updateUserTalking(user);
 		}
 		
 		/* (non-Javadoc)
@@ -1066,9 +1112,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 class ChannelSpinnerAdapter implements SpinnerAdapter {
 		
 		List<Channel> availableChannels;
+		SparseArray<View> channelViews;
 		
 		public ChannelSpinnerAdapter(List<Channel> availableChannels) {
 			this.availableChannels = availableChannels;
+			this.channelViews = new SparseArray<View>();
 		}
 		
 		/* (non-Javadoc)
@@ -1183,11 +1231,8 @@ class ChannelSpinnerAdapter implements SpinnerAdapter {
 				ViewGroup parent) {
 			View view = convertView;
 
-			Channel channel = getItem(position);
-			
-			DisplayMetrics metrics = getResources().getDisplayMetrics();
-
 			// Use rowHeight provided by settings, convert to dp.
+			DisplayMetrics metrics = getResources().getDisplayMetrics();
 			int rowHeight = settings.getChannelListRowHeight();
 			int rowHeightDp = (int)(rowHeight * metrics.density + 0.5f);
 
@@ -1200,6 +1245,16 @@ class ChannelSpinnerAdapter implements SpinnerAdapter {
 				v_params.height = rowHeightDp;
 				view.setLayoutParams(v_params);
 			}
+
+			Channel channel = getItem(position);
+			updateChannelView(view, channel);
+			channelViews.put(channel.id, view);
+
+			return view;
+		}
+		
+		private void updateChannelView(View view, Channel channel) {
+			DisplayMetrics metrics = getResources().getDisplayMetrics();
 
 			ImageView returnImage = (ImageView) view.findViewById(R.id.return_image);
 
@@ -1242,8 +1297,20 @@ class ChannelSpinnerAdapter implements SpinnerAdapter {
 			spinnerCount.setText("(" + channel.userCount + ")");
 			spinnerCount.setTextColor(getResources().getColor(
 			channel.userCount > 0 ? R.color.abs__holo_blue_light : R.color.abs__primary_text_holo_dark));
-
-			return view;
+		}
+		
+		/**
+		 * If the passed channel is present in the ChannelAdapter, update it with the latest data.
+		 * @param channel The updated channel whose representation in the spinner should be updated.
+		 */
+		public void updateChannel(Channel channel) {
+			if(!availableChannels.contains(channel))
+				return;
+			
+			View channelView = channelViews.get(channel.id);
+			
+			if(channelView != null && channelView.isShown())
+				updateChannelView(channelView, channel);
 		}
 		
 	}

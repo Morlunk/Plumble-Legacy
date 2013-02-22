@@ -14,8 +14,8 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -57,10 +57,8 @@ public class TokenDialogFragment extends DialogFragment {
 			throw new ClassCastException(activity.toString() + " must implement TokenDialogFragmentListener");
 		}
 		
-		dbAdapter = new DbAdapter(activity);
-		dbAdapter.open();
+		dbAdapter = MumbleService.getCurrentService().getDatabaseAdapter();
 		tokens = dbAdapter.fetchAllTokens(MumbleService.getCurrentService().getConnectedServer().getId());
-		dbAdapter.close();
 		
 		tokenAdapter = new TokenAdapter(activity, tokens);
 	}
@@ -167,9 +165,7 @@ public class TokenDialogFragment extends DialogFragment {
 				
 				@Override
 				public void onClick(View v) {
-					dbAdapter.open();
 					dbAdapter.deleteToken(token, MumbleService.getCurrentService().getConnectedServer().getId());
-					dbAdapter.close();
 					tokens.remove(position);
 					notifyDataSetChanged();
 				}

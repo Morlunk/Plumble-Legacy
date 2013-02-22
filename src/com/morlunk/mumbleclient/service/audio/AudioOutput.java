@@ -154,7 +154,7 @@ public class AudioOutput implements Runnable {
 			if (mix.size() > 0 && 
 					MumbleService.getCurrentService() != null && 
 					MumbleService.getCurrentService().getCurrentUser()!= null && 
-					!MumbleService.getCurrentService().getCurrentUser().deafened) {
+					!MumbleService.getCurrentService().getCurrentUser().selfDeafened) {
 				// Mix all the frames into one array.
 				mix(out, mix);
 				

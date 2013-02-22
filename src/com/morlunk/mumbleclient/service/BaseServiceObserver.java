@@ -47,6 +47,9 @@ public class BaseServiceObserver {
 	
 	public void onUserUpdated(final User user) throws RemoteException {
 	}
+	
+	public void onUserTalkingUpdated(final User user) {
+	}
 
 	public void onUserStateUpdated(final User user, UserState state) throws RemoteException {
 	}

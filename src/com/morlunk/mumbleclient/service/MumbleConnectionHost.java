@@ -15,4 +15,6 @@ public interface MumbleConnectionHost {
 	public void setConnectionState(int state);
 
 	public void setError(Object error);
+
+	public boolean hasError();
 }

@@ -23,7 +23,7 @@ public class DbAdapter {
 	public static final String SERVER_PORT = "port";
 	public static final String SERVER_USERNAME = "username";
 	public static final String SERVER_PASSWORD = "password";
-	public static final String TABLE_SERVER_CREATE_SQL = "CREATE TABLE `"+TABLE_SERVER+"` ("
+	public static final String TABLE_SERVER_CREATE_SQL = "CREATE TABLE IF NOT EXISTS `"+TABLE_SERVER+"` ("
 			   + "`"+SERVER_ID+"` INTEGER PRIMARY KEY AUTOINCREMENT,"
 			   + "`"+SERVER_NAME+"` TEXT NOT NULL,"
 			   + "`"+SERVER_HOST+"` TEXT NOT NULL,"
@@ -36,7 +36,7 @@ public class DbAdapter {
 	public static final String FAVOURITES_ID = "_id";
 	public static final String FAVOURITES_CHANNEL = "channel";
 	public static final String FAVOURITES_SERVER = "server";
-	public static final String TABLE_FAVOURITES_CREATE_SQL = "CREATE TABLE `"+TABLE_FAVOURITES+"` ("
+	public static final String TABLE_FAVOURITES_CREATE_SQL = "CREATE TABLE IF NOT EXISTS `"+TABLE_FAVOURITES+"` ("
 			   +"`"+FAVOURITES_ID+"` INTEGER PRIMARY KEY AUTOINCREMENT,"
 			   +"`"+FAVOURITES_CHANNEL+"` TEXT NOT NULL,"
 			   +"`"+FAVOURITES_SERVER+"` INTEGER NOT NULL"
@@ -46,15 +46,26 @@ public class DbAdapter {
 	public static final String TOKENS_ID = "_id";
 	public static final String TOKENS_VALUE = "value";
 	public static final String TOKENS_SERVER = "server";
-	public static final String TABLE_TOKENS_CREATE_SQL = "CREATE TABLE `"+TABLE_TOKENS+"` ("
+	public static final String TABLE_TOKENS_CREATE_SQL = "CREATE TABLE IF NOT EXISTS `"+TABLE_TOKENS+"` ("
 			   +"`"+TOKENS_ID+"` INTEGER PRIMARY KEY AUTOINCREMENT,"
 			   +"`"+TOKENS_VALUE+"` TEXT NOT NULL,"
 			   +"`"+TOKENS_SERVER+"` INTEGER NOT NULL"
 			   +");";
 	
+	public static final String TABLE_COMMENTS = "comments";
+	public static final String COMMENTS_WHO = "who";
+	public static final String COMMENTS_COMMENT = "comment";
+	public static final String COMMENTS_SEEN = "seen";
+	public static final String TABLE_COMMENTS_CREATE_SQL = "CREATE TABLE IF NOT EXISTS `"+TABLE_COMMENTS+"` ("
+			   +"`"+COMMENTS_WHO+"` TEXT NOT NULL,"
+			   +"`"+COMMENTS_COMMENT+"` TEXT NOT NULL,"
+			   +"`"+COMMENTS_SEEN+"` DATE NOT NULL"
+			   +");";
+	
 	public static final Integer PRE_FAVOURITES_DB_VERSION = 2;
 	public static final Integer PRE_TOKENS_DB_VERSION = 3;
-	public static final Integer CURRENT_DB_VERSION = 4;
+	public static final Integer PRE_COMMENTS_DB_VERSION = 4;
+	public static final Integer CURRENT_DB_VERSION = 5;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 		
@@ -67,6 +78,7 @@ public class DbAdapter {
 			db.execSQL(TABLE_SERVER_CREATE_SQL);
 			db.execSQL(TABLE_FAVOURITES_CREATE_SQL);
 			db.execSQL(TABLE_TOKENS_CREATE_SQL);
+			db.execSQL(TABLE_COMMENTS_CREATE_SQL);
 		}
 
 		@Override
@@ -83,6 +95,10 @@ public class DbAdapter {
 			if(oldVersion <= PRE_TOKENS_DB_VERSION) {
 				db.execSQL(TABLE_TOKENS_CREATE_SQL);
 			}
+			
+			if(oldVersion <= PRE_COMMENTS_DB_VERSION) {
+				db.execSQL(TABLE_COMMENTS_CREATE_SQL);
+			}
 		}
 	}
 
@@ -95,7 +111,8 @@ public class DbAdapter {
 	}
 
 	public final void close() {
-		dbHelper.close();
+		if(db.isOpen())
+			dbHelper.close();
 	}
 
 	public final long createServer(
@@ -228,6 +245,8 @@ public class DbAdapter {
 			cursor.moveToNext();
 		}
 		
+		cursor.close();
+		
 		return tokens;
 	}
 	
@@ -278,5 +297,23 @@ public class DbAdapter {
 	
 	public boolean deleteFavourite(final long favouriteId) {
 		return db.delete(TABLE_FAVOURITES, FAVOURITES_ID + " = " + favouriteId, null) > 0;
+	}
+	
+	public boolean isCommentSeen(String who, String commentHash) {
+		Cursor cursor = db.query(TABLE_COMMENTS, new String[] { COMMENTS_WHO, COMMENTS_COMMENT, COMMENTS_SEEN }, COMMENTS_WHO+"=? AND "+COMMENTS_COMMENT+"=?", new String[] { who, commentHash }, null, null, null);
+		boolean hasNext = cursor.moveToNext();
+		cursor.close();
+		return hasNext;
+	}
+	
+	public void setCommentSeen(String who, String commentHash) {
+		// First, remove the existence of any other comments by the user.
+		db.delete(TABLE_COMMENTS, COMMENTS_WHO+"=?", new String[] { who });
+		
+		ContentValues values = new ContentValues();
+		values.put(COMMENTS_WHO, who);
+		values.put(COMMENTS_COMMENT, commentHash);
+		values.put(COMMENTS_SEEN, "datetime('now')");
+		db.insert(TABLE_COMMENTS, null, values);
 	}
 }

@@ -132,14 +132,13 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 					alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							// Update server
-							
-							DbAdapter adapter = new DbAdapter(ConnectedActivity.this);
-							adapter.open();
-							adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
-							Server updatedServer = adapter.fetchServer(server.getId()); // Update server object again
-							adapter.close();
-							mService.connectToServer(updatedServer);
+							// Update server in database if it's not public (id = -1)
+							if(server.getId() != -1) {
+								DbAdapter adapter = mService.getDatabaseAdapter();
+								adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
+							}
+							server.setPassword(passwordField.getText().toString());
+							mService.connectToServer(server); // Reconnect
 						}
 					});
 					alertBuilder.setOnCancelListener(new OnCancelListener() {
@@ -203,7 +202,7 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 			
 			alertBuilder.show();
 			
-		} else {
+		} else if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_DISCONNECTED){
 			finish();
 		}
 	}

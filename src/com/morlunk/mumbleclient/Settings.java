@@ -4,6 +4,7 @@ import java.util.Observable;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 
 public class Settings extends Observable {
@@ -50,9 +51,6 @@ public class Settings extends Observable {
 	
 	public static final String PREF_CERT = "certificatePath";
 	public static final String PREF_CERT_PASSWORD = "certificatePassword";
-	
-	public static final String PREF_LAST_CHANNEL = "lastChannels";
-	public static final String LAST_CHANNEL_PREFIX = "lastChannel_"; // TODO move this to db code or something. It's messy as hell.
 
 	public static final String PREF_CHANNELLIST_ROW_HEIGHT = "channellistrowheight";
 	public static final String DEFAULT_CHANNELLIST_ROW_HEIGHT = "35";
@@ -68,6 +66,12 @@ public class Settings extends Observable {
 	
 	public static final String PREF_DISABLE_OPUS = "disableOpus";
 	public static final Boolean DEFAULT_DISABLE_OPUS = false;
+	
+	public static final String PREF_MUTED = "muted";
+	public static final Boolean DEFAULT_MUTED = false;
+	
+	public static final String PREF_DEAFENED = "deafened";
+	public static final Boolean DEFAULT_DEAFENED = false;
 	
 	private final SharedPreferences preferences;
 
@@ -148,16 +152,6 @@ public class Settings extends Observable {
 	public boolean isTextToSpeechEnabled() {
 		return preferences.getBoolean(PREF_USE_TTS, DEFAULT_USE_TTS);
 	}
-	
-	public int getLastChannel(int serverId) {
-		return preferences.getInt(String.format("%s%d", LAST_CHANNEL_PREFIX, serverId), -1);
-	}
-	
-	public void setLastChannel(int serverId, int channelId) {
-		preferences.edit()
-		.putInt(String.format("%s%d", LAST_CHANNEL_PREFIX, serverId), channelId).commit();
-		notifyObservers();
-	}
 
 	public int getChannelListRowHeight() {
 		return Integer.parseInt(preferences.getString(
@@ -181,5 +175,21 @@ public class Settings extends Observable {
 	
 	public boolean isOpusDisabled() {
 		return preferences.getBoolean(PREF_DISABLE_OPUS, DEFAULT_DISABLE_OPUS);
+	}
+	
+	public boolean isMuted() {
+		return preferences.getBoolean(PREF_MUTED, DEFAULT_MUTED);
+	}
+	
+	public boolean isDeafened() {
+		return preferences.getBoolean(PREF_DEAFENED, DEFAULT_DEAFENED);
+	}
+	
+	public void setMutedAndDeafened(boolean muted, boolean deafened) {
+		Editor editor = preferences.edit();
+		editor.putBoolean(PREF_MUTED, muted || deafened);
+		editor.putBoolean(PREF_DEAFENED, deafened);
+		editor.commit();
+		notifyObservers();
 	}
 }

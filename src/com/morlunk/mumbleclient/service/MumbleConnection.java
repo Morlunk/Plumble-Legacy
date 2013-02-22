@@ -541,15 +541,13 @@ public class MumbleConnection implements Runnable {
 				   tcpReader.isRunning() && udpReader.isRunning()) {
 				stateLock.wait();
 			}
-
-			// Causes error messages to not be displayed. WAT.
-			// Report error if we died without being in a disconnecting state.
-			//if (!disconnecting) {
-			//	reportError("Connection lost", null);
-			//}
-
+			
 			if (!disconnecting) {
 				disconnecting = true;
+				// If a disconnect was caught and there was no error found, report one.
+				if(!connectionHost.hasError()) {
+					reportError("Connection lost", null);
+				}
 				connectionHost.setConnectionState(MumbleConnectionHost.STATE_DISCONNECTED);
 			}
 		}

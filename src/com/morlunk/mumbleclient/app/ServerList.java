@@ -1,45 +1,41 @@
 package com.morlunk.mumbleclient.app;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.Assert;
-import android.annotation.SuppressLint;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.View.OnClickListener;
+import android.util.Xml;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.EditText;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.crittercism.app.Crittercism;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
-import com.morlunk.mumbleclient.app.db.DbAdapter;
+import com.morlunk.mumbleclient.app.db.PublicServer;
 import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
@@ -54,6 +50,12 @@ interface ServerInfoListener {
 	public void serverInfoUpdated();
 }
 
+interface ServerConnectHandler {
+	public void connectToServer(Server server);
+	public void connectToPublicServer(PublicServer server);
+	public void publicServerFavourited();
+}
+
 /**
  * The main server list activity.
  *
@@ -63,211 +65,34 @@ interface ServerInfoListener {
  * @author pcgod
  *
  */
-public class ServerList extends ConnectedListActivity implements ServerInfoListener {
-	private class ServerAdapter extends ArrayAdapter<Server> {
-		private Context context;
-		private List<Server> servers;
-
-		public ServerAdapter(Context context, List<Server> servers) {
-			super(context, android.R.id.text1, servers);
-			this.context = context;
-			this.servers = servers;
-		}
-
-		@Override
-		public final int getCount() {
-			return servers.size();
-		}
-		
-		@Override
-		public Server getItem(int position) {
-			return servers.get(position);
-		}
-		
-		@Override
-		public long getItemId(int position) {
-			return getItem(position).getId();
-		}
-
-		@Override
-		public final View getView(
-			final int position,
-			final View v,
-			final ViewGroup parent) {
-			View view = v;
-			
-			if(v == null) {
-				LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				view = inflater.inflate(
-					R.layout.server_list_row,
-					null);
-			}
-			
-			final Server server = getItem(position);
-			
-			ServerInfoResponse infoResponse = infoResponses.get(server.getId());
-			// If there is a null value for the server info (rather than none at all), the request must have failed.
-			boolean requestExists = infoResponses.containsKey(server.getId());
-			boolean requestFailure = requestExists && infoResponse == null;
-
-			TextView nameText = (TextView) view.findViewById(R.id.server_row_name);
-			TextView userText = (TextView) view.findViewById(R.id.server_row_user);
-			TextView addressText = (TextView) view.findViewById(R.id.server_row_address);
-			
-			if(server.getName().equals("")) {
-				nameText.setText(server.getHost());
-			} else {
-				nameText.setText(server.getName());
-			}
-			
-			userText.setText(server.getUsername());
-			addressText.setText(server.getHost()+":"+server.getPort());
-			
-			Button connectButton = (Button) view.findViewById(R.id.server_row_connect);
-			Button editButton = (Button) view.findViewById(R.id.server_row_edit);
-			connectButton.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					connectServer(server.getId());
-				}
-			});
-			editButton.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					editServer(server.getId());
-				}
-			});
-			
-			ImageButton deleteButton = (ImageButton) view.findViewById(R.id.server_row_delete);
-			deleteButton.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					deleteServer(server.getId());
-				}
-			});
-			
-			TextView serverVersionText = (TextView) view.findViewById(R.id.server_row_version_status);
-			TextView serverUsersText = (TextView) view.findViewById(R.id.server_row_usercount);
-			ProgressBar serverInfoProgressBar = (ProgressBar) view.findViewById(R.id.server_row_ping_progress);
-			
-			serverVersionText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
-			serverUsersText.setVisibility(!requestExists ? View.INVISIBLE : View.VISIBLE);
-			serverInfoProgressBar.setVisibility(!requestExists ? View.VISIBLE : View.INVISIBLE);
-
-			if(infoResponse != null) {
-				serverVersionText.setText(getResources().getString(R.string.online)+" ("+infoResponse.getVersionString()+")");
-				serverUsersText.setText(infoResponse.getCurrentUsers()+"/"+infoResponse.getMaximumUsers());
-			} else if(requestFailure) {
-				serverVersionText.setText(R.string.offline);
-				serverUsersText.setText("");
-			}
-			
-			return view;
-		}
-	}
-
-	private class ServerServiceObserver extends BaseServiceObserver {
-		@Override
-		public void onConnectionStateChanged(final int state)
-			throws RemoteException {
-			checkConnectionState();
-		}
-	}
-	
-	private class ServerInfoTask extends AsyncTask<Server, Void, ServerInfoResponse> {
-		
-		private Server server;
-		
-		@Override
-		protected ServerInfoResponse doInBackground(Server... params) {
-			server = params[0];
-			try {
-				InetAddress host = InetAddress.getByName(server.getHost());
-				
-				// Create ping message
-				ByteBuffer buffer = ByteBuffer.allocate(12);
-				buffer.putInt(0); // Request type
-				buffer.putLong((long)server.getId()); // Identifier
-				DatagramPacket requestPacket = new DatagramPacket(buffer.array(), 12, host, server.getPort());
-				
-				// Send packet and wait for response
-				DatagramSocket socket = new DatagramSocket();
-				socket.setSoTimeout(1000);
-				socket.setReceiveBufferSize(1024);
-				socket.send(requestPacket);
-				
-				byte[] responseBuffer = new byte[24];
-				DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
-				try {
-					socket.receive(responsePacket);
-				} catch (SocketTimeoutException e) {
-					return null;
-				}
-				
-				ServerInfoResponse response = new ServerInfoResponse(responseBuffer);
-								
-				Log.i(Globals.LOG_TAG, "DEBUG: Server version: "+response.getVersionString()+"\nUsers: "+response.getCurrentUsers()+"/"+response.getMaximumUsers());
-				
-				return response;
-				
-			} catch (UnknownHostException e) {
-				e.printStackTrace();
-			} catch (SocketException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-			return null;
-		}
-		
-		@Override
-		protected void onPostExecute(ServerInfoResponse result) {
-			super.onPostExecute(result);
-			
-			infoResponses.put(server.getId(), result);
-			serverAdapter.notifyDataSetChanged();
-		}
-		
-	}
-	
-	private static final int ACTIVITY_CHANNEL_LIST = 1;
+public class ServerList extends ConnectedListActivity implements ServerInfoListener, ServerConnectHandler {
 
 	private static final String STATE_WAIT_CONNECTION = "com.morlunk.mumbleclient.ServerList.WAIT_CONNECTION";
 	
 	private ServerServiceObserver mServiceObserver;
-	private ListView listView;
-	private ServerAdapter serverAdapter;
-	@SuppressLint("UseSparseArrays") // We use Map instead of SparseArray so we can contain null values for keys.
-	private Map<Integer, ServerInfoResponse> infoResponses = new HashMap<Integer, ServerInfoResponse>();
+	private ServerListFragment serverListFragment;
+	private PublicServerListFragment publicServerListFragment;
+	private ViewPager pager;
 	
 	@Override
 	public final boolean onCreateOptionsMenu(final Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		getSupportMenuInflater().inflate(R.menu.activity_server_list, menu);
+		
 		return true;
 	}
 	
 	@Override
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.menu_add_server_item:
-			addServer();
-			return true;
 		case R.id.menu_preferences:
 			final Intent prefs = new Intent(this, Preferences.class);
 			startActivity(prefs);
 			return true;
-		default:
-			return super.onMenuItemSelected(featureId, item);
 		}
-	}
-	
-
-	private void addServer() {
-		ServerInfo infoDialog = new ServerInfo();
-		infoDialog.show(getSupportFragmentManager(), "serverInfo");
+		serverListFragment.onOptionsItemSelected(item);
+		publicServerListFragment.onOptionsItemSelected(item);
+		return false;
 	}
 
 	/**
@@ -280,7 +105,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		case MumbleService.CONNECTION_STATE_CONNECTED:
 			unregisterConnectionReceiver();
 			final Intent i = new Intent(this, ChannelActivity.class);
-			startActivityForResult(i, ACTIVITY_CHANNEL_LIST);
+			startActivity(i);
 			return true;
 		case MumbleService.CONNECTION_STATE_DISCONNECTED:
 			// TODO: Error message checks.
@@ -295,40 +120,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		}
 
 		return false;
-	}
-	
-	private void editServer(long id) {
-		ServerInfo infoDialog = new ServerInfo();
-		Bundle args = new Bundle();
-		args.putLong("serverId", id);
-		infoDialog.setArguments(args);
-		infoDialog.show(getSupportFragmentManager(), "serverInfo");
-	}
-	
-	private void deleteServer(final long id) {
-		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-		alertBuilder.setMessage(R.string.sureDeleteServer);
-		alertBuilder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				DbAdapter adapter = new DbAdapter(ServerList.this);
-				adapter.open();
-				adapter.deleteServer(id);
-				adapter.close();
-				fillList();
-			}
-		});
-		alertBuilder.setNegativeButton(android.R.string.cancel, null);
-		alertBuilder.show();
-	}
-	
-	/**
-	 * Pings the passed host to retrieve server information.
-	 * @see ServerInfoResponse
-	 * @param server The server to ping.
-	 */
-	private void pingServerInfo(Server server) {
-		new ServerInfoTask().execute(server);
 	}
 	
 	private void registerConnectionReceiver() {
@@ -360,18 +151,45 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 	 *
 	 * @param id
 	 */
-	protected final void connectServer(final long id) {
-		DbAdapter adapter = new DbAdapter(this);
-		adapter.open();
-		Server server = adapter.fetchServer(id);
-		adapter.close();
-
+	public void connectToServer(final Server server) {
 		registerConnectionReceiver();
 		
 		final Intent connectionIntent = new Intent(this, MumbleService.class);
 		connectionIntent.setAction(MumbleService.ACTION_CONNECT);
 		connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
 		startService(connectionIntent);
+	}
+
+	/**
+	 * Starts connecting to a public server.
+	 *
+	 * @param id
+	 */
+	public void connectToPublicServer(final PublicServer server) {
+		
+		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+		
+		// Allow username entry
+		final EditText usernameField = new EditText(this);
+		usernameField.setHint(R.string.serverUsername);
+		alertBuilder.setView(usernameField);
+
+		alertBuilder.setTitle(R.string.connectToServer);
+		
+		alertBuilder.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				PublicServer newServer = server;
+				newServer.setUsername(usernameField.getText().toString());
+				registerConnectionReceiver();
+				Intent connectionIntent = new Intent(ServerList.this, MumbleService.class);
+				connectionIntent.setAction(MumbleService.ACTION_CONNECT);
+				connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
+				startService(connectionIntent);
+			}
+		});
+		
+		alertBuilder.show();
 	}
 
 	@Override
@@ -388,14 +206,79 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			Log.i(Globals.LOG_TAG, "Crittercism disabled in debug build.");
 		}
 		
-		setContentView(R.layout.main);
-		
-		listView = (ListView) findViewById(android.R.id.list);
-
 		// Create the service observer. If such exists, onServiceBound will
 		// register it.
 		if (savedInstanceState != null) {
 			mServiceObserver = new ServerServiceObserver();
+			serverListFragment = (ServerListFragment) getSupportFragmentManager().getFragment(savedInstanceState, ServerListFragment.class.getName());
+			publicServerListFragment = (PublicServerListFragment) getSupportFragmentManager().getFragment(savedInstanceState, PublicServerListFragment.class.getName());
+		} else {
+			serverListFragment = new ServerListFragment();
+			publicServerListFragment = new PublicServerListFragment();
+		}
+				
+		setContentView(R.layout.activity_server_list);
+		
+		pager = (ViewPager) findViewById(R.id.pager);
+		ServerListPagerAdapter pagerAdapter = new ServerListPagerAdapter(getSupportFragmentManager());
+		pager.setAdapter(pagerAdapter);
+		pager.setOffscreenPageLimit(10);
+		
+		pager.setOnPageChangeListener(new OnPageChangeListener() {
+			
+			@Override
+			public void onPageSelected(int position) {
+				switch (position) {
+				case 1:
+					fillPublicList();
+					break;
+				}
+			}
+			
+			@Override
+			public void onPageScrolled(int arg0, float arg1, int arg2) {
+			}
+			
+			@Override
+			public void onPageScrollStateChanged(int arg0) {
+			}
+		});
+		
+		if(getIntent().getAction() == Intent.ACTION_VIEW) {
+			// Load mumble:// links
+			final Uri data = getIntent().getData();
+			final Server server = parseServerUri(data); // Create mock server entry from intent data
+			
+			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+			alertBuilder.setTitle(R.string.connectToServer);
+			
+			// Build a string of the server details
+			StringBuilder serverInfoBuilder = new StringBuilder();
+			serverInfoBuilder.append(getString(R.string.serverHost)+": "+server.getHost()+"\n");
+			serverInfoBuilder.append(getString(R.string.serverPort)+": "+server.getPort()+"\n");
+			if(!server.getUsername().equals(""))
+				serverInfoBuilder.append(getString(R.string.serverUsername)+": "+server.getUsername()+"\n");
+			if(!server.getPassword().equals(""))
+				serverInfoBuilder.append(getString(R.string.serverPassword)+": "+server.getPassword()+"\n");
+			alertBuilder.setMessage(serverInfoBuilder.toString());
+			
+			// Show alert dialog prompting the user to specify a username if needed.
+			final EditText usernameField = new EditText(this);
+			if(server.getUsername().equals("")) {
+				usernameField.setHint(R.string.serverUsername);
+				alertBuilder.setView(usernameField);
+			}
+			
+			alertBuilder.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					if(!usernameField.getText().toString().equals(""))
+						server.setUsername(usernameField.getText().toString());
+					connectToServer(server);
+				}
+			});
+			
+			alertBuilder.show();
 		}
 	}
 
@@ -410,27 +293,14 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		super.onPause();
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.morlunk.mumbleclient.app.ConnectedListActivity#onResume()
-	 */
-	@Override
-	protected void onResume() {
-		super.onResume();
-		
-		if(mService != null && mService.getConnectionState() == MumbleService.CONNECTION_STATE_CONNECTED) {
-			// If already connected, just jump to channel list.
-			startActivity(new Intent(this, ChannelActivity.class));
-		} else {
-			fillList();
-		}
-	}
-
 	@Override
 	protected void onSaveInstanceState(final Bundle outState) {
 		super.onSaveInstanceState(outState);
 		if (mServiceObserver != null) {
 			outState.putBoolean(STATE_WAIT_CONNECTION, true);
 		}
+		getSupportFragmentManager().putFragment(outState, ServerListFragment.class.getName(), serverListFragment);
+		getSupportFragmentManager().putFragment(outState, PublicServerListFragment.class.getName(), publicServerListFragment);
 	}
 
 	@Override
@@ -440,26 +310,167 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 				mService.registerObserver(mServiceObserver);
 			}
 		}
+		
+		if(serverListFragment != null && serverListFragment.isAdded())
+			fillFavoritesList();
+	}
+	
+	private Server parseServerUri(Uri data) {
+		String host = data.getHost();
+		String userInfo = data.getUserInfo();
+		
+		// Password and username can be in format user:pass@example.com. Deal with this.
+		String username = "";
+		String password = "";
+		if(userInfo != null && !userInfo.equals("")) {
+			if(userInfo.split(":").length == 2) {
+				String[] userInfoArray = userInfo.split(":");
+				username = userInfoArray[0];
+				password = userInfoArray[1];
+			} else {
+				username = userInfo;
+			}
+		}
+		
+		int port = data.getPort();
+		if(port == -1)
+			port = 64738;
+		
+		Server server = new Server(-1, "", host, port, username, password);
+		return server;
 	}
 
-	private void fillList() {
-		DbAdapter dbAdapter = new DbAdapter(this);
-		dbAdapter.open();
-		List<Server> servers = dbAdapter.fetchAllServers();
-		dbAdapter.close();
-
-		serverAdapter = new ServerAdapter(this, servers);
-		listView.setAdapter(serverAdapter);
-		
-		// Clear and reload server ping responses
-		infoResponses.clear();
-		for(Server server : servers) {
-			pingServerInfo(server);
+	private void fillFavoritesList() {
+		List<Server> servers = mService.getDatabaseAdapter().fetchAllServers();
+		serverListFragment.setServers(servers);
+	}
+	
+	private void fillPublicList() {
+		if(!publicServerListFragment.isFilled()) {
+			new PublicServerFetchTask() {
+				protected void onPostExecute(List<PublicServer> result) {
+					super.onPostExecute(result);
+					if(publicServerListFragment.isVisible())
+						publicServerListFragment.setServers(result);
+				};
+			}.execute();
 		}
 	}
 
 	@Override
 	public void serverInfoUpdated() {
-		fillList();
+		fillFavoritesList();
+	}
+	
+	public void publicServerFavourited() {
+		fillFavoritesList();
+		pager.setCurrentItem(0, true);
+	};
+
+	private class ServerServiceObserver extends BaseServiceObserver {
+		@Override
+		public void onConnectionStateChanged(final int state)
+			throws RemoteException {
+			checkConnectionState();
+		}
+	}
+	
+	private class ServerListPagerAdapter extends FragmentPagerAdapter {
+
+		public ServerListPagerAdapter(FragmentManager fm) {
+			super(fm);
+		}
+
+		@Override
+		public int getCount() {
+			return 2;
+		}
+
+		@Override
+		public Fragment getItem(int arg0) {
+			switch (arg0) {
+			case 0:
+				return serverListFragment;
+			case 1:
+				return publicServerListFragment;
+			default:
+				return null;
+			}
+		}
+		
+		@Override
+		public CharSequence getPageTitle(int position) {
+			switch (position) {
+			case 0:
+				return getString(R.string.server_list_title_favorite);
+			case 1:
+				return getString(R.string.server_list_title_public_internet);
+			}
+			return null;
+		}
+		
+		@Override
+		public void destroyItem(ViewGroup container, int position, Object object) {
+			// Override to do nothing.
+		}
+	}
+	
+	private class PublicServerFetchTask extends AsyncTask<Void, Void, List<PublicServer>> {
+		
+		private static final String MUMBLE_PUBLIC_URL = "http://www.mumble.info/list2.cgi";
+		
+		@Override
+		protected List<PublicServer> doInBackground(Void... params) {
+			try {
+				// Fetch XML from server
+				URL url = new URL(MUMBLE_PUBLIC_URL);
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("GET");
+				connection.addRequestProperty("version", Globals.PROTOCOL_VERSION_STRING);
+				connection.connect();
+				InputStream stream = connection.getInputStream();				
+				
+				XmlPullParser parser = Xml.newPullParser();
+				parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+				parser.setInput(stream, "UTF-8");
+				parser.nextTag();
+				
+				List<PublicServer> serverList = new ArrayList<PublicServer>();
+				
+				parser.require(XmlPullParser.START_TAG, null, "servers");
+				while(parser.next() != XmlPullParser.END_TAG) {
+			        if (parser.getEventType() != XmlPullParser.START_TAG) {
+			            continue;
+			        }
+			        
+			        serverList.add(readEntry(parser));
+				}
+				parser.require(XmlPullParser.END_TAG, null, "servers");
+				
+				return serverList;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
+		
+		private PublicServer readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {			
+			String name = parser.getAttributeValue(null, "name");
+			String ca = parser.getAttributeValue(null, "ca");
+			String continentCode = parser.getAttributeValue(null, "continent_code");
+			String country = parser.getAttributeValue(null, "country");
+			String countryCode = parser.getAttributeValue(null, "country_code");
+			String ip = parser.getAttributeValue(null, "ip");
+			String port = parser.getAttributeValue(null, "port");
+			String region = parser.getAttributeValue(null, "region");
+			String url = parser.getAttributeValue(null, "url");
+			
+			parser.nextTag();
+			
+			PublicServer server = new PublicServer(name, ca, continentCode, country, countryCode, ip, Integer.parseInt(port), region, url);
+			
+			return server;
+		}
+		
 	}
 }

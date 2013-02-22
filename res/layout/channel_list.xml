@@ -4,23 +4,10 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/connectionViewRoot"
 	android:orientation="vertical"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent">
-
-	<!-- Channel name + Browse row -->
-
-	<TextView
-		android:id="@+id/noUsersText"
-		android:text="@string/noUsers"
-		android:textSize="28sp"
-		android:layout_height="fill_parent"
-		android:gravity="center"
-		android:textColor="@android:color/secondary_text_dark"
-		android:layout_width="fill_parent"
-		android:layout_weight="1" />
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
 	<ListView
 		android:id="@+id/channelUsers"
-		android:layout_height="wrap_content"
-		android:layout_width="fill_parent"
-		android:layout_weight="1"/>
+		android:layout_height="match_parent"
+		android:layout_width="match_parent"/>
 </LinearLayout>
