@@ -72,8 +72,8 @@
     <string name="search">Szukaj</string>
     <string name="searchHint">Wyszukiwanie kanału</string>
     <string name="undocumentedWakeLock">Niestety, Plumble nie jest w stanie zapewnić obsługi sensora zbliżeniowego w twoim urządzeniu. Proszę zmienić tryb wyjścia dźwięku na głośnik.</string>
-    <string name="amplifier">Wzmacniacz</string>
-    <string name="recordingVolume">Zwiększ głośność nagrywania</string>
+    <string name="amplifier">Wzmacnienie</string>
+    <string name="recordingVolume">Regulacja głośności nagrywania</string>
     <string name="quickConnect">Szybkie połączenie</string>
     <string name="connect">Połącz</string>
     <string name="connectToServer">Połącz do serwera</string>
@@ -117,4 +117,7 @@
     <string name="noServerInfo">Użyj Ping, aby zebrać informacje</string>
     <string name="status_notify_muted_and_deafened">Ogłuszony oraz wyciszony mikrofon.</string>
     <string name="status_notify_muted">Wyciszony mikrofon</string>
+    <string name="comment">Komentarz</string>
+    <string name="close">Zamknij</string>
+    <string name="retrieving">Trwa pobieranie…</string>
 </resources>
