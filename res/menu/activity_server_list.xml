@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/menu_preferences" android:title="@string/preferences" android:showAsAction="never" android:icon="@drawable/ic_action_settings"></item>
+    <item android:id="@+id/menu_preferences" android:title="@string/preferences" android:showAsAction="ifRoom" android:icon="@drawable/ic_action_settings" android:orderInCategory="1"></item>
 </menu>
