@@ -25,7 +25,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Xml;
 import android.view.ViewGroup;
@@ -221,12 +220,6 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		ServerListPagerAdapter pagerAdapter = new ServerListPagerAdapter(getSupportFragmentManager());
 		pager.setAdapter(pagerAdapter);
 		pager.setOffscreenPageLimit(10);
-		
-		DisplayMetrics metrics = new DisplayMetrics();
-		getWindowManager().getDefaultDisplay().getMetrics(metrics);
-		float logicalDensity = metrics.density;
-		int px = (int) (10 * logicalDensity + 0.5);
-		pager.setPageMargin(px);
 		
 		pager.setOnPageChangeListener(new OnPageChangeListener() {
 			

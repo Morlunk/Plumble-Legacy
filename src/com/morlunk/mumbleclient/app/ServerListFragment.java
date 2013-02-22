@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
@@ -183,6 +184,15 @@ public class ServerListFragment extends SherlockFragment {
 			
 			userText.setText(server.getUsername());
 			addressText.setText(server.getHost()+":"+server.getPort());
+			
+			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
+			
+			button1.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					connectHandler.connectToServer(server);
+				}
+			});
 			
 			ImageButton moreButton = (ImageButton) view.findViewById(R.id.server_row_more);
 			moreButton.setOnClickListener(new OnClickListener() {
