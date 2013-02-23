@@ -396,10 +396,16 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 				}
 				
 				AlertDialog.Builder builder = new AlertDialog.Builder(context);
-				builder.setTitle("Comment");
-				builder.setPositiveButton("Close", null);
+				builder.setTitle(R.string.comment);
+				builder.setPositiveButton(R.string.close, null);
 				final WebView webView = new WebView(context);
-				webView.loadDataWithBaseURL("", "<center>Retrieving...</center>", "text/html", "utf-8", "");
+				//TODO: Do it in better way?
+				final StringBuilder sb = new StringBuilder();
+				sb.append("<center>");
+				sb.append(getResources().getString(R.string.retrieving));
+				sb.append("</center>");
+				String string = sb.toString();
+				webView.loadDataWithBaseURL("", string, "text/html", "utf-8", "");
 				builder.setView(webView);
 				
 				final AlertDialog dialog = builder.show();

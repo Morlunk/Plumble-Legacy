@@ -117,4 +117,7 @@
     <string name="noServerInfo">Ping to fetch info</string>
     <string name="status_notify_muted_and_deafened">Muted and deafened.</string>
     <string name="status_notify_muted">Muted.</string>
+    <string name="comment">Comment</string>
+    <string name="close">Close</string>
+    <string name="retrieving">Retrieving…</string>
 </resources>
