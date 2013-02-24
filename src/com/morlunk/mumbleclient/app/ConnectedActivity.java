@@ -149,9 +149,15 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 					});
 				} else {
 					
-					alertBuilder.setPositiveButton("Ok", new OnClickListener() {
+					alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
+							mService.connectToServer(mService.getConnectedServer()); // Reconnect to server
+						}
+					});
+					alertBuilder.setNegativeButton(android.R.string.ok, new OnClickListener() {
+						@Override
+						public void onClick(DialogInterface arg0, int arg1) {
 							finish();
 						}
 					});
@@ -185,9 +191,15 @@ public class ConnectedActivity extends SherlockFragmentActivity {
 				String responseString = (String) response;
 				alertBuilder.setTitle(R.string.disconnected);
 
-				alertBuilder.setPositiveButton("Ok", new OnClickListener() {
+				alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
+						mService.connectToServer(mService.getConnectedServer()); // Reconnect to server
+					}
+				});
+				alertBuilder.setNegativeButton(android.R.string.ok, new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface arg0, int arg1) {
 						finish();
 					}
 				});
