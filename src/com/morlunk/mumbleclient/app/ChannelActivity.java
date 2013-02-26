@@ -205,13 +205,14 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         actionBar.setDisplayShowTitleEnabled(false);
         
         // Set up PTT button.
+    	RelativeLayout pushView = (RelativeLayout) findViewById(R.id.pushview);
+    	
+    	mTalkButton = (Button) findViewById(R.id.pushtotalk);
+    	mTalkToggleBox = (CheckBox) findViewById(R.id.pushtotalk_toggle);
+    	mTalkGradient = findViewById(R.id.pushgradient);
+    	
         if(settings.isPushToTalk() && settings.isPushToTalkButtonShown()) {
-        	RelativeLayout pushView = (RelativeLayout) findViewById(R.id.pushview);
         	pushView.setVisibility(View.VISIBLE);
-        	
-        	mTalkButton = (Button) findViewById(R.id.pushtotalk);
-        	mTalkToggleBox = (CheckBox) findViewById(R.id.pushtotalk_toggle);
-        	mTalkGradient = findViewById(R.id.pushgradient);
         	
         	mTalkToggleBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 				
@@ -309,10 +310,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     }
     
     public void setPushToTalk(final boolean talking) {
-    	if(mService.isRecording() == talking)
-    		return;
-    	
-    	mService.setRecording(talking);
+    	if(mService.isRecording() != talking)
+        	mService.setRecording(talking);
     	
 		if(settings.isPushToTalkButtonShown()) {
 			Animation fade = AnimationUtils.loadAnimation(ChannelActivity.this,
@@ -387,9 +386,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	if(mService != null) {
         	mService.setActivityVisible(false);
         	
-        	// Turn off push to talk when rotating so it doesn't get stuck on.
-        	if(settings.isPushToTalk())
+        	// Turn off push to talk when rotating so it doesn't get stuck on, except if it's in toggled state.
+        	if(settings.isPushToTalk() && !mTalkToggleBox.isChecked()) {
         		mService.setRecording(false);
+        	}
     	}
     }
     
@@ -681,6 +681,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		// Start recording for voice activity, as there is no push to talk button.
 		if(settings.isVoiceActivity() && !mService.isRecording()) {
 			mService.setRecording(true);
+		}
+		
+		// Restore push to talk state, if toggled.
+		if(settings.isPushToTalk() && 
+				settings.isPushToTalkButtonShown() && 
+				mService.isRecording()) {
+			setPushToTalk(true);
 		}
 	}
 
