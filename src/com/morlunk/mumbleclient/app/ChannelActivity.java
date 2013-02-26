@@ -346,8 +346,12 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	super.onSaveInstanceState(outState);
     	
     	if(mViewPager != null) {
-    		getSupportFragmentManager().putFragment(outState, ChannelListFragment.class.getName(), listFragment);
-    		getSupportFragmentManager().putFragment(outState, ChannelChatFragment.class.getName(), chatFragment);
+    		try {
+    			getSupportFragmentManager().putFragment(outState, ChannelListFragment.class.getName(), listFragment);
+    			getSupportFragmentManager().putFragment(outState, ChannelChatFragment.class.getName(), chatFragment);
+    		} catch (Exception e) {
+    			Log.w(Globals.LOG_TAG, "Issue with storing fragments in the fragment manager. Non-fatal.");
+			}
     	}
 		outState.putParcelable(SAVED_STATE_VISIBLE_CHANNEL, visibleChannel);
 		
@@ -654,6 +658,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			mProgressDialog.dismiss();
 			mProgressDialog = null;
 		}
+		
+		// Tell the service that we are now visible.
+        mService.setActivityVisible(true);
 		
 		// Send access tokens after connection.
 		sendAccessTokens();
