@@ -4,7 +4,7 @@
     <string name="channels">Channels</string>
     <string name="userJoin">Join channel</string>
     <string name="userSpeak">Speak</string>
-    <string name="noServers">no servers added</string>
+    <string name="noServers">No servers added.\nPress the \'add\' button on the action bar to begin.</string>
     <string name="noChannels">Channel list empty</string>
     <string name="noUsers">no users</string>
     <string name="serverAdd">Add Server</string>

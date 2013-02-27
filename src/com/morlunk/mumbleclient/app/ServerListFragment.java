@@ -68,6 +68,7 @@ public class ServerListFragment extends SherlockFragment {
 			Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_server_list, container, false);
 		serverGrid = (GridView) view.findViewById(R.id.serverGrid);
+		serverGrid.setEmptyView(view.findViewById(R.id.empty_server_grid));
 		registerForContextMenu(serverGrid);
 		return view;
 	}

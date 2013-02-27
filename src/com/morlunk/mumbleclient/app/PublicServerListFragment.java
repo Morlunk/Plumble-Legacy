@@ -71,7 +71,7 @@ public class PublicServerListFragment extends SherlockFragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		View view = inflater.inflate(R.layout.fragment_server_list, container, false);
+		View view = inflater.inflate(R.layout.fragment_public_server_list, container, false);
 		serverGrid = (GridView) view.findViewById(R.id.serverGrid);
 		serverProgress = (ProgressBar) view.findViewById(R.id.serverProgress);
 		serverProgress.setVisibility(View.VISIBLE);
