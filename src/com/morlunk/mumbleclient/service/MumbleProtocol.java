@@ -262,13 +262,12 @@ public class MumbleProtocol {
 				added = true;
 			}
 
-			if (us.hasSelfDeaf() || us.hasSelfMute()) {
-				if (us.getSelfDeaf()) {
-					user.selfDeafened = us.getSelfDeaf();
-				}
-				if (us.getSelfMute()) {
-					user.selfMuted = us.getSelfMute();
-				}
+			if (us.hasSelfDeaf()) {
+				user.selfDeafened = us.getSelfDeaf();
+			}
+			
+			if (us.hasSelfMute()) {
+				user.selfMuted = us.getSelfMute();
 			}
 
 			if (us.hasMute()) {
