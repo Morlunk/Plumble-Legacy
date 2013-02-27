@@ -345,7 +345,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 			
 			localMute.setVisibility(user.localMuted ? View.VISIBLE : View.GONE);
 			
-			if(user.comment != null || user.commentHash != null)
+			if(userCommentsSeen.containsKey(user))
 				comment.setImageResource(userCommentsSeen.get(user) ? R.drawable.ic_comment_seen : R.drawable.ic_comment);
 			
 			comment.setVisibility(user.comment != null || user.commentHash != null ? View.VISIBLE : View.GONE);
