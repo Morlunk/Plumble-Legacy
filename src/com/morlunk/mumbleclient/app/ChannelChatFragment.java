@@ -113,12 +113,17 @@ public class ChannelChatFragment extends SherlockFragment {
 			return;
 		}
 		
+		v.setText("");
+		
 		// Linkify (convert pasted links to spannable) and convert back to HTML
+		/*
 		Spannable spanText = new SpannableString(text);
 		Linkify.addLinks(spanText, Linkify.WEB_URLS);
 		text = Html.toHtml(spanText);
-		text = text.substring("<p dir=\"ltr\">".length(), text.length()-"</p>".length()-1); // Remove paragraph tags
 		
+		TODO: Fix this. We don't always get the paragraph tags for whatever reason.
+		text = text.substring("<p dir=\"ltr\">".length(), text.length()-"</p>".length()-1); // Remove paragraph tags
+		*/
 		AsyncTask<String, Void, Void> messageTask = new AsyncTask<String, Void, Void>() {
 			
 			@Override
@@ -134,12 +139,6 @@ public class ChannelChatFragment extends SherlockFragment {
 					channelProvider.sendUserMessage(params[0], chatTarget);
 				}
 				return null;
-			}
-			
-			@Override
-			protected void onPostExecute(Void result) {
-				super.onPostExecute(result);
-				v.setText("");
 			}
 		};
 		messageTask.execute(text);

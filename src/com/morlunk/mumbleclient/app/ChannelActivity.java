@@ -439,7 +439,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         }
 
         favouritesItem = menu.findItem(R.id.menu_favorite_button);
-        if(mService != null && !mService.isConnectedServerPublic())
+        if(mService != null && mService.isConnected() && !mService.isConnectedServerPublic())
         	updateFavouriteMenuItem();
         
         return true;
