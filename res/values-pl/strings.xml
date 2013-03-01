@@ -4,7 +4,7 @@
     <string name="channels">Kanały</string>
     <string name="userJoin">Dołącz do kanału</string>
     <string name="userSpeak">Mówi</string>
-    <string name="noServers">brak serwerów</string>
+    <string name="noServers">Żaden serwer nie został dodany.\nNaciśnij przycisk \'Dodaj\', aby dodać serwer.</string>
     <string name="noChannels">Lista kanałów jest pusta</string>
     <string name="noUsers">brak użytkowników</string>
     <string name="serverAdd">Dodaj serwer</string>
