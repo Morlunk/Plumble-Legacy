@@ -120,4 +120,6 @@
     <string name="comment">Komentarz</string>
     <string name="close">Zamknij</string>
     <string name="retrieving">Trwa pobieranie…</string>
+    <string name="search_name">Nazwa</string>
+    <string name="search_country">Kraj</string>
 </resources>
