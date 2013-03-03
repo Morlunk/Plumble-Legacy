@@ -181,7 +181,6 @@ public class MumbleService extends Service implements OnInitListener {
 								!settings.getHotCorner().equals(Settings.ARRAY_HOT_CORNER_NONE)) {
 							createPTTOverlay();
 						}
-						showNotification();	
 						updateConnectionState();						
 					} else if (state == MumbleConnectionHost.STATE_DISCONNECTED) {
 						dismissPTTOverlay();
@@ -1019,8 +1018,6 @@ public class MumbleService extends Service implements OnInitListener {
 		state = MumbleConnectionHost.STATE_DISCONNECTED;
 		updateConnectionState();
 
-		hideNotification();
-
 		// Now observers shouldn't need these anymore.
 		chatMessages.clear();
 		unreadChatMessages.clear();
@@ -1236,9 +1233,11 @@ public class MumbleService extends Service implements OnInitListener {
 			} else if(settings.isMuted()) {
 				setMuted(true);
 			}
+			showNotification();
 			break;
 		case MumbleConnectionHost.STATE_DISCONNECTED:
 			serviceState = CONNECTION_STATE_DISCONNECTED;
+			hideNotification();
 			break;
 		default:
 			Assert.fail();
