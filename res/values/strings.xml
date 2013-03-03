@@ -120,4 +120,6 @@
     <string name="comment">Comment</string>
     <string name="close">Close</string>
     <string name="retrieving">Retrieving…</string>
+    <string name="search_name">Name</string>
+    <string name="search_country">Country</string>
 </resources>

@@ -1,8 +1,10 @@
 package com.morlunk.mumbleclient.app;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import android.annotation.SuppressLint;
@@ -86,8 +88,13 @@ public class PublicServerListFragment extends SherlockFragment {
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if(item.getItemId() == R.id.menu_sort_server_item) {
+		switch(item.getItemId()) {
+		case R.id.menu_sort_server_item:
 			showSortDialog();
+			return true;
+			
+		case R.id.menu_search_server_item:
+			showFilterDialog();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -110,11 +117,47 @@ public class PublicServerListFragment extends SherlockFragment {
 		alertBuilder.show();
 	}
 	
+	private void showFilterDialog() {
+		AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity());
+		dialogBuilder.setTitle(R.string.search);
+		
+		View dialogView = ((LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.dialog_server_search, null);
+		final EditText nameText = (EditText) dialogView.findViewById(R.id.server_search_name);
+		final EditText countryText = (EditText) dialogView.findViewById(R.id.server_search_country);
+		
+		dialogBuilder.setView(dialogView);
+		
+		dialogBuilder.setPositiveButton(R.string.search, new DialogInterface.OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				String queryName = nameText.getText().toString().toUpperCase(Locale.US);
+				String queryCountry = countryText.getText().toString().toUpperCase(Locale.US);
+				serverAdapter.filter(queryName, queryCountry);
+			}
+		});
+		dialogBuilder.show();
+	}
+	
 	private class PublicServerAdapter extends ArrayAdapter<PublicServer> {
 		private Map<PublicServer, ServerInfoResponse> infoResponses = new HashMap<PublicServer, ServerInfoResponse>();
+		private List<PublicServer> originalServers;
 		
 		public PublicServerAdapter(Context context, List<PublicServer> servers) {
 			super(context, android.R.id.text1, servers);
+			originalServers = new ArrayList<PublicServer>(servers);
+		}
+		
+		public void filter(String queryName, String queryCountry) {
+			clear();
+			
+			for(PublicServer server : originalServers) {
+				String serverName = server.getName().toUpperCase(Locale.US);
+				String serverCountry = server.getCountry().toUpperCase(Locale.US);
+				
+				if(serverName.contains(queryName) && serverCountry.contains(queryCountry))
+					add(server);
+			}
 		}
 
 		@SuppressLint("NewApi")
