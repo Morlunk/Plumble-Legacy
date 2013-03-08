@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Observable;
+import java.util.Observer;
 
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
 import net.sf.mumble.MumbleProto.UserRemove;
@@ -99,7 +101,7 @@ interface TokenDialogFragmentListener {
 }
 
 
-public class ChannelActivity extends ConnectedActivity implements ChannelProvider, TokenDialogFragmentListener {
+public class ChannelActivity extends ConnectedActivity implements ChannelProvider, TokenDialogFragmentListener, Observer {
 
 	public static final String JOIN_CHANNEL = "join_channel";
 	public static final String SAVED_STATE_VISIBLE_CHANNEL = "visible_channel";
@@ -168,6 +170,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     @Override
     public void onCreate(Bundle savedInstanceState) {
 		settings = Settings.getInstance(this);
+		settings.addObserver(this);
 		
 		// Use theme from settings
 		int theme = 0;
@@ -205,47 +208,44 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         actionBar.setDisplayShowTitleEnabled(false);
         
         // Set up PTT button.
-    	RelativeLayout pushView = (RelativeLayout) findViewById(R.id.pushview);
     	
     	mTalkButton = (Button) findViewById(R.id.pushtotalk);
     	mTalkToggleBox = (CheckBox) findViewById(R.id.pushtotalk_toggle);
     	mTalkGradient = findViewById(R.id.pushgradient);
     	
-        if(settings.isPushToTalk() && settings.isPushToTalkButtonShown()) {
-        	pushView.setVisibility(View.VISIBLE);
-        	
-        	mTalkToggleBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+    	mTalkToggleBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				if(!isChecked) {
+					setPushToTalk(false);
+				}
+			}
+		});
+    	
+    	mTalkButton.setOnTouchListener(new OnTouchListener() {
+			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				if(mService == null) {
+					return false;
+				}
 				
-				@Override
-				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					if(!isChecked) {
+				if(!mTalkToggleBox.isChecked()) {
+					if(event.getAction() == MotionEvent.ACTION_DOWN)
+						setPushToTalk(true);
+					else if(event.getAction() == MotionEvent.ACTION_UP)
 						setPushToTalk(false);
-					}
+				} else {
+					if(event.getAction() == MotionEvent.ACTION_UP) 
+						setPushToTalk(!mService.isRecording());
 				}
-			});
-        	
-        	mTalkButton.setOnTouchListener(new OnTouchListener() {
 				
-				@Override
-				public boolean onTouch(View v, MotionEvent event) {
-					if(mService == null) {
-						return false;
-					}
-					
-					if(!mTalkToggleBox.isChecked()) {
-						if(event.getAction() == MotionEvent.ACTION_DOWN)
-							setPushToTalk(true);
-						else if(event.getAction() == MotionEvent.ACTION_UP)
-							setPushToTalk(false);
-					} else {
-						if(event.getAction() == MotionEvent.ACTION_UP) 
-							setPushToTalk(!mService.isRecording());
-					}
-					
-					return true;
-				}
-			});
-        }
+				return true;
+			}
+		});
+    	
+        updatePTTConfiguration();
         
         mViewPager = (ViewPager) findViewById(R.id.pager);
         
@@ -307,6 +307,27 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 				chatFragment.setChatTarget(chatTarget);
 			}
         }
+    }
+    
+    // Settings observer
+    @Override
+    public void update(Observable observable, Object data) {
+    	Settings settings = (Settings)observable;
+    	
+    	updatePTTConfiguration(); // Update push-to-talk
+    	
+		// Turn on voice activity if applicable
+		if(!mService.isRecording() && !settings.isPushToTalk())
+			mService.setRecording(true);
+		// Turn off recording if switching to PTT
+		if(mService.isRecording() && settings.isPushToTalk()) {
+			setPushToTalk(false);
+		}
+    }
+    
+    private void updatePTTConfiguration() {
+    	RelativeLayout pushView = (RelativeLayout) findViewById(R.id.pushview);
+    	pushView.setVisibility(settings.isPushToTalk() && settings.isPushToTalkButtonShown() ? View.VISIBLE : View.GONE);
     }
     
     public void setPushToTalk(final boolean talking) {
@@ -581,6 +602,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		case R.id.menu_amplifier:
 			AmplifierDialogFragment amplifierDialogFragment = AmplifierDialogFragment.newInstance();
 			amplifierDialogFragment.show(getSupportFragmentManager(), "amplifier");
+			return true;
+		case R.id.menu_preferences:
+			Intent intent = new Intent(this, Preferences.class);
+			startActivity(intent);
 			return true;
 		case R.id.menu_disconnect_item:
 			new Thread(new Runnable() {

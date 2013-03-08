@@ -6,5 +6,6 @@
     <item android:id="@+id/menu_search" android:title="@string/search" android:actionViewClass="android.widget.SearchView" android:showAsAction="ifRoom|collapseActionView" android:icon="@drawable/ic_action_search"></item>
     <item android:id="@+id/menu_access_tokens_button" android:title="@string/accessTokens" android:showAsAction="never"></item>
     <item android:id="@+id/menu_amplifier" android:title="@string/amplifier" android:showAsAction="never"></item>
+    <item android:id="@+id/menu_preferences" android:title="@string/preferences" android:showAsAction="never" android:icon="@drawable/ic_action_settings"></item>
     <item android:id="@+id/menu_disconnect_item" android:showAsAction="never" android:icon="@drawable/ic_action_delete_dark" android:title="@string/disconnect"></item>
 </menu>

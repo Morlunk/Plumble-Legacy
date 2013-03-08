@@ -63,6 +63,14 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 			configurePreferences(this);
 		}
 	}
+	
+	@Override
+	protected void onDestroy() {
+		// Notify of settings changes
+		Settings.getInstance(this).forceUpdateObservers();
+		
+		super.onDestroy();
+	}
 
 	public static Context getContext() {
 		return Preferences.context;

@@ -101,6 +101,7 @@ public class Settings extends Observable {
 	
 	public void setAmplitudeBoostMultiplier(Float multiplier) {
 		preferences.edit().putFloat(PREF_AMPLITUDE_BOOST, multiplier).commit();
+		setChanged();
 		notifyObservers();
 	}
 	
@@ -126,6 +127,7 @@ public class Settings extends Observable {
 	
 	public void setCertificatePath(String path) {
 		preferences.edit().putString(PREF_CERT, path).commit();
+		setChanged();
 		notifyObservers();
 	}
 	
@@ -190,6 +192,12 @@ public class Settings extends Observable {
 		editor.putBoolean(PREF_MUTED, muted || deafened);
 		editor.putBoolean(PREF_DEAFENED, deafened);
 		editor.commit();
+		setChanged();
+		notifyObservers();
+	}
+	
+	public void forceUpdateObservers() {
+		setChanged();
 		notifyObservers();
 	}
 }
