@@ -13,7 +13,7 @@
     <string name="serverUsername">Nazwa użytkownika</string>
     <string name="serverPort">Port</string>
     <string name="serverHost">Adres (IP lub domena)</string>
-    <string name="serverName">Etykieta (Opcjonalna)</string>
+    <string name="serverName">Etykieta</string>
     <string name="sendText">Wyślij</string>
     <string name="app_name">Plumble</string>
     <string name="server_deleted">Serwer został usunięty</string>
@@ -72,8 +72,8 @@
     <string name="search">Szukaj</string>
     <string name="searchHint">Wyszukiwanie kanału</string>
     <string name="undocumentedWakeLock">Niestety, Plumble nie jest w stanie zapewnić obsługi sensora zbliżeniowego w twoim urządzeniu. Proszę zmienić tryb wyjścia dźwięku na głośnik.</string>
-    <string name="amplifier">Wzmacnienie</string>
-    <string name="recordingVolume">Regulacja głośności nagrywania</string>
+    <string name="amplifier">Wzmocnienie</string>
+    <string name="recordingVolume">Opcja pozwala na regulację poziomu głośności mikrofonu.</string>
     <string name="quickConnect">Szybkie połączenie</string>
     <string name="connect">Połącz</string>
     <string name="connectToServer">Połącz do serwera</string>
@@ -122,4 +122,8 @@
     <string name="retrieving">Trwa pobieranie…</string>
     <string name="search_name">Nazwa</string>
     <string name="search_country">Kraj</string>
+    <string name="preferences_immutable">Ta opcja nie może zostać zmieniona podczas połączenia z serwerem.</string>
+    <string name="fullscreen">Pełny ekran</string>
+    <string name="fullscreen_chat">Czat</string>
+    <string name="fullscreen_channel">Kanał</string>
 </resources>
