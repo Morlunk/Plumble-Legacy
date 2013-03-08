@@ -62,6 +62,8 @@ public class Settings extends Observable {
 	public static final String ARRAY_THEME_LIGHTDARK = "lightDark";
 	public static final String ARRAY_THEME_DARK = "dark";
 	
+	public static final String PREF_GENERATE_CERT = "certificateGenerate";
+	
 	public static final String PREF_CERT = "certificatePath";
 	public static final String PREF_CERT_PASSWORD = "certificatePassword";
 

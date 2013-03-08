@@ -25,6 +25,7 @@ import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
+import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.PlumbleCertificateManager;
 
 /**
@@ -38,6 +39,16 @@ interface PreferenceProvider {
 
 public class Preferences extends SherlockPreferenceActivity implements PreferenceProvider {
 
+	// A list of preference keys that can't be changed when connected to a server.
+	private static final String[] IMMUTABLE_WHEN_CONNECTED = new String[] {
+		Settings.PREF_GENERATE_CERT,
+		Settings.PREF_CERT,
+		Settings.PREF_CERT_PASSWORD,
+		Settings.PREF_QUALITY,
+		Settings.PREF_DISABLE_OPUS,
+		Settings.PREF_FORCE_TCP
+	};
+	
 	private static final String CERTIFICATE_GENERATE_KEY = "certificateGenerate";
 	private static final String CERTIFICATE_PATH_KEY = "certificatePath";
 	private static final String CERTIFICATE_FOLDER = "Plumble";
@@ -81,6 +92,15 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 	 * @param preferenceProvider
 	 */
 	private static void configurePreferences(final PreferenceProvider preferenceProvider) {
+		// Disable options that are immutable when connected
+		if(MumbleService.getCurrentService() != null && MumbleService.getCurrentService().isConnected()) {
+			for(String key : IMMUTABLE_WHEN_CONNECTED) {
+				Preference preference = preferenceProvider.findPreference(key);
+				preference.setEnabled(false);
+				preference.setSummary(R.string.preferences_immutable);
+			}
+		}
+		
 		final Preference certificateGeneratePreference = preferenceProvider.findPreference(CERTIFICATE_GENERATE_KEY);
 		final ListPreference certificatePathPreference = (ListPreference) preferenceProvider.findPreference(CERTIFICATE_PATH_KEY);
 		

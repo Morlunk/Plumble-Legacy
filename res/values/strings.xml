@@ -122,4 +122,5 @@
     <string name="retrieving">Retrieving…</string>
     <string name="search_name">Name</string>
     <string name="search_country">Country</string>
+    <string name="preferences_immutable">This setting cannot be changed while connected to a server.</string>
 </resources>
