@@ -314,15 +314,17 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     public void update(Observable observable, Object data) {
     	Settings settings = (Settings)observable;
     	
-    	updatePTTConfiguration(); // Update push-to-talk
-    	
-		// Turn on voice activity if applicable
-		if(!mService.isRecording() && !settings.isPushToTalk())
-			mService.setRecording(true);
-		// Turn off recording if switching to PTT
-		if(mService.isRecording() && settings.isPushToTalk()) {
-			setPushToTalk(false);
-		}
+    	if(data == Settings.OBSERVER_KEY_ALL) {
+        	updatePTTConfiguration(); // Update push-to-talk
+        	
+    		// Turn on voice activity if applicable
+    		if(!mService.isRecording() && !settings.isPushToTalk())
+    			mService.setRecording(true);
+    		// Turn off recording if switching to PTT
+    		if(mService.isRecording() && settings.isPushToTalk()) {
+    			setPushToTalk(false);
+    		}
+    	}
     }
     
     private void updatePTTConfiguration() {
@@ -987,7 +989,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	public void reloadChat() {
 		chatFragment.clear();
 		for(String message : mService.getChatMessages()) {
-			chatFragment.addChatMessage(message);
+			if(message != null)
+				chatFragment.addChatMessage(message);
 		}
 	}
 	

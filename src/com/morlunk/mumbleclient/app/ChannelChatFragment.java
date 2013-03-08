@@ -92,6 +92,9 @@ public class ChannelChatFragment extends SherlockFragment {
 	}
 	
 	public void addChatMessage(String text) {
+		if(chatText == null)
+			return;
+		
 		chatText.append(Html.fromHtml(text));
 		chatText.append(Html.fromHtml("<br>"));
 		

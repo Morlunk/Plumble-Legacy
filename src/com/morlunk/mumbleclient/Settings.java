@@ -7,7 +7,20 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 
+/**
+ * Singleton settings class for universal access to the app's preferences.
+ * You can listen to Settings events by registering your class as an observer and responding according to the observer key passed.
+ * 
+ * @author morlunk
+ *
+ */
 public class Settings extends Observable {
+	// If you can't find a specifically observable key here, listen for "all".
+	public static final String OBSERVER_KEY_ALL = "all";
+	public static final String OBSERVER_KEY_MUTED_AND_DEAFENED = "mutedAndDeafened";
+	public static final String OBSERVER_KEY_CERTIFICATE_PATH = "certificatePath";
+	public static final String OBSERVER_KEY_AMPLITUDE = "certificatePath";
+	
 	public static final String PREF_CALL_MODE = "callMode";
 	public static final String ARRAY_CALL_MODE_SPEAKER = "speakerphone";
 	public static final String ARRAY_CALL_MODE_VOICE = "voice";
@@ -102,7 +115,7 @@ public class Settings extends Observable {
 	public void setAmplitudeBoostMultiplier(Float multiplier) {
 		preferences.edit().putFloat(PREF_AMPLITUDE_BOOST, multiplier).commit();
 		setChanged();
-		notifyObservers();
+		notifyObservers(OBSERVER_KEY_AMPLITUDE);
 	}
 	
 	public int getDetectionThreshold() {
@@ -128,7 +141,7 @@ public class Settings extends Observable {
 	public void setCertificatePath(String path) {
 		preferences.edit().putString(PREF_CERT, path).commit();
 		setChanged();
-		notifyObservers();
+		notifyObservers(OBSERVER_KEY_CERTIFICATE_PATH);
 	}
 	
 	public String getCertificatePassword() {
@@ -193,11 +206,11 @@ public class Settings extends Observable {
 		editor.putBoolean(PREF_DEAFENED, deafened);
 		editor.commit();
 		setChanged();
-		notifyObservers();
+		notifyObservers(OBSERVER_KEY_MUTED_AND_DEAFENED);
 	}
 	
 	public void forceUpdateObservers() {
 		setChanged();
-		notifyObservers();
+		notifyObservers(OBSERVER_KEY_ALL);
 	}
 }
