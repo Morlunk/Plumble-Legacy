@@ -126,4 +126,5 @@
     <string name="fullscreen">Fullscreen</string>
     <string name="fullscreen_chat">Chat</string>
     <string name="fullscreen_channel">Channel</string>
+    <string name="fetchingServers">Please wait, fetching list of public servers.</string>
 </resources>
