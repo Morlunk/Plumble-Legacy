@@ -11,7 +11,9 @@
     <EditText
         android:id="@+id/server_search_name"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:imeOptions="actionSearch"
+        android:inputType="text"/>
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,5 +21,7 @@
     <EditText
         android:id="@+id/server_search_country"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:imeOptions="actionSearch"
+        android:inputType="text"/>
 </LinearLayout>
