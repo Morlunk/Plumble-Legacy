@@ -123,4 +123,7 @@
     <string name="search_name">Name</string>
     <string name="search_country">Country</string>
     <string name="preferences_immutable">This setting cannot be changed while connected to a server.</string>
+    <string name="fullscreen">Fullscreen</string>
+    <string name="fullscreen_chat">Chat</string>
+    <string name="fullscreen_channel">Channel</string>
 </resources>

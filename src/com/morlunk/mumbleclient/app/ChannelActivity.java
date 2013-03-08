@@ -150,6 +150,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	private ChannelListFragment listFragment;
 	private ChannelChatFragment chatFragment;
 	
+	// Fragments (split view exclusive)
+	private View leftSplit;
+	private View rightSplit;
+	
 	// Proximity sensor
 	private WakeLock proximityLock;
 	
@@ -290,6 +294,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         	// Otherwise, create tablet UI.
 	        listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
 	        chatFragment = (ChannelChatFragment) getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
+	        
+	        leftSplit = findViewById(R.id.left_split);
+	        rightSplit = findViewById(R.id.right_split);
         }
         
         if(savedInstanceState != null) {
@@ -423,6 +430,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
     	// Only show favourites and access tokens (DB-related) if the connected server has a DB representation (non-public).
+    	MenuItem fullscreenItem = menu.findItem(R.id.menu_fullscreen);
     	MenuItem favouriteToggleItem = menu.findItem(R.id.menu_favorite_button);
     	MenuItem favouritesViewItem = menu.findItem(R.id.menu_view_favorites_button);
     	MenuItem accessTokensItem = menu.findItem(R.id.menu_access_tokens_button);
@@ -433,6 +441,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     		favouritesViewItem.setVisible(!mService.isConnectedServerPublic());
     		accessTokensItem.setVisible(!mService.isConnectedServerPublic());
     	}
+    	
+    	fullscreenItem.setVisible(mViewPager == null); // Only show fullscreen option if in tablet mode
     	
     	return super.onPrepareOptionsMenu(menu);
     }
@@ -578,6 +588,14 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		case R.id.menu_deafen_button:
 			updateMuteDeafenMenuItems(!mService.isDeafened(), !mService.isDeafened());
 			mService.setDeafened(!mService.isDeafened());
+			return true;
+		case R.id.menu_fullscreen_chat:
+			rightSplit.setVisibility(rightSplit.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+			leftSplit.setVisibility(View.VISIBLE);
+			return true;
+		case R.id.menu_fullscreen_channel:
+			leftSplit.setVisibility(leftSplit.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+			rightSplit.setVisibility(View.VISIBLE);
 			return true;
 		case R.id.menu_favorite_button:
 			toggleFavourite(getChannel());
