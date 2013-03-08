@@ -16,10 +16,13 @@ import android.os.AsyncTask;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -27,6 +30,8 @@ import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
@@ -88,14 +93,17 @@ public class PublicServerListFragment extends SherlockFragment {
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch(item.getItemId()) {
-		case R.id.menu_sort_server_item:
-			showSortDialog();
-			return true;
-			
-		case R.id.menu_search_server_item:
-			showFilterDialog();
-			return true;
+		if (isFilled()) {
+			switch(item.getItemId()) {
+			case R.id.menu_sort_server_item:
+				showSortDialog();
+				return true;
+			case R.id.menu_search_server_item:
+				showFilterDialog();
+				return true;
+			}
+		} else {
+			Toast.makeText(getActivity(), R.string.fetchingServers, Toast.LENGTH_LONG).show();
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -118,25 +126,61 @@ public class PublicServerListFragment extends SherlockFragment {
 	}
 	
 	private void showFilterDialog() {
-		AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity());
-		dialogBuilder.setTitle(R.string.search);
-		
 		View dialogView = ((LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.dialog_server_search, null);
 		final EditText nameText = (EditText) dialogView.findViewById(R.id.server_search_name);
 		final EditText countryText = (EditText) dialogView.findViewById(R.id.server_search_country);
+				
+		final AlertDialog dlg = new AlertDialog.Builder(getActivity()).
+		    setTitle(R.string.search).
+		    setView(dialogView).
+		    setCancelable(false).
+		    setPositiveButton(R.string.search, new DialogInterface.OnClickListener() {
+		        public void onClick(final DialogInterface dialog, final int which)
+		        {
+					String queryName = nameText.getText().toString().toUpperCase(Locale.US);
+					String queryCountry = countryText.getText().toString().toUpperCase(Locale.US);
+					serverAdapter.filter(queryName, queryCountry);
+		            dialog.dismiss();
+		        }
+		    }).create();
 		
-		dialogBuilder.setView(dialogView);
-		
-		dialogBuilder.setPositiveButton(R.string.search, new DialogInterface.OnClickListener() {
-			
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
+		nameText.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+		nameText.setOnEditorActionListener(new OnEditorActionListener() {
+		    @Override
+		    public boolean onEditorAction(final TextView v, final int actionId, final KeyEvent event)
+		    {
 				String queryName = nameText.getText().toString().toUpperCase(Locale.US);
 				String queryCountry = countryText.getText().toString().toUpperCase(Locale.US);
 				serverAdapter.filter(queryName, queryCountry);
-			}
+		        dlg.dismiss();
+		        return true;
+		    }
 		});
-		dialogBuilder.show();
+		
+		countryText.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+		countryText.setOnEditorActionListener(new OnEditorActionListener() {
+		    @Override
+		    public boolean onEditorAction(final TextView v, final int actionId, final KeyEvent event)
+		    {
+				String queryName = nameText.getText().toString().toUpperCase(Locale.US);
+				String queryCountry = countryText.getText().toString().toUpperCase(Locale.US);
+				serverAdapter.filter(queryName, queryCountry);
+		        dlg.dismiss();
+		        return true;
+		    }
+		});
+		
+		// Show keyboard automatically
+		nameText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+		    @Override
+		    public void onFocusChange(View v, boolean hasFocus) {
+		        if (hasFocus) {
+		            dlg.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+		        }
+		    }
+		});
+		
+		dlg.show();
 	}
 	
 	private class PublicServerAdapter extends ArrayAdapter<PublicServer> {
