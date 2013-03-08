@@ -44,6 +44,7 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 		Settings.PREF_GENERATE_CERT,
 		Settings.PREF_CERT,
 		Settings.PREF_CERT_PASSWORD,
+		Settings.PREF_THEME,
 		Settings.PREF_QUALITY,
 		Settings.PREF_DISABLE_OPUS,
 		Settings.PREF_FORCE_TCP
