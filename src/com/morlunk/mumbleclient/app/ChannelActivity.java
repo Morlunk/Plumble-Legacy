@@ -192,11 +192,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     		setVolumeControlStream(AudioManager.STREAM_MUSIC);
         } else if(callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
         	setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
-        	
-        	// Set up proximity sensor
-        	PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        	proximityLock = powerManager.newWakeLock(PROXIMITY_SCREEN_OFF_WAKE_LOCK, Globals.LOG_TAG);
         }
+    	
+    	// Set up proximity sensor
+    	PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+    	proximityLock = powerManager.newWakeLock(PROXIMITY_SCREEN_OFF_WAKE_LOCK, Globals.LOG_TAG);
         
         AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
