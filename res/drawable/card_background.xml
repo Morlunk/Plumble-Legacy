@@ -2,8 +2,9 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:state_pressed="true">
-        <nine-patch android:src="@drawable/server_card_selected"/>
-        
+        <shape android:shape="rectangle">
+            <solid android:color="#87cce5"/>
+        </shape>
     </item>
     <item>
         <nine-patch android:src="@drawable/server_card"/>

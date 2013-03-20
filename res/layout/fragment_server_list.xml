@@ -14,7 +14,7 @@
 		android:numColumns="auto_fit"
 		android:verticalSpacing="10dp"
 		android:horizontalSpacing="10dp"
-		android:padding="6dp"
+		android:padding="10dp"
 		android:stretchMode="columnWidth"
 		android:fastScrollEnabled="true"/>
 	
