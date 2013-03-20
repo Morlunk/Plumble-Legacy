@@ -2,4 +2,5 @@
     <style name="Plumble.BorderlessButton" parent="Widget">
         <item name="android:background">?android:attr/selectableItemBackground</item>
     </style>
+    <style name="Plumble.HorizontalProgressBar" parent="@android:style/Widget.Holo.Light.ProgressBar.Horizontal"></style>
 </resources>
