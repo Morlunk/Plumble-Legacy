@@ -135,7 +135,6 @@ public class PublicServerListFragment extends SherlockFragment implements OnItem
 		final AlertDialog dlg = new AlertDialog.Builder(getActivity()).
 		    setTitle(R.string.search).
 		    setView(dialogView).
-		    setCancelable(false).
 		    setPositiveButton(R.string.search, new DialogInterface.OnClickListener() {
 		        public void onClick(final DialogInterface dialog, final int which)
 		        {
