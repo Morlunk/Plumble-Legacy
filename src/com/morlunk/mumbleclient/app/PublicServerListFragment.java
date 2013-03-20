@@ -23,13 +23,14 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 
@@ -47,7 +48,7 @@ import com.morlunk.mumbleclient.service.MumbleService;
  * @author morlunk
  *
  */
-public class PublicServerListFragment extends SherlockFragment {
+public class PublicServerListFragment extends SherlockFragment implements OnItemClickListener {
 	
 	public static final int MAX_ACTIVE_PINGS = 50;
 	
@@ -80,6 +81,7 @@ public class PublicServerListFragment extends SherlockFragment {
 			Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_public_server_list, container, false);
 		serverGrid = (GridView) view.findViewById(R.id.serverGrid);
+		serverGrid.setOnItemClickListener(this);
 		serverProgress = (ProgressBar) view.findViewById(R.id.serverProgress);
 		serverProgress.setVisibility(View.VISIBLE);
 		return view;
@@ -182,6 +184,11 @@ public class PublicServerListFragment extends SherlockFragment {
 		
 		dlg.show();
 	}
+
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+		connectHandler.connectToPublicServer(serverAdapter.getItem(arg2));
+	}
 	
 	private class PublicServerAdapter extends ArrayAdapter<PublicServer> {
 		private Map<PublicServer, ServerInfoResponse> infoResponses = new HashMap<PublicServer, ServerInfoResponse>();
@@ -236,15 +243,6 @@ public class PublicServerListFragment extends SherlockFragment {
 			TextView locationText = (TextView) view.findViewById(R.id.server_row_location);
 			locationText.setText(server.getCountry());
 			
-			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
-			
-			button1.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					connectHandler.connectToPublicServer(server);
-				}
-			});
-			
 			// Ping server if available
 			if(!infoResponses.containsKey(server) && activePingCount < MAX_ACTIVE_PINGS) {
 				activePingCount++;
@@ -267,7 +265,7 @@ public class PublicServerListFragment extends SherlockFragment {
 					task.execute(server);
 			}
 			
-			ImageButton favoriteButton = (ImageButton)view.findViewById(R.id.server_row_favorite);
+			ImageView favoriteButton = (ImageView)view.findViewById(R.id.server_row_favorite);
 			
 			favoriteButton.setOnClickListener(new OnClickListener() {
 

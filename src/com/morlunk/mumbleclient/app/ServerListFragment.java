@@ -16,10 +16,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.GridView;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.ProgressBar;
@@ -38,7 +39,7 @@ import com.morlunk.mumbleclient.service.MumbleService;
  * @author morlunk
  *
  */
-public class ServerListFragment extends SherlockFragment {
+public class ServerListFragment extends SherlockFragment implements OnItemClickListener {
 	
 	private ServerConnectHandler connectHandler;
 	private GridView serverGrid;
@@ -68,6 +69,7 @@ public class ServerListFragment extends SherlockFragment {
 			Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_server_list, container, false);
 		serverGrid = (GridView) view.findViewById(R.id.serverGrid);
+		serverGrid.setOnItemClickListener(this);
 		serverGrid.setEmptyView(view.findViewById(R.id.empty_server_grid));
 		registerForContextMenu(serverGrid);
 		return view;
@@ -141,6 +143,11 @@ public class ServerListFragment extends SherlockFragment {
 		}
 	}
 	
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+		connectHandler.connectToServer(serverAdapter.getItem(arg2));
+	}
+	
 	private class ServerAdapter extends ArrayAdapter<Server> {
 
 		public ServerAdapter(Context context, List<Server> servers) {
@@ -186,16 +193,7 @@ public class ServerListFragment extends SherlockFragment {
 			userText.setText(server.getUsername());
 			addressText.setText(server.getHost()+":"+server.getPort());
 			
-			Button button1 = (Button) view.findViewById(R.id.server_row_button1);
-			
-			button1.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					connectHandler.connectToServer(server);
-				}
-			});
-			
-			ImageButton moreButton = (ImageButton) view.findViewById(R.id.server_row_more);
+			ImageView moreButton = (ImageView) view.findViewById(R.id.server_row_more);
 			moreButton.setOnClickListener(new OnClickListener() {
 				
 				@SuppressLint("NewApi")

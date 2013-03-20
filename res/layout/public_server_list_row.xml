@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -10,84 +10,71 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/card_background"
-        android:orientation="vertical">
+        android:orientation="vertical" >
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="10dp"
+            android:paddingBottom="18dp"
             android:paddingLeft="18dp"
             android:paddingRight="18dp"
             android:paddingTop="10dp" >
-            
-            <LinearLayout
+
+            <TextView
+                android:id="@+id/server_row_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-light"
+                android:gravity="left|center_vertical"
+                android:lines="1"
+                android:text="@string/serverHost"
+                android:textColor="#808080"
+                android:textSize="24sp" />
+
+            <RelativeLayout
+                android:id="@+id/server_row_info"
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:paddingBottom="2dp" >
 
                 <TextView
-                    android:id="@+id/server_row_name"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-light"
-                    android:gravity="left|center_vertical"
-                    android:text="@string/serverHost"
-                    android:textColor="#808080"
-                    android:textSize="24sp" 
-                    android:ellipsize="end"
-                    android:lines="1"
-                    android:layout_weight="1"/>
-
-                <ImageButton
-                    android:id="@+id/server_row_favorite"
-                    style="@style/Plumble.BorderlessButton"
+                    android:id="@+id/server_row_version_status"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/ic_action_favorite_dark" />
-                
-                </LinearLayout>
-        
-        <RelativeLayout
-            android:id="@+id/server_row_info"
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:paddingBottom="2dp">
-            
-            <TextView 
-                android:id="@+id/server_row_version_status"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:fontFamily="sans-serif-light"
-                android:textColor="#808080"
-				android:focusable="false"
-                android:text="@string/noServerInfo"
-                android:lines="1"/>
-            
-            <TextView 
-                android:id="@+id/server_row_usercount"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:fontFamily="sans-serif-light"
-                android:textColor="#808080"
-                android:singleLine="true"
-                android:text="15/100"
-                android:layout_alignParentRight="true"/>
+                    android:layout_height="match_parent"
+                    android:focusable="false"
+                    android:fontFamily="sans-serif-light"
+                    android:gravity="center_vertical"
+                    android:lines="1"
+                    android:text="@string/noServerInfo"
+                    android:textColor="#808080" />
+
+                <TextView
+                    android:id="@+id/server_row_usercount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentRight="true"
+                    android:fontFamily="sans-serif-light"
+                    android:gravity="center_vertical"
+                    android:singleLine="true"
+                    android:text="15/100"
+                    android:textColor="#808080" />
 
                 <ProgressBar
                     android:id="@+id/server_row_ping_progress"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_centerHorizontal="true" />
-
-        </RelativeLayout>
+                    style="@android:style/Widget.Holo.Light.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:indeterminate="true" />
+            </RelativeLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="left|center_vertical"
-                android:paddingBottom="4dp">
+                android:paddingBottom="4dp" >
 
                 <ImageView
                     android:layout_width="wrap_content"
@@ -122,15 +109,16 @@
                     android:textColor="#808080" />
             </LinearLayout>
         </LinearLayout>
-            <Button
-                android:id="@+id/server_row_button1"
-                style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:layout_toLeftOf="@+id/verticalSeparator"
-                android:text="@string/connect"
-                android:textColor="@color/abs__holo_blue_light"
-                android:textSize="14sp" />
     </LinearLayout>
 
-</LinearLayout>
+    <ImageView
+        android:id="@+id/server_row_favorite"
+        style="@style/Plumble.BorderlessButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:padding="5dp"
+        android:src="@drawable/ic_action_favorite_dark" />
+
+</RelativeLayout>

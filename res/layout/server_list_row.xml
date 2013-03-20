@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="10dp"
+            android:paddingBottom="18dp"
             android:paddingLeft="18dp"
             android:paddingRight="18dp"
             android:paddingTop="10dp" >
@@ -25,10 +25,10 @@
                 android:id="@+id/server_row_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
                 android:fontFamily="sans-serif-light"
                 android:gravity="left|center_vertical"
                 android:lines="1"
-                android:ellipsize="end"
                 android:text="@string/serverHost"
                 android:textColor="#808080"
                 android:textSize="24sp" />
@@ -67,9 +67,11 @@
 
                 <ProgressBar
                     android:id="@+id/server_row_ping_progress"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_centerHorizontal="true" />
+                    style="@android:style/Widget.Holo.Light.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:indeterminate="true" />
             </RelativeLayout>
 
             <LinearLayout
@@ -111,25 +113,18 @@
                     android:textColor="#808080" />
             </LinearLayout>
         </LinearLayout>
-
-            <Button
-                android:id="@+id/server_row_button1"
-                style="@android:style/Widget.Holo.Light.Button.Borderless.Small"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:text="@string/connect"
-                android:textColor="@color/abs__holo_blue_light"
-                android:textSize="14sp" />
     </LinearLayout>
 
-    <ImageButton
+    <!-- We can't have a focusable element in a GridView item -->
+
+    <ImageView
         android:id="@+id/server_row_more"
         style="@style/Plumble.BorderlessButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/server_card"
         android:layout_alignRight="@id/server_card"
-        android:src="@drawable/ic_action_more" 
-        android:padding="5dp"/>
+        android:padding="5dp"
+        android:src="@drawable/ic_action_more" />
 
 </RelativeLayout>
