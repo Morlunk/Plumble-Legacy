@@ -184,30 +184,33 @@ public class MumbleProtocol {
 			break;
 		case ServerSync:
 			final ServerSync ss = ServerSync.parseFrom(buffer);
-
-			// We do some things that depend on being executed only once here
-			// so for now assert that there won't be multiple ServerSyncs.
-			Assert.assertNull("A second ServerSync received.", currentUser);
+			
+			boolean resync = currentUser != null;
+			if(resync)
+				Log.i(Globals.LOG_TAG, "We received a second ServerSync message.");
 
 			currentUser = findUser(ss.getSession());
 			currentUser.isCurrent = true;
 			currentChannel = currentUser.getChannel();
 			
-			pingThread = new Thread(new PingThread(conn), "Ping");
-			pingThread.start();
-			
-			if(conn.forceTcp) {
-				// Mumble protocol docs say we should send a blank UDP tunnel packet to tell the server we want UDP tunneling.
-				UDPTunnel.Builder tunnelBuilder = UDPTunnel.newBuilder();
-				tunnelBuilder.setPacket(ByteString.EMPTY);
-				conn.sendTcpMessage(MessageType.UDPTunnel, tunnelBuilder);
+			// Perform one-time synchronization operations. Will not be called if we get >1 ServerSync messages.
+			if(!resync) {
+				pingThread = new Thread(new PingThread(conn), "Ping");
+				pingThread.start();
+				
+				if(conn.forceTcp) {
+					// Mumble protocol docs say we should send a blank UDP tunnel packet to tell the server we want UDP tunneling.
+					UDPTunnel.Builder tunnelBuilder = UDPTunnel.newBuilder();
+					tunnelBuilder.setPacket(ByteString.EMPTY);
+					conn.sendTcpMessage(MessageType.UDPTunnel, tunnelBuilder);
+				}
+
+				ao = new AudioOutput(ctx, audioHost);
+				audioOutputThread = new Thread(ao, "audio output");
+				audioOutputThread.start();
 			}
 			
 			Log.d(Globals.LOG_TAG, ">>> " + t);
-
-			ao = new AudioOutput(ctx, audioHost);
-			audioOutputThread = new Thread(ao, "audio output");
-			audioOutputThread.start();
 
 			final UserState.Builder usb = UserState.newBuilder();
 			usb.setSession(currentUser.session);
