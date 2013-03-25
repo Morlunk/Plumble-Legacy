@@ -28,9 +28,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:divider="?android:attr/dividerVertical"
-        android:orientation="vertical"
-        android:showDividers="middle" >
+        android:orientation="vertical">
 
         <fragment
             android:id="@+id/list_fragment"
@@ -44,13 +42,13 @@
             android:layout_height="wrap_content"
             android:gravity="right"
             android:orientation="vertical"
-            android:padding="8dp" >
+            android:padding="8dp">
 
             <Button
                 android:id="@+id/pushtotalk"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/vs_micbtn_off" />
+                android:background="@drawable/vs_micbtn_off"/>
         </LinearLayout>
     </LinearLayout>
 

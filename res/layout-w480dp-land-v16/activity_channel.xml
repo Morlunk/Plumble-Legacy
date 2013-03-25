@@ -22,9 +22,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:layout_weight="1"
-    	android:divider="?android:attr/dividerVertical"
-    	android:showDividers="middle">
+        android:layout_weight="1">
 
     	<fragment
     	    android:id="@+id/list_fragment"
@@ -33,17 +31,19 @@
     	    android:layout_height="0dp" 
             android:layout_weight="1"/>
     	
-    <LinearLayout
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="wrap_content"
             android:gravity="right"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="8dp">
 
             <Button
                 android:id="@+id/pushtotalk"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:background="@drawable/vs_micbtn_off" />
+                android:background="@drawable/vs_micbtn_off"/>
         </LinearLayout>
     </LinearLayout>
 
