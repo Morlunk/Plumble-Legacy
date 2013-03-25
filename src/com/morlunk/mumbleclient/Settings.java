@@ -46,6 +46,9 @@ public class Settings extends Observable {
 	public static final String PREF_PUSH_BUTTON_HIDE_KEY = "hidePtt";
 	public static final Boolean DEFAULT_PUSH_BUTTON_HIDE = false;
 	
+	public static final String PREF_PTT_TOGGLE = "togglePtt";
+	public static final Boolean DEFAULT_PTT_TOGGLE = false;
+	
 	public static final String PREF_QUALITY = "quality";
 	public static final String DEFAULT_QUALITY = "48000";
 	
@@ -156,6 +159,10 @@ public class Settings extends Observable {
 	
 	public boolean isPushToTalk() {
 		return preferences.getString(PREF_METHOD, ARRAY_METHOD_VOICE).equals(ARRAY_METHOD_PTT);
+	}
+	
+	public boolean isPushToTalkToggle() {
+		return preferences.getBoolean(PREF_PTT_TOGGLE, DEFAULT_PTT_TOGGLE);
 	}
 	
 	public boolean isPushToTalkButtonShown() {

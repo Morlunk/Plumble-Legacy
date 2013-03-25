@@ -33,51 +33,18 @@
     	    android:layout_height="0dp" 
             android:layout_weight="1"/>
     	
-    <RelativeLayout
-        android:id="@+id/pushview"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:visibility="gone"
-        >
-    
-    <View 
-        android:id="@+id/pushgradient"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="@drawable/record_gradient"
-        android:layout_alignParentBottom="true"
-        android:visibility="invisible"/>
-    
-    <Button
-        android:id="@+id/pushtotalk"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:paddingTop="8dp"
-        android:text="@string/ptt"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:textSize="14sp"
-        android:gravity="top|center_horizontal"
-        android:background="@null"/>
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="right"
+            android:orientation="vertical">
 
-    <CheckBox
-        android:id="@+id/pushtotalk_toggle"
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="8dp"
-        android:layout_alignTop="@+id/pushtotalk" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:paddingBottom="8dp"
-        android:text="@string/pushToTalkHint"
-        android:textSize="10sp" />
-    </RelativeLayout>
+            <Button
+                android:id="@+id/pushtotalk"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:background="@drawable/vs_micbtn_off" />
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

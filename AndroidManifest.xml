@@ -44,7 +44,7 @@
         	<meta-data android:name="android.app.searchable"
                   	 android:resource="@xml/searchable"/>
         </activity>
-        <activity android:name=".app.Preferences" android:parentActivityName=".app.ServerList"/>
+        <activity android:name=".app.Preferences"/>
 
         <service
             android:name=".service.MumbleService"

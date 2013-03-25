@@ -48,16 +48,9 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
-import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
-import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
@@ -143,8 +136,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
 	private ProgressDialog mProgressDialog;
 	private Button mTalkButton;
-	private CheckBox mTalkToggleBox;
-	private View mTalkGradient;
 	
 	// Fragments
 	private ChannelListFragment listFragment;
@@ -214,18 +205,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         // Set up PTT button.
     	
     	mTalkButton = (Button) findViewById(R.id.pushtotalk);
-    	mTalkToggleBox = (CheckBox) findViewById(R.id.pushtotalk_toggle);
-    	mTalkGradient = findViewById(R.id.pushgradient);
-    	
-    	mTalkToggleBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				if(!isChecked) {
-					setPushToTalk(false);
-				}
-			}
-		});
     	
     	mTalkButton.setOnTouchListener(new OnTouchListener() {
 			
@@ -235,17 +214,17 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 					return false;
 				}
 				
-				if(!mTalkToggleBox.isChecked()) {
-					if(event.getAction() == MotionEvent.ACTION_DOWN)
-						setPushToTalk(true);
-					else if(event.getAction() == MotionEvent.ACTION_UP)
-						setPushToTalk(false);
-				} else {
-					if(event.getAction() == MotionEvent.ACTION_UP) 
+				if(event.getAction() == MotionEvent.ACTION_DOWN && !settings.isPushToTalkToggle()) {
+					setPushToTalk(true);
+				} else if(event.getAction() == MotionEvent.ACTION_UP) {
+					if(settings.isPushToTalkToggle())
 						setPushToTalk(!mService.isRecording());
+					else
+						setPushToTalk(false);
 				}
+				mTalkButton.setBackgroundResource(mService.isRecording() ? R.drawable.vs_micbtn_rec : R.drawable.vs_micbtn_off);
 				
-				return true;
+				return false; // We return false so that the selector that changes the background still fires.
 			}
 		});
     	
@@ -335,37 +314,12 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     }
     
     private void updatePTTConfiguration() {
-    	RelativeLayout pushView = (RelativeLayout) findViewById(R.id.pushview);
-    	pushView.setVisibility(settings.isPushToTalk() && settings.isPushToTalkButtonShown() ? View.VISIBLE : View.GONE);
+    	mTalkButton.setVisibility(settings.isPushToTalk() && settings.isPushToTalkButtonShown() ? View.VISIBLE : View.GONE);
     }
     
     public void setPushToTalk(final boolean talking) {
     	if(mService.isRecording() != talking)
         	mService.setRecording(talking);
-    	
-		if(settings.isPushToTalkButtonShown()) {
-			Animation fade = AnimationUtils.loadAnimation(ChannelActivity.this,
-					talking ? R.anim.fade_in : R.anim.fade_out);
-			fade.setAnimationListener(new AnimationListener() {
-				@Override
-				public void onAnimationStart(Animation animation) {
-					if (talking)
-						mTalkGradient.setVisibility(View.VISIBLE);
-				}
-
-				@Override
-				public void onAnimationRepeat(Animation animation) {
-				}
-
-				@Override
-				public void onAnimationEnd(Animation animation) {
-					if (!talking)
-						mTalkGradient.setVisibility(View.INVISIBLE);
-				}
-			});
-			mTalkGradient.startAnimation(fade);
-		}
-    	
     }
     
     /* (non-Javadoc)
@@ -421,9 +375,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         	mService.setActivityVisible(false);
         	
         	// Turn off push to talk when rotating so it doesn't get stuck on, except if it's in toggled state.
-        	if(settings.isPushToTalk() && !mTalkToggleBox.isChecked()) {
-        		mService.setRecording(false);
-        	}
+        	//if(settings.isPushToTalk() && !mTalkToggleBox.isChecked()) {
+        	//	mService.setRecording(false);
+        	//}
     	}
     }
     
