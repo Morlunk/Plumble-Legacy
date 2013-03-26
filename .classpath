@@ -6,6 +6,7 @@
 	<classpathentry kind="lib" path="libs/sc-light-jdk15on-1.47.0.2.jar"/>
 	<classpathentry kind="lib" path="libs/scprov-jdk15on-1.47.0.2.jar"/>
 	<classpathentry kind="lib" path="libs/scpkix-jdk15on-1.47.0.2.jar"/>
+	<classpathentry kind="lib" path="libs/guava-14.0.1.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="output" path="bin/classes"/>

@@ -2,7 +2,6 @@ package com.morlunk.mumbleclient.app;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -22,8 +21,6 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
-import android.database.DataSetObserver;
-import android.graphics.Color;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -38,26 +35,17 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.SparseArray;
-import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
-import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.SearchView;
-import android.widget.SpinnerAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -79,8 +67,6 @@ import com.morlunk.mumbleclient.service.model.User;
  *
  */
 interface ChannelProvider {
-	public Channel getChannel();
-	public List<User> getChannelUsers();
 	public User getCurrentUser();
 	public User getUserWithIdentifier(int id);
 	public void setChatTarget(User chatTarget);
@@ -130,7 +116,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     private MenuItem deafenedButton;
     
 	private Channel visibleChannel;
-	private ChannelSpinnerAdapter channelAdapter;
 	
 	private User chatTarget;
 
@@ -198,9 +183,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
         // Set up the action bar.
         final ActionBar actionBar = getSupportActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         actionBar.setDisplayShowHomeEnabled(false);
-        actionBar.setDisplayShowTitleEnabled(false);
         
         // Set up PTT button.
     	
@@ -460,41 +443,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	public MumbleService getService() {
 		return mService;
 	}
-    
-    /**
-     * Creates the channel list spinner with the channel list provided by the service.
-     */
-	public void loadChannelSpinner() {		
-		List<Channel> channelList = mService.getSortedChannelList();
-		channelAdapter = new ChannelSpinnerAdapter(channelList);
-		getSupportActionBar().setListNavigationCallbacks(channelAdapter, new OnNavigationListener() {
-			@Override
-			public boolean onNavigationItemSelected(final int itemPosition, long itemId) {
-				
-				new AsyncTask<Channel, Void, Void>() {
-					
-					@Override
-					protected Void doInBackground(Channel... params) {
-						if(visibleChannel == null || !visibleChannel.equals(params[0]))
-							mService.joinChannel(params[0].id);
-						
-						return null;
-					}
-					
-				}.execute(channelAdapter.getItem(itemPosition));
-				return true;
-			}
-		});
-		
-		// Re-select visible channel.
-		if(visibleChannel != null)
-			setVisibleChannel(visibleChannel);
-	}
 	
     /**
      * Updates the icon and title of the 'favourites' menu icon to represent the channel's favourited status.
      */
     public void updateFavouriteMenuItem() {
+    	// FIXME
+    	/*
     	if(favouritesItem == null || getChannel() == null)
     		return;
     	int currentChannel = getChannel().id;
@@ -509,6 +464,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	
     	favouritesItem.setTitle(isFavouriteChannel ? R.string.removeFavorite : R.string.addFavorite);
     	favouritesItem.setIcon(isFavouriteChannel ? R.drawable.ic_action_favorite_on : R.drawable.ic_action_favorite_off);
+    	*/
     }
     
     /**
@@ -552,7 +508,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			rightSplit.setVisibility(View.VISIBLE);
 			return true;
 		case R.id.menu_favorite_button:
-			toggleFavourite(getChannel());
+			// FIXME
+			//toggleFavourite(getChannel());
 			return true;
 		case R.id.menu_view_favorites_button:
 			showFavouritesDialog();
@@ -668,19 +625,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         if(!mService.isConnectedServerPublic())
         	favourites = loadFavourites();
         
-		// Load channel spinner
-        loadChannelSpinner();
-		
-		// If we don't have visible channel selected, get the last stored channel from preferences.
-		// Setting channel also synchronizes the UI so we don't need to do it manually.
-		if (visibleChannel != null) {
-			// Re-select visible channel. Necessary after a rotation is
-			// performed or the app is suspended.
-			if (mService.getChannelList().contains(visibleChannel)) {
-				setVisibleChannel(visibleChannel);
-			}
-		}
-		
 		// Load messages
 		reloadChat();
 		
@@ -890,26 +834,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		builder.show();
 	}
 	
-	public void setVisibleChannel(Channel channel) {		
-		this.visibleChannel = channel;
-		listFragment.updateChannel();
-		
-		// Update action bar
-		getSupportActionBar().setSelectedNavigationItem(channelAdapter.availableChannels.indexOf(channel));
-        
-        // Update favourites icon
-		if(!mService.isConnectedServerPublic())
-			updateFavouriteMenuItem();
-	}
-	
-	/* (non-Javadoc)
-	 * @see com.morlunk.mumbleclient.app.ChannelProvider#getChannel()
-	 */
-	@Override
-	public Channel getChannel() {
-		return visibleChannel;
-	}
-	
 	/**
 	 * Looks through the list of channels and returns a channel with the passed ID. Returns null if not found.
 	 */
@@ -921,23 +845,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			}
 		}
 		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see com.morlunk.mumbleclient.app.ChannelProvider#getChannelUsers()
-	 */
-	@Override
-	public List<User> getChannelUsers() {
-		List<User> channelUsers = new ArrayList<User>();
-		for(User user : mService.getUserList()) {
-			if(user.getChannel().equals(getChannel())) {
-				channelUsers.add(user);
-			}
-		}
-		
-		Collections.sort(channelUsers, userComparator);
-		
-		return channelUsers;
 	}
 	
 	@Override
@@ -1054,28 +961,23 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		@Override
 		public void onCurrentChannelChanged() throws RemoteException {
-			Channel userChannel = mService.getCurrentChannel();
-			if(userChannel != visibleChannel) {
-				setVisibleChannel(userChannel);
-			}
+			listFragment.updateChannelList();
 		}
 		
 		@Override
 		public void onChannelAdded(Channel channel) throws RemoteException {
-			if(mService.isConnected())
-				loadChannelSpinner(); // Reload channel spinner if connected
+			listFragment.updateChannelList();
 		}
 		
 		@Override
 		public void onChannelRemoved(Channel channel) throws RemoteException {
-			if(mService.isConnected())
-				loadChannelSpinner(); // Reload channel spinner if connected
+			listFragment.updateChannelList();
 		}
 		
 		@Override
 		public void onChannelUpdated(Channel channel) throws RemoteException {
-			if(mService.isConnected() && channelAdapter != null)
-				channelAdapter.updateChannel(channel);
+			if(mService.isConnected())
+				listFragment.updateChannel(channel);
 		}
 		
 		@Override
@@ -1086,7 +988,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		@Override
 		public void onUserAdded(final User user) throws RemoteException {
 			if(mService.isConnected())
-				listFragment.updateChannel();
+				listFragment.updateChannel(user.getChannel());
 		}
 
 		@Override
@@ -1122,210 +1024,4 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			permissionDenied(reason, DenyType.valueOf(denyType));
 		}
 	};
-    
-class ChannelSpinnerAdapter implements SpinnerAdapter {
-		
-		List<Channel> availableChannels;
-		SparseArray<View> channelViews;
-		
-		public ChannelSpinnerAdapter(List<Channel> availableChannels) {
-			this.availableChannels = availableChannels;
-			this.channelViews = new SparseArray<View>();
-		}
-		
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#getCount()
-		 */
-		@Override
-		public int getCount() {
-			return availableChannels.size();
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#getItem(int)
-		 */
-		@Override
-		public Channel getItem(int arg0) {
-			return availableChannels.get(arg0);
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#getItemId(int)
-		 */
-		@Override
-		public long getItemId(int arg0) {
-			return 0;
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#getItemViewType(int)
-		 */
-		@Override
-		public int getItemViewType(int arg0) {
-			return 0;
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#getView(int, android.view.View, android.view.ViewGroup)
-		 */
-		@Override
-		public View getView(int arg0, View arg1, ViewGroup arg2) {
-			View view = arg1;
-			if(arg1 == null) {
-				view = getLayoutInflater().inflate(R.layout.sherlock_spinner_dropdown_item, arg2, false);
-			}
-			
-			Channel channel = getItem(arg0);
-			
-			TextView spinnerTitle = (TextView) view.findViewById(android.R.id.text1);
-			spinnerTitle.setTextColor(getResources().getColor(android.R.color.primary_text_dark));
-			spinnerTitle.setText(channel.name);
-			
-			return view;
-		}
-		
-		public int getNestedLevel(Channel channel) {
-			if(channel.parent != 0) {
-				for(Channel c : availableChannels) {
-					if(c.id == channel.parent) {
-						return 1+getNestedLevel(c);
-					}
-				}
-			}
-			return 0;
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#getViewTypeCount()
-		 */
-		@Override
-		public int getViewTypeCount() {
-			return 1;
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#hasStableIds()
-		 */
-		@Override
-		public boolean hasStableIds() {
-			return false;
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#isEmpty()
-		 */
-		@Override
-		public boolean isEmpty() {
-			return false;
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#registerDataSetObserver(android.database.DataSetObserver)
-		 */
-		@Override
-		public void registerDataSetObserver(DataSetObserver arg0) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.Adapter#unregisterDataSetObserver(android.database.DataSetObserver)
-		 */
-		@Override
-		public void unregisterDataSetObserver(DataSetObserver arg0) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		/* (non-Javadoc)
-		 * @see android.widget.SpinnerAdapter#getDropDownView(int, android.view.View, android.view.ViewGroup)
-		 */
-		@Override
-		public View getDropDownView(int position, View convertView,
-				ViewGroup parent) {
-			View view = convertView;
-
-			// Use rowHeight provided by settings, convert to dp.
-			DisplayMetrics metrics = getResources().getDisplayMetrics();
-			int rowHeight = settings.getChannelListRowHeight();
-			int rowHeightDp = (int)(rowHeight * metrics.density + 0.5f);
-
-			if (convertView == null) {
-				view = getLayoutInflater().inflate(R.layout.nested_dropdown_item, parent, false);
-
-				// set the height to layout, image and textview
-				LayoutParams v_params = view
-						.getLayoutParams();
-				v_params.height = rowHeightDp;
-				view.setLayoutParams(v_params);
-			}
-
-			Channel channel = getItem(position);
-			updateChannelView(view, channel);
-			channelViews.put(channel.id, view);
-
-			return view;
-		}
-		
-		private void updateChannelView(View view, Channel channel) {
-			DisplayMetrics metrics = getResources().getDisplayMetrics();
-
-			ImageView returnImage = (ImageView) view.findViewById(R.id.return_image);
-
-			// Show 'return' arrow and pad the view depending on channel's
-			// nested level.
-			// Width of return arrow is 50dp, convert thamutedt to px.
-			if (channel.parent != -1) {
-				returnImage.setVisibility(View.VISIBLE);
-				view.setPadding((int) (getNestedLevel(channel) * TypedValue
-						.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 25,
-								metrics)), 0, (int) TypedValue.applyDimension(
-						TypedValue.COMPLEX_UNIT_DIP, 15, metrics), 0);
-			} else {
-				returnImage.setVisibility(View.GONE);
-				view.setPadding((int) TypedValue.applyDimension(
-						TypedValue.COMPLEX_UNIT_DIP, 15, metrics), 0,
-						(int) TypedValue.applyDimension(
-								TypedValue.COMPLEX_UNIT_DIP, 15, metrics), 0);
-			}
-
-			TextView spinnerTitle = (TextView) view.findViewById(R.id.channel_name);
-			spinnerTitle.setText(channel.name);
-
-			// colorize root elements, channels with users, channels with many
-			// users
-			if (settings.getChannellistColorized()) {
-				if (channel.parent == 0) {
-					spinnerTitle.setTextColor(Color.YELLOW);
-				} else if (channel.userCount > 0
-						&& channel.userCount < settings.getColorizeThreshold()) {
-					spinnerTitle.setTextColor(Color.CYAN);
-				} else if (channel.userCount >= settings.getColorizeThreshold()) {
-					spinnerTitle.setTextColor(Color.RED);
-				} else {
-					spinnerTitle.setTextColor(Color.WHITE);
-				}
-			}
-			
-			TextView spinnerCount = (TextView) view.findViewById(R.id.channel_count);
-			spinnerCount.setText("(" + channel.userCount + ")");
-			spinnerCount.setTextColor(getResources().getColor(
-			channel.userCount > 0 ? R.color.abs__holo_blue_light : R.color.abs__primary_text_holo_dark));
-		}
-		
-		/**
-		 * If the passed channel is present in the ChannelAdapter, update it with the latest data.
-		 * @param channel The updated channel whose representation in the spinner should be updated.
-		 */
-		public void updateChannel(Channel channel) {
-			if(!availableChannels.contains(channel))
-				return;
-			
-			View channelView = channelViews.get(channel.id);
-			
-			if(channelView != null && channelView.isShown())
-				updateChannelView(channelView, channel);
-		}
-		
-	}
 }

@@ -23,11 +23,11 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.AdapterView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.BaseAdapter;
+import android.widget.BaseExpandableListAdapter;
+import android.widget.ExpandableListView;
+import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
@@ -37,66 +37,30 @@ import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
+import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.User;
 
-/**
- * The main connection view.
- *
- * The state of this activity depends closely on the state of the underlying
- * MumbleService. When the activity is started it can't really do anything else
- * than initialize its member variables until it has acquired a reference to the
- * MumbleService.
- *
- * Once the MumbleService reference has been acquired the activity is in one of
- * the three states:
- * <dl>
- * <dt>Connecting to server
- * <dd>MumbleService has just been started and ChannelList should wait until the
- * connection has been established. In this case the ChannelList should be very
- * careful as it doesn't have a visible channel and the Service doesn't have a
- * current channel.
- *
- * <dt>Connected to server
- * <dd>When the Activity is resumed during an established Mumble connection it
- * has connection immediately available and is free to act freely.
- *
- * <dt>Disconnecting or Disconnected
- * <dd>If the ChannelList is resumed after the Service has been disconnected the
- * List should exit immediately.
- * </dl>
- *
- * NOTE: Service enters 'Connected' state when it has received and processed
- * server sync message. This means that at this point the service should be
- * fully initialized.
- *
- * And just so the state wouldn't be too easy the connection can be cancelled.
- * Disconnecting the service is practically synchronous operation. Intents
- * broadcast by the Service aren't though. This means that after the ChannelList
- * disconnects the service it might still have some unprocessed intents queued
- * in a queue. For this reason all intents that require active connection must
- * take care to check that the connection is still alive.
- *
- * @author pcgod, Rantanen
- *
- */
-public class ChannelListFragment extends SherlockFragment implements OnItemClickListener {	
+public class ChannelListFragment extends SherlockFragment implements OnItemClickListener {
 	
 	/**
 	 * The parent activity MUST implement ChannelProvider. An exception will be thrown otherwise.
 	 */
 	private ChannelProvider channelProvider;
 	
-	protected ListView channelUsersList;
+	private ExpandableListView channelUsersList;
 	private UserListAdapter usersAdapter;
 
 	private User selectedUser;
 	
+	public void updateChannelList() {
+		usersAdapter.updateChannelList();
+		usersAdapter.notifyDataSetChanged();
+	}
+	
 	/**
 	 * Updates the users display with the data from the channelProvider.
 	 */
-	public void updateChannel() {
-		// We need to make sure the fragment has been attached and is shown before updating the users.
-		usersAdapter.setUsers(channelProvider.getChannelUsers());
+	public void updateChannel(Channel channel) {
 		usersAdapter.notifyDataSetChanged();
 	}
 	
@@ -117,7 +81,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 	 * @param user
 	 */
 	public void removeUser(User user) {
-		usersAdapter.removeUser(user);
+		usersAdapter.notifyDataSetChanged();
 	}
 	
 	/* (non-Javadoc)
@@ -129,7 +93,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		View view = inflater.inflate(R.layout.channel_list, container, false);
 
 		// Get the UI views
-		channelUsersList = (ListView) view.findViewById(R.id.channelUsers);
+		channelUsersList = (ExpandableListView) view.findViewById(R.id.channelUsers);
 		channelUsersList.setOnItemClickListener(this);
 		
 		return view;
@@ -156,7 +120,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 
-		usersAdapter = new UserListAdapter(getActivity(), null);
+		usersAdapter = new UserListAdapter(getActivity(), channelProvider.getService());
 		channelUsersList.setAdapter(usersAdapter);
 		registerForContextMenu(channelUsersList);
 	}
@@ -172,8 +136,8 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 	}
 	
 	public boolean onContextItemSelected(MenuItem item) {
-		AdapterView.AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-		User user = (User) usersAdapter.getItem(info.position);
+		ExpandableListContextMenuInfo info = (ExpandableListContextMenuInfo) item.getMenuInfo();
+		User user = (User) usersAdapter.getChild(ExpandableListView.getPackedPositionGroup(info.packedPosition), ExpandableListView.getPackedPositionChild(info.packedPosition));
 		
 		switch (item.getItemId()) {
 		case R.id.menu_local_mute_item:
@@ -202,7 +166,7 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		channelProvider.setChatTarget(newSelectedUser);
 	};
 	
-	class UserListAdapter extends BaseAdapter {
+	class UserListAdapter extends BaseExpandableListAdapter {
 		Comparator<User> userComparator = new Comparator<User>() {
 			@Override
 			public int compare(final User object1, final User object2) {
@@ -212,11 +176,11 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		};
 		
 		private final Context context;
+		private final MumbleService service;
 		private final DbAdapter dbAdapter;
-		private final List<User> users = new ArrayList<User>();
+		private List<Channel> channels = new ArrayList<Channel>();
+		
 		private final Map<User, Boolean> userCommentsSeen = new HashMap<User, Boolean>();
-
-		private final Runnable visibleUsersChangedCallback;
 
 		private final Drawable chatDrawable; // Changes depending on theme.
 		
@@ -224,71 +188,30 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 
 		public UserListAdapter(
 			final Context context,
-			final Runnable visibleUsersChangedCallback) {
+			final MumbleService service) {
+			// FIXME fix service code, no singletons
 			this.context = context;
-			this.visibleUsersChangedCallback = visibleUsersChangedCallback;
-			this.dbAdapter = MumbleService.getCurrentService().getDatabaseAdapter();
+			this.service = MumbleService.getCurrentService();
+			this.dbAdapter = this.service.getDatabaseAdapter();
 			
 			// Fetch theme dependent icon
 			Settings settings = Settings.getInstance(context);
 			chatDrawable = getResources().getDrawable(settings.getTheme().equals(Settings.ARRAY_THEME_LIGHTDARK) ? R.drawable.ic_action_chat_light : R.drawable.ic_action_chat_dark);
-		}
-
-		@Override
-		public int getCount() {
-			return users.size();
-		}
-
-		@Override
-		public User getItem(int arg0) {
-			return users.get(arg0);
-		}
-
-		@Override
-		public long getItemId(int arg0) {
-			return users.get(arg0).session;
+			
+			updateChannelList();
 		}
 		
-		@Override
-		public int getViewTypeCount() {
-			return 1;
-		}
-		
-		@Override
-		public final View getView(final int position, View v, final ViewGroup parent) {
-			// All views are the same.
-			if (v == null) {
-				final LayoutInflater inflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				v = inflater.inflate(R.layout.channel_user_row, null);
-			}
-
-			// Tie the view to the current user.
-			final User u = (User) getItem(position);
-			
-			refreshElements(v, u);
-			
-			return v;
-		}
-
-		public final boolean hasUser(final User user) {
-			return users.contains(user);
-		}
-
-		@Override
-		public void notifyDataSetChanged() {
-			if (visibleUsersChangedCallback != null) {
-				visibleUsersChangedCallback.run();
-			}
-			super.notifyDataSetChanged();
+		/**
+		 * Fetches a new list of channels from the service.
+		 */
+		public void updateChannelList() {
+			this.channels = service.getSortedChannelList();
 		}
 		
 		public void refreshUser(User user) {			
-			if(!users.contains(user))
-				return;
+			int position = getPositionOfUser(user);
 			
-			int userPosition = users.indexOf(user);
-			
-			View userView = channelUsersList.getChildAt(userPosition-channelUsersList.getFirstVisiblePosition());
+			View userView = channelUsersList.getChildAt(position-channelUsersList.getFirstVisiblePosition());
 			
 			// Update comment state
 			if(user.comment != null || user.commentHash != null && !MumbleService.getCurrentService().isConnectedServerPublic()) {
@@ -300,37 +223,30 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 		}
 		
 		public void refreshTalkingState(User user) {
-			if(!users.contains(user))
-				return;
+			int position = getPositionOfUser(user);
 			
-			int userPosition = users.indexOf(user);
+			View userView = channelUsersList.getChildAt(position-channelUsersList.getFirstVisiblePosition());
 			
-			View userView = channelUsersList.getChildAt(userPosition-channelUsersList.getFirstVisiblePosition());
-			
-			if(userView != null && userView.isShown())
+			if(userView != null && userView.isShown() && service.getUserList().contains(user))
 				refreshTalkingState(userView, user);
 			
 		}
-
-		public void removeUser(final User user) {
-			users.remove(user);
-			userCommentsSeen.remove(user);
-
-			if (user != null) {
-				notifyDataSetChanged();
+		
+		/**
+		 * Gets the position of the passed user in the channel hierarchy. Position includes channel headers.
+		 * @param user
+		 */
+		private int getPositionOfUser(final User user) {
+			int position = 0;
+			for(int i=0;i<channels.size();i++) {
+				Channel channel = channels.get(i);
+				position++;
+				if(channel.id == user.getChannel().id)
+					position += service.getChannelUsers(channel).indexOf(user); // add to current user position in channel
+				else
+					position += channelUsersList.isGroupExpanded(i) ? channel.userCount : 0; // go to next section, adding all users to the position if expanded
 			}
-		}
-
-		public void setUsers(final List<User> newUsers) {
-			this.users.clear();
-			this.userCommentsSeen.clear();
-			
-			for (User user : newUsers) {
-				this.users.add(user);
-				// Get the user's comment history
-				if(user.comment != null || user.commentHash != null && !MumbleService.getCurrentService().isConnectedServerPublic())
-					this.userCommentsSeen.put(user, dbAdapter.isCommentSeen(user.name, user.commentHash != null ? user.commentHash.toStringUtf8() : user.comment));
-			}
+			return position;
 		}
 		
 		private void refreshElements(final View view, final User user) {
@@ -438,6 +354,84 @@ public class ChannelListFragment extends SherlockFragment implements OnItemClick
 					}.execute();
 				}
 			}
+		}
+
+
+		@Override
+		public Object getChild(int groupPosition, int childPosition) {
+			Channel channel = channels.get(groupPosition);
+			List<User> channelUsers = channelProvider.getService().getChannelUsers(channel);
+			return channelUsers.get(childPosition);
+		}
+
+		@Override
+		public long getChildId(int arg0, int arg1) {
+			return 0;
+		}
+
+		@Override
+		public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View v,
+				ViewGroup arg4) {
+			// All views are the same.
+			if (v == null) {
+				final LayoutInflater inflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				v = inflater.inflate(R.layout.channel_user_row, null);
+			}
+			
+			User user = (User) getChild(groupPosition, childPosition);
+			
+			refreshElements(v, user);
+			
+			return v;
+		}
+
+		@Override
+		public int getChildrenCount(int arg0) {
+			return channels.get(arg0).userCount;
+		}
+
+		@Override
+		public Object getGroup(int arg0) {
+			return channels.get(arg0);
+		}
+
+		@Override
+		public int getGroupCount() {
+			return channels.size();
+		}
+
+		@Override
+		public long getGroupId(int arg0) {
+			return 0;
+		}
+
+		@Override
+		public View getGroupView(int groupPosition, boolean isExpanded, View convertView,
+				ViewGroup parent) {
+			View v = convertView;
+			if(v == null) {
+				final LayoutInflater inflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				v = inflater.inflate(R.layout.channel_row, null);
+			}
+			Channel channel = channels.get(groupPosition);
+			
+			TextView nameView = (TextView)v.findViewById(R.id.channel_row_name);
+			TextView countView = (TextView)v.findViewById(R.id.channel_row_count);
+			
+			nameView.setText(channel.name);
+			countView.setText(String.format("(%d)", channel.userCount));
+			
+			return v;
+		}
+
+		@Override
+		public boolean hasStableIds() {
+			return false;
+		}
+
+		@Override
+		public boolean isChildSelectable(int arg0, int arg1) {
+			return true;
 		}
 	}
 }
