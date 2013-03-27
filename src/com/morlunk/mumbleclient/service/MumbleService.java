@@ -2,7 +2,6 @@ package com.morlunk.mumbleclient.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -42,9 +41,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
 import com.google.protobuf.Message.Builder;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
@@ -725,25 +721,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 	public List<User> getUserList() {
 		return Collections.unmodifiableList(users);
-	}
-	
-	public List<User> getChannelUsers(final Channel channel) {
-		Predicate<User> predicate = new Predicate<User>() {
-			@Override
-			public boolean apply(User arg0) {
-				return arg0.getChannel().equals(channel);
-			}
-		};
-		List<User> channelUsers = Lists.newArrayList(Collections2.filter(users, predicate));
-		// Sort alphebetically
-		Collections.sort(channelUsers, new Comparator<User>() {
-
-			@Override
-			public int compare(User lhs, User rhs) {
-				return lhs.name.compareTo(rhs.name);
-			}
-		});;
-		return channelUsers;
 	}
 
 	public boolean isConnected() {

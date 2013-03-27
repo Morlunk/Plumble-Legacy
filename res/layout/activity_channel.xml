@@ -23,14 +23,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:padding="8dp" >
+        android:orientation="vertical">
 
         <Button
             android:id="@+id/pushtotalk"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/vs_micbtn_off"/>
+            android:background="@drawable/vs_micbtn_off"
+            android:layout_margin="8dp"/>
     </LinearLayout>
 
 </LinearLayout>

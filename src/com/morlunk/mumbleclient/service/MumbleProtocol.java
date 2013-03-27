@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
 import net.sf.mumble.MumbleProto.Authenticate;
 import net.sf.mumble.MumbleProto.ChannelRemove;
 import net.sf.mumble.MumbleProto.ChannelState;
@@ -299,7 +298,13 @@ public class MumbleProtocol {
 			}
 
 			if (added || us.hasChannelId()) {
-				user.setChannel(channels.get(us.getChannelId()));
+				Channel userChannel = channels.get(us.getChannelId());				
+				if(!added)
+					user.getChannel().removeUser(user);
+				
+				user.setChannel(userChannel);
+				userChannel.addUser(user);
+				
 				channelUpdated = true;
 			}
 
@@ -352,6 +357,7 @@ public class MumbleProtocol {
 				
 				// Remove the user from the channel as well.
 				user.getChannel().userCount--;
+				user.getChannel().removeUser(user);
 
 				host.channelUpdated(user.getChannel());
 				host.userRemoved(user.session, ur);

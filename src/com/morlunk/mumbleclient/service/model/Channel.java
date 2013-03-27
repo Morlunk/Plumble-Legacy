@@ -1,5 +1,11 @@
 package com.morlunk.mumbleclient.service.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -21,6 +27,7 @@ public class Channel implements Parcelable {
 	public int userCount;
 	public int position;
 	public int parent;
+	private List<User> users = new ArrayList<User>();
 
 	/**
 	 * Value signaling whether this channel has just been removed.
@@ -61,6 +68,30 @@ public class Channel implements Parcelable {
 		return "Channel [id=" + id + ", name=" + name + ", userCount=" +
 			   userCount + "]";
 	}
+	
+	public void addUser(User user) {
+		users.add(user);
+		sortUsers();
+	}
+	
+	public void removeUser(User user) {
+		users.remove(user);
+		sortUsers();
+	}
+	
+	public List<User> getUsers() {
+		return users;
+	}
+	
+	private void sortUsers() {
+		// Sort alphabetically
+		Collections.sort(users, new Comparator<User>() {
+			@Override
+			public int compare(User lhs, User rhs) {
+				return lhs.name.toLowerCase(Locale.getDefault()).compareTo(rhs.name.toLowerCase(Locale.getDefault()));
+			}
+		});;
+	}
 
 	@Override
 	public void writeToParcel(final Parcel dest, final int flags) {
@@ -71,8 +102,10 @@ public class Channel implements Parcelable {
 		dest.writeInt(userCount);
 		dest.writeInt(position);
 		dest.writeInt(parent);
+		dest.writeList(users);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void readFromParcel(final Parcel in) {
 		in.readInt(); // Version
 
@@ -81,5 +114,6 @@ public class Channel implements Parcelable {
 		userCount = in.readInt();
 		position = in.readInt();
 		parent = in.readInt();
+		users = in.readArrayList(User.class.getClassLoader());
 	}
 }
