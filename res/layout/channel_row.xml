@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="55dp"
     android:orientation="horizontal" 
-    android:padding="8dp">
+    android:padding="8dp"
+    android:background="@drawable/selectable_background">
     
     <TextView 
         android:id="@+id/channel_row_name"

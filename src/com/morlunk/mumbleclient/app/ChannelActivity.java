@@ -99,19 +99,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      * The {@link ViewPager} that will host the section contents.
      */
     ViewPager mViewPager;
-
-    private Comparator<User> userComparator = new Comparator<User>() {
-		@Override
-		public int compare(final User object1, final User object2) {
-			return object1.name.toLowerCase(Locale.ENGLISH)
-					.compareTo(object2.name.toLowerCase(Locale.ENGLISH));
-		}
-	};
     
     // Favourites
     private List<Favourite> favourites;
     private MenuItem searchItem;
-    private MenuItem favouritesItem;
     private MenuItem mutedButton;
     private MenuItem deafenedButton;
     
@@ -368,13 +359,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     public boolean onPrepareOptionsMenu(Menu menu) {
     	// Only show favourites and access tokens (DB-related) if the connected server has a DB representation (non-public).
     	MenuItem fullscreenItem = menu.findItem(R.id.menu_fullscreen);
-    	MenuItem favouriteToggleItem = menu.findItem(R.id.menu_favorite_button);
     	MenuItem favouritesViewItem = menu.findItem(R.id.menu_view_favorites_button);
     	MenuItem accessTokensItem = menu.findItem(R.id.menu_access_tokens_button);
     	
     	if(mService != null &&
     			mService.getConnectedServer() != null) {
-    		favouriteToggleItem.setVisible(!mService.isConnectedServerPublic());
     		favouritesViewItem.setVisible(!mService.isConnectedServerPublic());
     		accessTokensItem.setVisible(!mService.isConnectedServerPublic());
     	}
@@ -407,10 +396,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         		mService.getCurrentUser() != null) {
         	updateMuteDeafenMenuItems(mService.isMuted(), mService.isDeafened());
         }
-
-        favouritesItem = menu.findItem(R.id.menu_favorite_button);
-        if(mService != null && mService.isConnected() && !mService.isConnectedServerPublic())
-        	updateFavouriteMenuItem();
         
         return true;
     }
@@ -443,29 +428,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	public MumbleService getService() {
 		return mService;
 	}
-	
-    /**
-     * Updates the icon and title of the 'favourites' menu icon to represent the channel's favourited status.
-     */
-    public void updateFavouriteMenuItem() {
-    	// FIXME
-    	/*
-    	if(favouritesItem == null || getChannel() == null)
-    		return;
-    	int currentChannel = getChannel().id;
-    	
-    	boolean isFavouriteChannel = false;
-    	for(Favourite favourite : favourites) {
-    		if(favourite.getChannelId() == currentChannel) {
-    			isFavouriteChannel = true;
-    			break;
-    		}
-    	}
-    	
-    	favouritesItem.setTitle(isFavouriteChannel ? R.string.removeFavorite : R.string.addFavorite);
-    	favouritesItem.setIcon(isFavouriteChannel ? R.drawable.ic_action_favorite_on : R.drawable.ic_action_favorite_off);
-    	*/
-    }
     
     /**
      * Updates the 'muted' and 'deafened' action bar icons to reflect the audio status.
@@ -506,10 +468,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		case R.id.menu_fullscreen_channel:
 			leftSplit.setVisibility(leftSplit.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
 			rightSplit.setVisibility(View.VISIBLE);
-			return true;
-		case R.id.menu_favorite_button:
-			// FIXME
-			//toggleFavourite(getChannel());
 			return true;
 		case R.id.menu_view_favorites_button:
 			showFavouritesDialog();
@@ -758,7 +716,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
 			protected void onPostExecute(Void result) {
 				favourites = loadFavourites();
-				updateFavouriteMenuItem();
 			};
 		}.execute();
 	}
@@ -962,6 +919,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		@Override
 		public void onCurrentChannelChanged() throws RemoteException {
 			listFragment.updateChannelList();
+			listFragment.expandChannel(getCurrentUser().getChannel());
 		}
 		
 		@Override

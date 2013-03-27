@@ -58,6 +58,15 @@ public class ChannelListFragment extends SherlockFragment implements
 	public void updateChannelList() {
 		usersAdapter.updateChannelList();
 		usersAdapter.notifyDataSetChanged();
+		
+		// Expand channels with users
+		for(int i=0;i<usersAdapter.getGroupCount();i++) {
+			Channel channel = usersAdapter.channels.get(i);
+			if(channel.userCount > 0)
+				channelUsersList.expandGroup(i);
+			else
+				channelUsersList.collapseGroup(i);
+		}
 	}
 
 	/**
@@ -65,6 +74,10 @@ public class ChannelListFragment extends SherlockFragment implements
 	 */
 	public void updateChannel(Channel channel) {
 		usersAdapter.notifyDataSetChanged();
+	}
+	
+	public void expandChannel(Channel channel) {
+		channelUsersList.expandGroup(usersAdapter.channels.indexOf(channel));
 	}
 
 	/**
@@ -105,8 +118,14 @@ public class ChannelListFragment extends SherlockFragment implements
 		channelUsersList = (ExpandableListView) view
 				.findViewById(R.id.channelUsers);
 		channelUsersList.setOnChildClickListener(this);
-
+		
 		return view;
+	}
+	
+	@Override
+	public void onStart() {
+		super.onStart();
+		updateChannelList();
 	}
 
 	/*
@@ -206,7 +225,7 @@ public class ChannelListFragment extends SherlockFragment implements
 		private final Context context;
 		private final MumbleService service;
 		private final DbAdapter dbAdapter;
-		private List<Channel> channels = new ArrayList<Channel>();
+		protected List<Channel> channels = new ArrayList<Channel>();
 
 		private final Map<User, Boolean> userCommentsSeen = new HashMap<User, Boolean>();
 
@@ -228,8 +247,6 @@ public class ChannelListFragment extends SherlockFragment implements
 							settings.getTheme().equals(
 									Settings.ARRAY_THEME_LIGHTDARK) ? R.drawable.ic_action_chat_light
 									: R.drawable.ic_action_chat_dark);
-
-			updateChannelList();
 		}
 
 		/**
@@ -256,8 +273,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			// Update comment state
 			if (user.comment != null
 					|| user.commentHash != null
-					&& !MumbleService.getCurrentService()
-							.isConnectedServerPublic()) {
+					&& !service.isConnectedServerPublic()) {
 				userCommentsSeen.put(user, dbAdapter.isCommentSeen(
 						user.name,
 						user.commentHash != null ? user.commentHash
@@ -425,7 +441,7 @@ public class ChannelListFragment extends SherlockFragment implements
 						.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				v = inflater.inflate(R.layout.channel_row, null);
 			}
-			Channel channel = channels.get(groupPosition);
+			final Channel channel = channels.get(groupPosition);
 
 			TextView nameView = (TextView) v
 					.findViewById(R.id.channel_row_name);
@@ -442,6 +458,20 @@ public class ChannelListFragment extends SherlockFragment implements
 							25, metrics);
 			v.setPadding((int) margin, v.getPaddingTop(), v.getPaddingRight(),
 					v.getPaddingBottom());
+			
+			// Override the expand/collapse paradigm and join channels by pressing them.
+			v.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							service.joinChannel(channel.id);
+						}
+					}).start();
+				}
+			});
 
 			return v;
 		}
