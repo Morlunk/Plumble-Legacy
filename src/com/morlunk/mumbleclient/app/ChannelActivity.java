@@ -924,12 +924,14 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		@Override
 		public void onChannelAdded(Channel channel) throws RemoteException {
-			listFragment.updateChannelList();
+			if(mService.isConnected())
+				listFragment.updateChannelList();
 		}
 		
 		@Override
 		public void onChannelRemoved(Channel channel) throws RemoteException {
-			listFragment.updateChannelList();
+			if(mService.isConnected())
+				listFragment.updateChannelList();
 		}
 		
 		@Override
