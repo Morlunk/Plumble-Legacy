@@ -231,8 +231,6 @@ public class ChannelListFragment extends SherlockFragment implements
 
 		private final Drawable chatDrawable; // Changes depending on theme.
 
-		int totalViews = 0;
-
 		public UserListAdapter(final Context context,
 				final MumbleService service) {
 			// FIXME fix service code, no singletons
@@ -267,6 +265,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			long packedPosition = ExpandableListView.getPackedPositionForChild(
 					channelPosition, userPosition);
 			int position = channelUsersList.getFlatListPosition(packedPosition);
+			
 			View userView = channelUsersList.getChildAt(position
 					- channelUsersList.getFirstVisiblePosition());
 
@@ -280,7 +279,7 @@ public class ChannelListFragment extends SherlockFragment implements
 								.toStringUtf8() : user.comment));
 			}
 
-			if (userView != null && userView.isShown())
+			if (userView != null && userView.isShown() && userView.getTag() != null && userView.getTag().equals(user))
 				refreshElements(userView, user);
 		}
 
@@ -298,7 +297,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			View userView = channelUsersList.getChildAt(position
 					- channelUsersList.getFirstVisiblePosition());
 
-			if (userView != null && userView.isShown()
+			if (userView != null && userView.isShown() && userView.getTag() != null && userView.getTag().equals(user)
 					&& service.getUserList().contains(user))
 				refreshTalkingState(userView, user);
 
@@ -313,7 +312,7 @@ public class ChannelListFragment extends SherlockFragment implements
 					.findViewById(R.id.localMuteState);
 			final ImageView chatActive = (ImageView) view
 					.findViewById(R.id.activeChatState);
-
+			
 			name.setText(user.name);
 
 			refreshTalkingState(view, user);
@@ -408,6 +407,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			User user = (User) getChild(groupPosition, childPosition);
 
 			refreshElements(v, user);
+			v.setTag(user);
 
 			return v;
 		}
@@ -464,12 +464,17 @@ public class ChannelListFragment extends SherlockFragment implements
 				
 				@Override
 				public void onClick(View v) {
-					new Thread(new Runnable() {
-						@Override
-						public void run() {
-							service.joinChannel(channel.id);
-						}
-					}).start();
+					if(!service.getCurrentUser().getChannel().equals(channel)) {
+						new AsyncTask<Void, Void, Void>() {
+							
+							@Override
+							protected Void doInBackground(Void... params) {
+								service.joinChannel(channel.id);
+								return null;
+							}
+							
+						}.execute();
+					}
 				}
 			});
 

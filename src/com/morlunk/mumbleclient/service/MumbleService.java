@@ -2,6 +2,7 @@ package com.morlunk.mumbleclient.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -632,9 +633,9 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	 * @return
 	 */
 	public List<Channel> getSortedChannelList() {
-		List<Channel> unsortedChannels = getChannelList();
+		List<Channel> unsortedChannels = new ArrayList<Channel>(getChannelList());
 		List<Channel> sortedChannels = new ArrayList<Channel>();
-
+		
 		for (Channel channel : unsortedChannels) {
 			if (channel.parent == -1) {
 				sortedChannels.add(channel);
@@ -649,13 +650,31 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		List<Channel> nestedChannels = new ArrayList<Channel>();
 		for (Channel c : channels) {
 			if (c.parent == channel.id) {
-				// TODO sort subchannels alphabetically.
 				nestedChannels.add(c);
 				List<Channel> internalChannels = getNestedChannels(c);
 				nestedChannels.addAll(internalChannels);
 			}
 		}
 		return nestedChannels;
+	}
+	
+	/**
+	 * Sorts the passed list of channels alphebetically and by position.
+	 * @param channels
+	 */
+	private void sortChannelList(List<Channel> channels) {
+		Collections.sort(channels, new Comparator<Channel>() {
+			@Override
+			public int compare(Channel lhs, Channel rhs) {
+				return lhs.name.toLowerCase(Locale.getDefault()).compareTo(rhs.name.toLowerCase(Locale.getDefault()));
+			}
+		});
+		Collections.sort(channels, new Comparator<Channel>() {
+			@Override
+			public int compare(Channel lhs, Channel rhs) {
+				return ((Integer)lhs.position).compareTo(((Integer)rhs.position));
+			}
+		});
 	}
 
 	public int getCodec() {
@@ -1262,7 +1281,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			} else if (settings.isMuted()) {
 				setMuted(true);
 			}
-			showNotification();
+			if(synced)
+				showNotification();
 			break;
 		case MumbleConnectionHost.STATE_DISCONNECTED:
 			settings.deleteObserver(this);

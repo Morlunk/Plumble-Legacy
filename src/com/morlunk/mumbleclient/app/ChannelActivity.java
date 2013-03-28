@@ -2,7 +2,6 @@ package com.morlunk.mumbleclient.app;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Observable;
@@ -105,8 +104,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     private MenuItem searchItem;
     private MenuItem mutedButton;
     private MenuItem deafenedButton;
-    
-	private Channel visibleChannel;
 	
 	private User chatTarget;
 
@@ -253,14 +250,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         }
         
         if(savedInstanceState != null) {
-        	final Channel channel = (Channel) savedInstanceState.getParcelable(SAVED_STATE_VISIBLE_CHANNEL);
-
-			// Channel might be null if we for example caused screen rotation
-			// while still connecting.
-			if (channel != null) {
-				this.visibleChannel = channel;
-			}
-			
 			chatTarget = (User) savedInstanceState.getParcelable(SAVED_STATE_CHAT_TARGET);
 			if(chatTarget != null) {
 				listFragment.setChatTarget(chatTarget);
@@ -311,7 +300,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     			Log.w(Globals.LOG_TAG, "Issue with storing fragments in the fragment manager. Non-fatal.");
 			}
     	}
-		outState.putParcelable(SAVED_STATE_VISIBLE_CHANNEL, visibleChannel);
 		
 		if(chatTarget != null)
 			outState.putParcelable(SAVED_STATE_CHAT_TARGET, chatTarget);
@@ -846,7 +834,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	@Override
 	public void sendChannelMessage(String message) {
 		mService.sendChannelTextMessage(
-				message, visibleChannel);
+				message, getCurrentUser().getChannel());
 	}
 	
 	@Override
