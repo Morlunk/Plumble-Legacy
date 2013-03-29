@@ -1198,7 +1198,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			ttsText.append(getString(R.string.server));
 
 		ttsText.append(": ");
-		ttsText.append(msg.message);
+		ttsText.append(Html.fromHtml(msg.message).toString());
 
 		tts.speak(ttsText.toString(), TextToSpeech.QUEUE_ADD, null);
 	}
