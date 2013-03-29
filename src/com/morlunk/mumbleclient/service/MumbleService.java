@@ -641,22 +641,23 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		for (Channel channel : unsortedChannels) {
 			if (channel.parent == -1) {
 				sortedChannels.add(channel);
-				sortedChannels.addAll(getNestedChannels(channel));
+				sortedChannels.addAll(getNestedChannels(channel, unsortedChannels));
 			}
 		}
 
 		return sortedChannels;
 	}
 
-	private List<Channel> getNestedChannels(Channel channel) {
+	private List<Channel> getNestedChannels(Channel channel, List<Channel> channels) {
 		List<Channel> nestedChannels = new ArrayList<Channel>();
 		for (Channel c : channels) {
 			if (c.parent == channel.id) {
 				nestedChannels.add(c);
-				List<Channel> internalChannels = getNestedChannels(c);
+				List<Channel> internalChannels = getNestedChannels(c, channels);
 				nestedChannels.addAll(internalChannels);
 			}
 		}
+		
 		return nestedChannels;
 	}
 	
@@ -1081,7 +1082,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		builder.setTicker(getResources().getString(R.string.plumbleConnected));
 		builder.setContentTitle(getResources().getString(R.string.app_name));
 		builder.setContentText(getResources().getString(R.string.connected));
-		builder.setPriority(Notification.PRIORITY_HIGH);
+		builder.setPriority(NotificationCompat.PRIORITY_HIGH);
 		builder.setOngoing(true);
 
 		// Add notification triggers
