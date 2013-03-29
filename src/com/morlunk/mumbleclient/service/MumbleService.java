@@ -636,6 +636,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		List<Channel> unsortedChannels = new ArrayList<Channel>(getChannelList());
 		List<Channel> sortedChannels = new ArrayList<Channel>();
 		
+		sortChannelList(unsortedChannels);
+		
 		for (Channel channel : unsortedChannels) {
 			if (channel.parent == -1) {
 				sortedChannels.add(channel);

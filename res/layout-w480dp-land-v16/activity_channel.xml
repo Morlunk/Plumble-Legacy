@@ -36,14 +36,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="right"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:orientation="vertical">
 
             <Button
                 android:id="@+id/pushtotalk"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:background="@drawable/vs_micbtn_off"/>
+                android:background="@drawable/vs_micbtn_off"
+            	android:layout_margin="8dp"/>
         </LinearLayout>
     </LinearLayout>
 
