@@ -760,6 +760,10 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	public boolean isMuted() {
 		return mProtocol.currentUser.selfMuted;
 	}
+	
+	public void registerSelf() {
+		mProtocol.registerUser(getCurrentUser());
+	}
 
 	public void joinChannel(final int channelId) {
 		mProtocol.joinChannel(channelId);

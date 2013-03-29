@@ -104,6 +104,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     private MenuItem searchItem;
     private MenuItem mutedButton;
     private MenuItem deafenedButton;
+    
+    // User control
+    private MenuItem userRegisterItem;
+    private MenuItem userCommentItem;
+    private MenuItem userInformationItem;
 	
 	private User chatTarget;
 
@@ -350,8 +355,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	MenuItem favouritesViewItem = menu.findItem(R.id.menu_view_favorites_button);
     	MenuItem accessTokensItem = menu.findItem(R.id.menu_access_tokens_button);
     	
+    	userRegisterItem = menu.findItem(R.id.menu_user_register);
+    	userCommentItem = menu.findItem(R.id.menu_user_comment);
+    	userInformationItem = menu.findItem(R.id.menu_user_information);
+    	
     	if(mService != null &&
     			mService.getConnectedServer() != null) {
+    		
     		favouritesViewItem.setVisible(!mService.isConnectedServerPublic());
     		accessTokensItem.setVisible(!mService.isConnectedServerPublic());
     	}
@@ -420,12 +430,22 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     /**
      * Updates the 'muted' and 'deafened' action bar icons to reflect the audio status.
      */
-    public void updateMuteDeafenMenuItems(boolean muted, boolean deafened) {
+    private void updateMuteDeafenMenuItems(boolean muted, boolean deafened) {
     	if(mutedButton == null || deafenedButton == null)
     		return;
 
     	mutedButton.setIcon(!muted ? R.drawable.ic_action_microphone : R.drawable.ic_action_microphone_muted);
     	deafenedButton.setIcon(!deafened ? R.drawable.ic_action_headphones : R.drawable.ic_action_headphones_deafened);
+    }
+    
+    /**
+     * Used to control the user settings shown when registered.
+     */
+    private void updateUserControlMenuItems() {
+		boolean userRegistered = getCurrentUser().isRegistered;
+		userRegisterItem.setEnabled(!userRegistered);
+		userCommentItem.setEnabled(userRegistered);
+		userInformationItem.setEnabled(userRegistered);
     }
     
     /* (non-Javadoc)
@@ -459,6 +479,25 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			return true;
 		case R.id.menu_view_favorites_button:
 			showFavouritesDialog();
+			return true;
+		case R.id.menu_user_register:
+			new AsyncTask<Void, Void, Void>() {
+				@Override
+				protected Void doInBackground(Void... params) {
+					mService.registerSelf();
+					return null;
+				}
+				
+				protected void onPostExecute(Void result) {
+					Toast.makeText(ChannelActivity.this, R.string.registerSelfSuccess, Toast.LENGTH_SHORT).show();
+				};
+			}.execute();
+			return true;
+		case R.id.menu_user_comment:
+			
+			return true;
+		case R.id.menu_user_information:
+			
 			return true;
 		case R.id.menu_clear_chat:
 			mService.clearChat();
@@ -563,6 +602,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		// Tell the service that we are now visible.
         mService.setActivityVisible(true);
+        
+        // Update user control
+        updateUserControlMenuItems();
 		
 		// Send access tokens after connection.
 		sendAccessTokens();
@@ -931,6 +973,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		@Override
 		public void onCurrentUserUpdated() throws RemoteException {
 			updateMuteDeafenMenuItems(mService.getCurrentUser().selfMuted, mService.getCurrentUser().selfDeafened);
+	        updateUserControlMenuItems();
 		}
 
 		@Override

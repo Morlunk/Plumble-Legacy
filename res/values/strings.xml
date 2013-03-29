@@ -127,4 +127,8 @@
     <string name="fullscreen_chat">Chat</string>
     <string name="fullscreen_channel">Channel</string>
     <string name="fetchingServers">Please wait, fetching list of public servers.</string>
+    <string name="information">Information</string>
+    <string name="register">Register Self</string>
+    <string name="userControl">User Control</string>
+    <string name="registerSelfSuccess">Sent registration request</string>
 </resources>

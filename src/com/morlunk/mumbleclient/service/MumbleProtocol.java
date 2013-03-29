@@ -104,6 +104,13 @@ public class MumbleProtocol {
 			conn.sendTcpMessage(MessageType.UserState, us);
 		}
 	}
+
+	public void registerUser(User user) {
+		UserState.Builder stateBuilder = UserState.newBuilder();
+		stateBuilder.setSession(user.session);
+		stateBuilder.setUserId(0);
+		conn.sendTcpMessage(MessageType.UserState, stateBuilder);
+	}
 	
 	public void sendAccessTokens(List<String> tokens) {
 		Authenticate.Builder authenticate = Authenticate.newBuilder();
@@ -263,6 +270,9 @@ public class MumbleProtocol {
 				users.put(user.session, user);
 				added = true;
 			}
+			
+			if(us.hasUserId())
+				user.isRegistered = true;
 
 			if (us.hasSelfDeaf()) {
 				user.selfDeafened = us.getSelfDeaf();

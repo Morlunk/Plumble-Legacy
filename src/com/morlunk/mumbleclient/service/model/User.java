@@ -31,6 +31,7 @@ public class User implements Parcelable {
 	public float averageAvailable;
 	public int talkingState;
 	public boolean isCurrent;
+	public boolean isRegistered;
 	
 	public boolean selfMuted;
 	public boolean selfDeafened;
@@ -102,7 +103,7 @@ public class User implements Parcelable {
 		dest.writeString(commentHash != null ? commentHash.toStringUtf8() : "");
 		dest.writeFloat(averageAvailable);
 		dest.writeInt(talkingState);
-		dest.writeBooleanArray(new boolean[] { isCurrent, selfMuted, selfDeafened, suppressed, serverMuted, serverDeafened });
+		dest.writeBooleanArray(new boolean[] { isCurrent, selfMuted, selfDeafened, suppressed, serverMuted, serverDeafened, isRegistered });
 		dest.writeParcelable(channel, 0);
 	}
 
@@ -124,6 +125,7 @@ public class User implements Parcelable {
 		suppressed = boolArr[3];
 		serverMuted = boolArr[4];
 		serverDeafened = boolArr[5];
+		isRegistered = boolArr[6];
 		channel = in.readParcelable(null);
 	}
 }
