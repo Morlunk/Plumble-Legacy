@@ -98,14 +98,16 @@
 	<string name="certificateGenerate">Generowanie certyfikatu</string>
 	<string name="certificateGenerateSum">Generuje nowy własnoręcznie podpisany certyfikat Plumble. Zalecane dla początkujących.</string>
 	<string name="pttSettings">Konfiguracja aktywacji przyciskiem</string>
-	<string name="pttSettingsSum">Konfiguruje aktywację przyciskiem, gdy jest włączona.</string>
+	<string name="pttSettingsSum">Konfiguracja aktywacji przyciskiem, gdy jest włączona.</string>
 	<string name="voiceActivitySettings">Konfiguracja aktywacji głosowej</string>
-	<string name="voiceActivitySettingsSum">Konfiguruje aktywację głosową, gdy jest włączona.</string>
+	<string name="voiceActivitySettingsSum">Konfiguracja aktywacji głosowej, gdy jest włączona.</string>
 	<string name="audioOutput">Wyjście Dźwięku</string>
 	<string name="disableOpus">Wyłącz kodek Opus</string>
 	<string name="disableOpusSum">Wyłącza wsparcie kodeka Opus dla serwerów w wersji 1.2.4. Zaznacz jeżeli masz problemy z dźwiękiem na serwerach w wersji 1.2.4.</string>
-	<string name="hidePtt">Ukryj pasek aktywacji przyciskiem</string>
-	<string name="hidePttSum">Ukrywa pasek aktywacji przyciskiem. Ukryj go jeżeli korzystasz ze sprzętowego przycisku lub gorących narożników.</string>
+	<string name="hidePtt">Ukryj przycisk aktywacji przyciskiem</string>
+	<string name="hidePttSum">Ukrywa przycisk aktywacji przyciskiem. Ukryj go jeżeli korzystasz ze sprzętowego przycisku lub gorących narożników.</string>
     <string name="useTts">Tekst-Na-Mowę</string>
     <string name="useTtsSum">Aktywuje Tekst-Na-Mowę dla przychdzących wiadomości.</string>
+    <string name="togglePtt">Przycisk aktywacji jako przełącznik</string>
+    <string name="togglePttSum">Naciśnięcie przycisku aktywacji powoduje ciągłe nadawanie do czasu ponownego jego naciśnięcia.</string>
 </resources>
