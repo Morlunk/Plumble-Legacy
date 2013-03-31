@@ -262,7 +262,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			int channelPosition = channels.indexOf(user.getChannel());
 			if (!channelUsersList.isGroupExpanded(channelPosition))
 				return;
-			int userPosition = user.getChannel().getUsers().indexOf(user);
+			int userPosition = service.getChannelUsers(user.getChannel()).indexOf(user);
 			long packedPosition = ExpandableListView.getPackedPositionForChild(
 					channelPosition, userPosition);
 			int position = channelUsersList.getFlatListPosition(packedPosition);
@@ -291,7 +291,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			int channelPosition = channels.indexOf(user.getChannel());
 			if (!channelUsersList.isGroupExpanded(channelPosition))
 				return;
-			int userPosition = user.getChannel().getUsers().indexOf(user);
+			int userPosition = service.getChannelUsers(user.getChannel()).indexOf(user);
 			long packedPosition = ExpandableListView.getPackedPositionForChild(
 					channelPosition, userPosition);
 			int position = channelUsersList.getFlatListPosition(packedPosition);
@@ -387,7 +387,7 @@ public class ChannelListFragment extends SherlockFragment implements
 		@Override
 		public Object getChild(int groupPosition, int childPosition) {
 			Channel channel = channels.get(groupPosition);
-			List<User> channelUsers = channel.getUsers();
+			List<User> channelUsers = service.getChannelUsers(channel);
 			return channelUsers.get(childPosition);
 		}
 

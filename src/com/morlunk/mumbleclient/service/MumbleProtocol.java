@@ -1,8 +1,12 @@
 package com.morlunk.mumbleclient.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import net.sf.mumble.MumbleProto.Authenticate;
@@ -67,6 +71,7 @@ public class MumbleProtocol {
 
 	public Map<Integer, Channel> channels = new HashMap<Integer, Channel>();
 	public Map<Integer, User> users = new HashMap<Integer, User>();
+	public Map<Channel, List<User>> channelMap = new HashMap<Channel, List<User>>();
 	public Channel currentChannel = null;
 	public User currentUser = null;
 	public boolean canSpeak = true;
@@ -245,6 +250,7 @@ public class MumbleProtocol {
 			channel.parent = cs.hasParent() ? cs.getParent() : -1;
 			channel.position = cs.getPosition();
 			channels.put(channel.id, channel);
+			channelMap.put(channel, new ArrayList<User>());
 			host.channelAdded(channel);
 			break;
 		case ChannelRemove:
@@ -252,6 +258,7 @@ public class MumbleProtocol {
 			channel = findChannel(cr.getChannelId());
 			channel.removed = true;
 			channels.remove(channel.id);
+			channelMap.remove(channel);
 			host.channelRemoved(channel.id);
 			break;
 		case UserState:
@@ -308,12 +315,19 @@ public class MumbleProtocol {
 			}
 
 			if (added || us.hasChannelId()) {
-				Channel userChannel = channels.get(us.getChannelId());				
-				if(!added)
-					user.getChannel().removeUser(user);
+				Channel userChannel = channels.get(us.getChannelId());
+				
+				if(user.getChannel() != null) {
+					// Remove from old channel
+					List<User> channelUsers = channelMap.get(user.getChannel());
+					channelUsers.remove(user);
+				}
 				
 				user.setChannel(userChannel);
-				userChannel.addUser(user);
+				// Add to new channel
+				List<User> channelUsers = channelMap.get(userChannel);
+				channelUsers.add(user);
+				sortChannelUsers(channelUsers);
 				
 				channelUpdated = true;
 			}
@@ -367,7 +381,8 @@ public class MumbleProtocol {
 				
 				// Remove the user from the channel as well.
 				user.getChannel().userCount--;
-				user.getChannel().removeUser(user);
+				List<User> channelUsers = channelMap.get(user.getChannel());
+				channelUsers.remove(user);
 
 				host.channelUpdated(user.getChannel());
 				host.userRemoved(user.session, ur);
@@ -393,6 +408,16 @@ public class MumbleProtocol {
 		default:
 			Log.w(Globals.LOG_TAG, "unhandled message type " + t);
 		}
+	}
+	
+	private void sortChannelUsers(List<User> users) {
+		// Sort alphabetically
+		Collections.sort(users, new Comparator<User>() {
+			@Override
+			public int compare(User lhs, User rhs) {
+				return lhs.name.toLowerCase(Locale.getDefault()).compareTo(rhs.name.toLowerCase(Locale.getDefault()));
+			}
+		});;
 	}
 
 	public void processUdp(final byte[] buffer, final int length) {

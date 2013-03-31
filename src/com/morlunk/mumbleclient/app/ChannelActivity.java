@@ -41,9 +41,11 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.SearchView;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -97,6 +99,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+    
+    // Tabs
+    private View channelsIndicator;
+    private View chatIndicator;
     
     // Favourites
     private MenuItem searchItem;
@@ -217,6 +223,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 						InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 			            imm.hideSoftInputFromWindow(mViewPager.getApplicationWindowToken(), 0);
 					}
+					// Update indicator
+					channelsIndicator.setVisibility(arg0 == 0 ? View.VISIBLE : View.INVISIBLE);
+					chatIndicator.setVisibility(arg0 == 1 ? View.VISIBLE : View.INVISIBLE);
 				}
 				
 				@Override
@@ -239,6 +248,31 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			}
             
             mViewPager.setAdapter(mSectionsPagerAdapter);
+            
+            // Set up tabs
+            getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+            
+            View channelTabView = getLayoutInflater().inflate(R.layout.channel_tab_view, null);
+            channelsIndicator = channelTabView.findViewById(R.id.tab_channels_indicator);
+            chatIndicator = channelTabView.findViewById(R.id.tab_chat_indicator);
+            
+            ImageButton channelsButton = (ImageButton) channelTabView.findViewById(R.id.tab_channels);
+            ImageButton chatButton = (ImageButton) channelTabView.findViewById(R.id.tab_chat);
+            channelsButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mViewPager.setCurrentItem(0, true);
+				}
+			});
+            chatButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mViewPager.setCurrentItem(1, true);
+				}
+			});
+            
+            getSupportActionBar().setCustomView(channelTabView);
+            
         } else {
         	// Otherwise, create tablet UI.
 	        listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);

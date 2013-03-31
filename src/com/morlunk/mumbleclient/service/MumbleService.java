@@ -625,6 +625,18 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			mClient.disconnect();
 		}
 	}
+	
+	public Channel getChannel(int channelId) {
+		for(Channel channel : channels) {
+			if(channel.id == channelId)
+				return channel;
+		}
+		return null;
+	}
+	
+	public List<User> getChannelUsers(Channel channel) {
+		return mProtocol.channelMap.get(channel);
+	}
 
 	public List<Channel> getChannelList() {
 		return Collections.unmodifiableList(channels);

@@ -126,6 +126,6 @@ public class User implements Parcelable {
 		serverMuted = boolArr[4];
 		serverDeafened = boolArr[5];
 		isRegistered = boolArr[6];
-		channel = in.readParcelable(null);
+		channel = in.readParcelable(Channel.class.getClassLoader());
 	}
 }
