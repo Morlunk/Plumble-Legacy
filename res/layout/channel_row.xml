@@ -1,27 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="55dp"
+    android:layout_height="wrap_content"
     android:orientation="horizontal" 
     android:padding="8dp"
+    android:gravity="left|center_horizontal"
     android:background="@drawable/selectable_background">
     
-    <TextView 
-        android:id="@+id/channel_row_name"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center_vertical|left"
-		android:textSize="16sp"
-        android:layout_marginLeft="38dp"
-        android:text="Channel name"
-        />
     <TextView 
         android:id="@+id/channel_row_count"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:layout_marginLeft="5dp"
+        android:layout_marginLeft="38dp"
+        android:layout_marginRight="8dp"
         android:textColor="@color/abs__holo_blue_light"
         android:text="(1)"/>
+    
+    <TextView 
+        android:id="@+id/channel_row_name"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical|left"
+		android:textSize="16sp"
+        android:text="Channel name"
+        />
+    
+    <ImageView 
+        android:id="@+id/channel_row_favourite"
+        android:layout_width="39dp"
+        android:layout_height="39dp"
+        android:scaleType="center"
+        android:layout_marginLeft="8dp"
+        android:src="@drawable/ic_action_favourite_off"
+        style="@style/Plumble.BorderlessButton"/>
 </LinearLayout>

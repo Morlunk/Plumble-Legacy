@@ -44,7 +44,6 @@ import android.widget.Button;
 import android.widget.SearchView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -97,10 +96,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     /**
      * The {@link ViewPager} that will host the section contents.
      */
-    ViewPager mViewPager;
+    private ViewPager mViewPager;
     
     // Favourites
-    private List<Favourite> favourites;
     private MenuItem searchItem;
     private MenuItem mutedButton;
     private MenuItem deafenedButton;
@@ -173,10 +171,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         
         AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
-
-        // Set up the action bar.
-        final ActionBar actionBar = getSupportActionBar();
-        actionBar.setDisplayShowHomeEnabled(false);
         
         // Set up PTT button.
     	
@@ -442,6 +436,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      * Used to control the user settings shown when registered.
      */
     private void updateUserControlMenuItems() {
+    	if(mService == null || 
+    			getCurrentUser() == null || 
+    			userRegisterItem == null || 
+    			userCommentItem == null || 
+    			userInformationItem == null)
+    		return;
+    	
 		boolean userRegistered = getCurrentUser().isRegistered;
 		userRegisterItem.setEnabled(!userRegistered);
 		userCommentItem.setEnabled(userRegistered);
@@ -608,10 +609,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		// Send access tokens after connection.
 		sendAccessTokens();
-		
-        // Load favourites if is non-public server
-        if(!mService.isConnectedServerPublic())
-        	favourites = loadFavourites();
         
 		// Load messages
 		reloadChat();
@@ -717,39 +714,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		}
 	}
 	
-	private void toggleFavourite(final Channel channel) {
-		
-		Favourite currentFavourite = null;
-		
-		for(Favourite favourite : favourites) {
-			if(favourite.getChannelId() == channel.id) {
-				currentFavourite = favourite;
-			}
-		}
-		
-		final Favourite channelFavourite = currentFavourite;
-		
-		new AsyncTask<Void, Void, Void>() {
-
-			@Override
-			protected Void doInBackground(Void... params) {
-				DbAdapter dbAdapter = mService.getDatabaseAdapter();
-
-				if (channelFavourite == null)
-					dbAdapter.createFavourite(mService.getConnectedServer().getId(),
-							channel.id);
-				else
-					dbAdapter.deleteFavourite(channelFavourite.getId());
-				
-				return null;
-			}
-
-			protected void onPostExecute(Void result) {
-				favourites = loadFavourites();
-			};
-		}.execute();
-	}
-	
 	/**
 	 * @see http://stackoverflow.com/questions/6335875/help-with-proximity-screen-off-wake-lock-in-android
 	 */
@@ -768,21 +732,15 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		}
 	}
 	
-	public List<Favourite> loadFavourites() {
-        DbAdapter dbAdapter = mService.getDatabaseAdapter();
-        List<Favourite> favouriteResult = dbAdapter.fetchAllFavourites(mService.getConnectedServer().getId());
-        return favouriteResult;
-	}
-	
 	private void showFavouritesDialog() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		
 		builder.setTitle(R.string.favorites);
 		
 		List<CharSequence> items = new ArrayList<CharSequence>();
-		final List<Favourite> activeFavourites = new ArrayList<Favourite>(favourites);
+		final List<Favourite> activeFavourites = new ArrayList<Favourite>(mService.getFavourites());
 		
-		for(Favourite favourite : favourites) {
+		for(Favourite favourite : mService.getFavourites()) {
 			int channelId = favourite.getChannelId();
 			Channel channel = findChannelById(channelId);
 			

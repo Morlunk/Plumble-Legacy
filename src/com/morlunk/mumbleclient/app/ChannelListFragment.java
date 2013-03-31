@@ -35,6 +35,7 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
+import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
@@ -451,6 +452,35 @@ public class ChannelListFragment extends SherlockFragment implements
 			nameView.setText(channel.name);
 			countView.setText(String.format("(%d)", channel.userCount));
 
+			final ImageView favouriteImageView = (ImageView) v.findViewById(R.id.channel_row_favourite);
+			Favourite favourite = service.getFavouriteForChannel(channel);
+			favouriteImageView.setImageResource(favourite != null ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off);
+			favouriteImageView.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					new AsyncTask<Channel, Void, Boolean>() {
+
+						@Override
+						protected Boolean doInBackground(Channel... params) {
+							Channel favouriteChannel = params[0];
+							Favourite f = service.getFavouriteForChannel(favouriteChannel);
+							if(f == null)
+								dbAdapter.createFavourite(service.getConnectedServer().getId(), channel.id);
+							else
+								dbAdapter.deleteFavourite(f.getId());
+							return f == null; // True: created, False: deleted
+						}
+						
+						protected void onPostExecute(Boolean result) {
+							favouriteImageView.setImageResource(result ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off);
+							service.updateFavourites();
+						};
+						
+					}.execute(channel);
+				}
+			});
+			
 			// Pad the view depending on channel's nested level.
 			DisplayMetrics metrics = getResources().getDisplayMetrics();
 			float margin = getNestedLevel(channel)
