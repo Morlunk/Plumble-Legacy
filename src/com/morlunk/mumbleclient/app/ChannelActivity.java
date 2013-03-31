@@ -198,7 +198,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 					else
 						setPushToTalk(false);
 				}
-				mTalkButton.setBackgroundResource(mService.isRecording() ? R.drawable.vs_micbtn_rec : R.drawable.vs_micbtn_off);
 				
 				return false; // We return false so that the selector that changes the background still fires.
 			}

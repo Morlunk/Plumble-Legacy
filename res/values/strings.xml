@@ -32,7 +32,7 @@
     <string name="title_activity_channel">Channel</string>
     <string name="pressKey">Press a hardware key to bind to push-to-talk.</string>
     <string name="pressKeyInfo">Note: due to limitations in Android, the app must be open to use hardware key push to talk.</string>
-    <string name="ptt">Push to Talk</string>
+    <string name="ptt">PUSH TO TALK</string>
     <string name="mute">Mute</string>
     <string name="deafen">Deafen</string>
     <string name="disconnect">Disconnect</string>
