@@ -106,7 +106,7 @@
     <string name="unknown">Unbekannt</string>
     <string name="server_list_title_favorite">FAVORITEN</string>
     <string name="server_list_title_lan">LAN</string>
-    <string name="server_list_title_public_internet">ÖFFENTLICHES INTERNET</string>
+    <string name="server_list_title_public_internet">INTERNET - ÖFFENTLICH</string>
     <string name="ping">Ping</string>
     <string name="sort">Sortierung</string>
     <string name="sortBy">Sortieren nach…</string>
@@ -127,4 +127,8 @@
     <string name="fullscreen_chat">Chat</string>
     <string name="fullscreen_channel">Kanal</string>
     <string name="fetchingServers">Bitte warten, die Liste der öffentlichen Server wird abgerufen.</string>
+    <string name="information">Informationen</string>
+    <string name="register">Registrieren</string>
+    <string name="userControl">Benutzerkontrolle</string>
+    <string name="registerSelfSuccess">Registrationsanfrage gesendet</string>
 </resources>
