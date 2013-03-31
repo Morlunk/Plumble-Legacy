@@ -4,46 +4,57 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:divider="?android:attr/dividerHorizontal"
+    android:orientation="horizontal"
     android:showDividers="middle"
-    tools:context=".ChannelActivity"
-    android:orientation="horizontal" >
-    <LinearLayout 
+    tools:context=".ChannelActivity" >
+
+    <LinearLayout
         android:id="@+id/left_split"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1">
-    <fragment android:id="@+id/chat_fragment"
-        android:name="com.morlunk.mumbleclient.app.ChannelChatFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_weight="1" >
+
+        <fragment
+            android:id="@+id/chat_fragment"
+            android:name="com.morlunk.mumbleclient.app.ChannelChatFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
     </LinearLayout>
-    <LinearLayout 
+
+    <LinearLayout
         android:id="@+id/right_split"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:orientation="vertical" >
 
-    	<fragment
-    	    android:id="@+id/list_fragment"
-    	    android:name="com.morlunk.mumbleclient.app.ChannelListFragment"
-    	    android:layout_width="match_parent"
-    	    android:layout_height="0dp" 
-            android:layout_weight="1"/>
-    	
+        <fragment
+            android:id="@+id/list_fragment"
+            android:name="com.morlunk.mumbleclient.app.ChannelListFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="right"
-            android:orientation="vertical">
+            android:layout_height="51dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical" >
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#dadada" />
 
             <Button
                 android:id="@+id/pushtotalk"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:background="@drawable/vs_micbtn_off"
-            	android:layout_margin="8dp"/>
+                style="@style/Plumble.BorderlessButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/ptt"
+                android:textSize="12sp"
+                android:textColor="#858585"
+                android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 

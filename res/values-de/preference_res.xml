@@ -24,6 +24,7 @@
 	    <item>lightDark</item>
 	    <item>dark</item>
 	</string-array>
+	
 	<string-array name="callModeNames">
 	    <item>Freisprechen</item>
 	    <item>Telefonanruf</item>
@@ -101,4 +102,12 @@
 	<string name="voiceActivitySettings">Einstellunge Sprachaktivierung</string>
 	<string name="voiceActivitySettingsSum">Konfiguration der Sprachaktivierung falls eingeschaltet.</string>
 	<string name="audioOutput">Audio Ausgabe</string>
+	<string name="disableOpus">Opus Codec deaktivieren</string>
+	<string name="disableOpusSum">Opus unterstüzung für Mumble 1.2.4 Server deaktivieren. Hilfreich bei Schwierigkeiten mit dem Ton auf Mumble 1.2.4 Servern.</string>
+	<string name="hidePtt">Verstecke die Push to Talk Taste</string>
+	<string name="hidePttSum">Versteckt die Push to Talk Taste. Nützlich bei Verwendung von Bildschirmecken oder Hardwaretasten zur Sprachaktivierung.</string>
+	<string name="useTts">Text-zu-Sprache</string>
+	<string name="useTtsSum">Aktiviert Text-zu-Sprache für eingehende Nachrichten.</string>
+	<string name="togglePtt">Push to Talk Taste feststellen</string>
+	<string name="togglePttSum">Die Sprachübertragung wird beim drücken der Push to Talk Taste dauerhaft aktiviert/deaktiviert.</string>
 </resources>

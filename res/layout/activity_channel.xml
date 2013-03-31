@@ -11,26 +11,29 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" >
-
-        <android.support.v4.view.PagerTabStrip
-            android:id="@+id/tabstrip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top" />
     </android.support.v4.view.ViewPager>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:gravity="center_horizontal"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="#555555">
+        
+        <View 
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#484848"/>
 
         <Button
             android:id="@+id/pushtotalk"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/vs_micbtn_off"
-            android:layout_margin="8dp"/>
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/ptt"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            style="@style/Plumble.BorderlessButton"/>
     </LinearLayout>
 
 </LinearLayout>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal" >
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent" >
+
+        <ImageButton
+            android:id="@+id/tab_channels"
+            style="@style/Plumble.BorderlessButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:src="@drawable/ic_action_channels" />
+        
+        <View 
+            android:id="@+id/tab_channels_indicator"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignLeft="@id/tab_channels"
+            android:layout_alignRight="@id/tab_channels"
+            android:background="@color/abs__holo_blue_light"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent" >
+
+        <ImageButton
+            android:id="@+id/tab_chat"
+            style="@style/Plumble.BorderlessButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:src="@drawable/ic_action_chat_dark" />
+        
+        <View 
+            android:id="@+id/tab_chat_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="4dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignLeft="@id/tab_chat"
+            android:layout_alignRight="@id/tab_chat"
+            android:background="@color/abs__holo_blue_light"
+            android:visibility="gone"/>
+    </RelativeLayout>
+
+</LinearLayout>

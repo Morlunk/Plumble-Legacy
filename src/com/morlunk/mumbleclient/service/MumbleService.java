@@ -48,6 +48,7 @@ import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.ChannelActivity;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
+import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
@@ -575,6 +576,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	final List<Message> unreadMessages = new LinkedList<Message>();
 	final List<Channel> channels = new ArrayList<Channel>();
 	final List<User> users = new ArrayList<User>();
+	
+	private List<Favourite> favourites;
 
 	// Use concurrent hash map so we can modify the collection while iterating.
 	private final Map<Object, BaseServiceObserver> observers = new ConcurrentHashMap<Object, BaseServiceObserver>();
@@ -621,6 +624,18 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		if (mClient != null) {
 			mClient.disconnect();
 		}
+	}
+	
+	public Channel getChannel(int channelId) {
+		for(Channel channel : channels) {
+			if(channel.id == channelId)
+				return channel;
+		}
+		return null;
+	}
+	
+	public List<User> getChannelUsers(Channel channel) {
+		return mProtocol.channelMap.get(channel);
 	}
 
 	public List<Channel> getChannelList() {
@@ -678,6 +693,23 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				return ((Integer)lhs.position).compareTo(((Integer)rhs.position));
 			}
 		});
+	}
+	
+	public void updateFavourites() {
+        DbAdapter dbAdapter = getDatabaseAdapter();
+        favourites = dbAdapter.fetchAllFavourites(getConnectedServer().getId());
+	}
+	
+	public List<Favourite> getFavourites() {
+		return favourites;
+	}
+	
+	public Favourite getFavouriteForChannel(Channel channel) {
+		for(Favourite favourite : favourites) {
+			if(favourite.getChannelId() == channel.id)
+				return favourite;
+		}
+		return null;
 	}
 
 	public int getCodec() {
@@ -1288,6 +1320,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			} else if (settings.isMuted()) {
 				setMuted(true);
 			}
+			updateFavourites();
 			if(synced)
 				showNotification();
 			break;

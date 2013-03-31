@@ -41,6 +41,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -97,10 +98,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     /**
      * The {@link ViewPager} that will host the section contents.
      */
-    ViewPager mViewPager;
+    private ViewPager mViewPager;
+    
+    // Tabs
+    private View channelsIndicator;
+    private View chatIndicator;
     
     // Favourites
-    private List<Favourite> favourites;
     private MenuItem searchItem;
     private MenuItem mutedButton;
     private MenuItem deafenedButton;
@@ -173,10 +177,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         
         AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
-
-        // Set up the action bar.
-        final ActionBar actionBar = getSupportActionBar();
-        actionBar.setDisplayShowHomeEnabled(false);
         
         // Set up PTT button.
     	
@@ -198,7 +198,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 					else
 						setPushToTalk(false);
 				}
-				mTalkButton.setBackgroundResource(mService.isRecording() ? R.drawable.vs_micbtn_rec : R.drawable.vs_micbtn_off);
 				
 				return false; // We return false so that the selector that changes the background still fires.
 			}
@@ -223,6 +222,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 						InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 			            imm.hideSoftInputFromWindow(mViewPager.getApplicationWindowToken(), 0);
 					}
+					// Update indicator
+					channelsIndicator.setVisibility(arg0 == 0 ? View.VISIBLE : View.INVISIBLE);
+					chatIndicator.setVisibility(arg0 == 1 ? View.VISIBLE : View.INVISIBLE);
 				}
 				
 				@Override
@@ -245,6 +247,31 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			}
             
             mViewPager.setAdapter(mSectionsPagerAdapter);
+            
+            // Set up tabs
+            getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+            
+            View channelTabView = getLayoutInflater().inflate(R.layout.channel_tab_view, null);
+            channelsIndicator = channelTabView.findViewById(R.id.tab_channels_indicator);
+            chatIndicator = channelTabView.findViewById(R.id.tab_chat_indicator);
+            
+            ImageButton channelsButton = (ImageButton) channelTabView.findViewById(R.id.tab_channels);
+            ImageButton chatButton = (ImageButton) channelTabView.findViewById(R.id.tab_chat);
+            channelsButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mViewPager.setCurrentItem(0, true);
+				}
+			});
+            chatButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mViewPager.setCurrentItem(1, true);
+				}
+			});
+            
+            getSupportActionBar().setCustomView(channelTabView);
+            
         } else {
         	// Otherwise, create tablet UI.
 	        listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
@@ -442,6 +469,13 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
      * Used to control the user settings shown when registered.
      */
     private void updateUserControlMenuItems() {
+    	if(mService == null || 
+    			getCurrentUser() == null || 
+    			userRegisterItem == null || 
+    			userCommentItem == null || 
+    			userInformationItem == null)
+    		return;
+    	
 		boolean userRegistered = getCurrentUser().isRegistered;
 		userRegisterItem.setEnabled(!userRegistered);
 		userCommentItem.setEnabled(userRegistered);
@@ -608,10 +642,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		
 		// Send access tokens after connection.
 		sendAccessTokens();
-		
-        // Load favourites if is non-public server
-        if(!mService.isConnectedServerPublic())
-        	favourites = loadFavourites();
         
 		// Load messages
 		reloadChat();
@@ -717,39 +747,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		}
 	}
 	
-	private void toggleFavourite(final Channel channel) {
-		
-		Favourite currentFavourite = null;
-		
-		for(Favourite favourite : favourites) {
-			if(favourite.getChannelId() == channel.id) {
-				currentFavourite = favourite;
-			}
-		}
-		
-		final Favourite channelFavourite = currentFavourite;
-		
-		new AsyncTask<Void, Void, Void>() {
-
-			@Override
-			protected Void doInBackground(Void... params) {
-				DbAdapter dbAdapter = mService.getDatabaseAdapter();
-
-				if (channelFavourite == null)
-					dbAdapter.createFavourite(mService.getConnectedServer().getId(),
-							channel.id);
-				else
-					dbAdapter.deleteFavourite(channelFavourite.getId());
-				
-				return null;
-			}
-
-			protected void onPostExecute(Void result) {
-				favourites = loadFavourites();
-			};
-		}.execute();
-	}
-	
 	/**
 	 * @see http://stackoverflow.com/questions/6335875/help-with-proximity-screen-off-wake-lock-in-android
 	 */
@@ -768,21 +765,15 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		}
 	}
 	
-	public List<Favourite> loadFavourites() {
-        DbAdapter dbAdapter = mService.getDatabaseAdapter();
-        List<Favourite> favouriteResult = dbAdapter.fetchAllFavourites(mService.getConnectedServer().getId());
-        return favouriteResult;
-	}
-	
 	private void showFavouritesDialog() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		
 		builder.setTitle(R.string.favorites);
 		
 		List<CharSequence> items = new ArrayList<CharSequence>();
-		final List<Favourite> activeFavourites = new ArrayList<Favourite>(favourites);
+		final List<Favourite> activeFavourites = new ArrayList<Favourite>(mService.getFavourites());
 		
-		for(Favourite favourite : favourites) {
+		for(Favourite favourite : mService.getFavourites()) {
 			int channelId = favourite.getChannelId();
 			Channel channel = findChannelById(channelId);
 			
