@@ -782,7 +782,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	}
 
 	public boolean isRecording() {
-		return (mRecordThreadInstance != null);
+		return mRecordThread.isRecording();
 	}
 
 	public boolean isDeafened() {
@@ -903,11 +903,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		if (mProtocol == null || mProtocol.currentUser == null)
 			return;
 
-		if (state) {
+		if (state && mRecordThreadInstance == null) {
 			// start record
-			// TODO check initialized
-			mRecordThread = new RecordThread(this, settings.isVoiceActivity(),
-					mProtocol.codec);
 			mRecordThreadInstance = new Thread(mRecordThread, "record");
 			mRecordThreadInstance.start();
 
@@ -920,7 +917,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			// stop record
 			mRecordThreadInstance.interrupt();
 			mRecordThreadInstance = null;
-			mRecordThread = null;
 			mAudioHost.setTalkState(mProtocol.currentUser,
 					AudioOutputHost.STATE_PASSIVE);
 		}
@@ -1321,12 +1317,19 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				setMuted(true);
 			}
 			updateFavourites();
-			if(synced)
+			if(synced) {
+				// Initialize recording thread
+				mRecordThread = new RecordThread(this, settings.isVoiceActivity(), mProtocol.codec);
+				if(settings.isVoiceActivity())
+					setRecording(true); // Immediately begin record if using voice activity
+				
 				showNotification();
+			}
 			break;
 		case MumbleConnectionHost.STATE_DISCONNECTED:
 			settings.deleteObserver(this);
 			serviceState = CONNECTION_STATE_DISCONNECTED;
+			mRecordThread = null;
 			hideNotification();
 			break;
 		default:
@@ -1357,5 +1360,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 						Settings.ARRAY_HOT_CORNER_NONE)) {
 			createPTTOverlay();
 		}
+		
+		// Handle voice activity
+		setRecording(settings.isVoiceActivity());
 	}
 }

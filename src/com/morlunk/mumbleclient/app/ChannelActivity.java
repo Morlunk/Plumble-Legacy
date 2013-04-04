@@ -294,18 +294,8 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     // Settings observer
     @Override
     public void update(Observable observable, Object data) {
-    	Settings settings = (Settings)observable;
-    	
     	if(data == Settings.OBSERVER_KEY_ALL) {
         	updatePTTConfiguration(); // Update push-to-talk
-        	
-    		// Turn on voice activity if applicable
-    		if(!mService.isRecording() && !settings.isPushToTalk())
-    			mService.setRecording(true);
-    		// Turn off recording if switching to PTT
-    		if(mService.isRecording() && settings.isPushToTalk()) {
-    			setPushToTalk(false);
-    		}
     	}
     }
     
@@ -649,11 +639,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         
 		// Load messages
 		reloadChat();
-		
-		// Start recording for voice activity, as there is no push to talk button.
-		if(settings.isVoiceActivity() && !mService.isRecording()) {
-			mService.setRecording(true);
-		}
 		
 		// Restore push to talk state, if toggled.
 		if(settings.isPushToTalk() && 

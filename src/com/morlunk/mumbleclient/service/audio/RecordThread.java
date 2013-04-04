@@ -4,7 +4,6 @@ import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
 
-import android.annotation.TargetApi;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -21,12 +20,12 @@ import com.morlunk.mumbleclient.service.PacketDataStream;
 
 /**
  * Thread responsible for recording voice and sending it over to server.
- *
+ * 
  * @author pcgod
- *
+ * 
  */
 public class RecordThread implements Runnable, Observer {
-	
+
 	private float volumeMultiplier;
 	private int audioQuality;
 	private static int frameSize;
@@ -37,39 +36,47 @@ public class RecordThread implements Runnable, Observer {
 	private int codec;
 	private boolean voiceActivity = false;
 	private String callMode;
-	
+
 	// CELT
 	private long celtEncoder;
 	private long celtMode;
 	// Opus
 	private long opusEncoder;
-	
+
 	private final int framesPerPacket = 6;
 	private final LinkedList<byte[]> outputQueue = new LinkedList<byte[]>();
 	private final short[] resampleBuffer = new short[MumbleProtocol.FRAME_SIZE];
 	private int seq;
 	private final long speexResamplerState;
 	private final MumbleService mService;
-	
+
 	private static final int DETECTION_DELAY = 400; // Wait 400ms after record
 	private int detectionThreshold = 1400;
 	private long lastDetection = 0;
 	private int talkState = AudioOutputHost.STATE_PASSIVE;
 
-	public RecordThread(final MumbleService service, final boolean voiceActivity, final int codec) {
+	// State
+	private AudioRecord audioRecord;
+	private boolean recording;
+
+	public RecordThread(final MumbleService service,
+			final boolean voiceActivity, final int codec) {
 		mService = service;
 		this.voiceActivity = voiceActivity;
 		this.codec = codec;
-		
+
 		Settings settings = Settings.getInstance(service);
 		settings.addObserver(this);
-		update(settings, null);
+		
+		detectionThreshold = settings.getDetectionThreshold();
+		callMode = settings.getCallMode();
+		audioQuality = settings.getAudioQuality();
+		volumeMultiplier = settings.getAmplitudeBoostMultiplier();
 
 		for (final int s : new int[] { 48000, 44100, 22050, 11025, 8000 }) {
-			bufferSize = AudioRecord.getMinBufferSize(
-				s,
-				AudioFormat.CHANNEL_IN_MONO,
-				AudioFormat.ENCODING_PCM_16BIT);
+			bufferSize = AudioRecord
+					.getMinBufferSize(s, AudioFormat.CHANNEL_IN_MONO,
+							AudioFormat.ENCODING_PCM_16BIT);
 			if (bufferSize > 0) {
 				recordingSampleRate = s;
 				break;
@@ -80,84 +87,76 @@ public class RecordThread implements Runnable, Observer {
 			throw new RuntimeException("No recording sample rate found");
 		}
 
-		Log.i(Globals.LOG_TAG, "Selected recording sample rate: " +
-							  recordingSampleRate);
+		Log.i(Globals.LOG_TAG, "Selected recording sample rate: "
+				+ recordingSampleRate);
 
 		frameSize = recordingSampleRate / 100;
 
 		buffer = new short[frameSize];
-		
-		if(codec == MumbleProtocol.CODEC_OPUS) {
-			opusEncoder = NativeAudio.opusEncoderCreate(MumbleProtocol.SAMPLE_RATE, 1, NativeAudio.OPUS_APPLICATION_VOIP);
-			NativeAudio.opusEncoderCtl(opusEncoder, NativeAudio.OPUS_SET_VBR_REQUEST, 0);
-		} else if(codec == MumbleProtocol.CODEC_BETA || codec == MumbleProtocol.CODEC_ALPHA) {
-			celtMode = Native.celt_mode_create(
-					MumbleProtocol.SAMPLE_RATE,
+
+		if (codec == MumbleProtocol.CODEC_OPUS) {
+			opusEncoder = NativeAudio.opusEncoderCreate(
+					MumbleProtocol.SAMPLE_RATE, 1,
+					NativeAudio.OPUS_APPLICATION_VOIP);
+			NativeAudio.opusEncoderCtl(opusEncoder,
+					NativeAudio.OPUS_SET_VBR_REQUEST, 0);
+		} else if (codec == MumbleProtocol.CODEC_BETA
+				|| codec == MumbleProtocol.CODEC_ALPHA) {
+			celtMode = Native.celt_mode_create(MumbleProtocol.SAMPLE_RATE,
 					MumbleProtocol.FRAME_SIZE);
 			celtEncoder = Native.celt_encoder_create(celtMode, 1);
-			Native.celt_encoder_ctl(
-					celtEncoder,
-					celtConstants.CELT_SET_PREDICTION_REQUEST,
-					0);
-			Native.celt_encoder_ctl(
-					celtEncoder,
-					celtConstants.CELT_SET_VBR_RATE_REQUEST,
-					audioQuality);
+			Native.celt_encoder_ctl(celtEncoder,
+					celtConstants.CELT_SET_PREDICTION_REQUEST, 0);
+			Native.celt_encoder_ctl(celtEncoder,
+					celtConstants.CELT_SET_VBR_RATE_REQUEST, audioQuality);
 		}
 
 		if (recordingSampleRate != TARGET_SAMPLE_RATE) {
 			Log.d(Globals.LOG_TAG, "Initializing Speex resampler.");
-			speexResamplerState = Native.speex_resampler_init(
-				1,
-				recordingSampleRate,
-				TARGET_SAMPLE_RATE,
-				3);
+			speexResamplerState = Native.speex_resampler_init(1,
+					recordingSampleRate, TARGET_SAMPLE_RATE, 3);
 		} else {
 			speexResamplerState = 0;
 		}
-	}
 
-	@TargetApi(16)
-	@Override
-	public final void run() {
-		final boolean running = true;
-		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-		
+		android.os.Process
+				.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+
 		int audioSource = MediaRecorder.AudioSource.DEFAULT;
-		
-		if(callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
+
+		if (callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
 			audioSource = (MediaRecorder.AudioSource.MIC);
-		} else if(callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
+		} else if (callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
 			audioSource = (MediaRecorder.AudioSource.DEFAULT);
 		}
-				
-		AudioRecord ar = null;
-		try {
-			ar = new AudioRecord(audioSource,
-				recordingSampleRate,
-				AudioFormat.CHANNEL_IN_MONO,
-				AudioFormat.ENCODING_PCM_16BIT,
+
+		audioRecord = new AudioRecord(audioSource, recordingSampleRate,
+				AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
 				64 * 1024);
-			
-			/*
-			if(VERSION.SDK_INT >= 16 && AcousticEchoCanceler.isAvailable()) {
-				// Setup echo cancellation
-				Log.d(Globals.LOG_TAG, "Enabled echo cancellation.");
-				AcousticEchoCanceler.create(ar.getAudioSessionId());
-			}
-			*/
-			
-			if (ar.getState() != AudioRecord.STATE_INITIALIZED) {
+
+		/*
+		 * if(VERSION.SDK_INT >= 16 && AcousticEchoCanceler.isAvailable()) {
+		 * Log.d(Globals.LOG_TAG, "Enabled echo cancellation.");
+		 * AcousticEchoCanceler.create(ar.getAudioSessionId()); }
+		 */
+	}
+
+	@Override
+	public final void run() {
+		recording = true;
+		try {
+
+			if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
 				return;
 			}
 
-			ar.startRecording();
-			
-			while (running && mService.isConnected() && !Thread.interrupted()) {
-				final int read = ar.read(buffer, 0, frameSize);
+			audioRecord.startRecording();
 
-				if (read == AudioRecord.ERROR_BAD_VALUE ||
-					read == AudioRecord.ERROR_INVALID_OPERATION) {
+			while (recording && mService.isConnected() && !Thread.interrupted()) {
+				final int read = audioRecord.read(buffer, 0, frameSize);
+
+				if (read == AudioRecord.ERROR_BAD_VALUE
+						|| read == AudioRecord.ERROR_INVALID_OPERATION) {
 					throw new RuntimeException("" + read);
 				}
 
@@ -166,55 +165,56 @@ public class RecordThread implements Runnable, Observer {
 					out = resampleBuffer;
 					final int[] in_len = new int[] { buffer.length };
 					final int[] out_len = new int[] { out.length };
-					Native.speex_resampler_process_int(
-						speexResamplerState,
-						0,
-						buffer,
-						in_len,
-						out,
-						out_len);
+					Native.speex_resampler_process_int(speexResamplerState, 0,
+							buffer, in_len, out, out_len);
 				} else {
 					out = buffer;
 				}
-				
+
 				long totalAmplitude = 0;
-				
+
 				// Boost amplitude, if applicable- also, record avg. amplitude.
-				for(int x=0;x<out.length;x++) {
+				for (int x = 0; x < out.length; x++) {
 					totalAmplitude += Math.abs(out[x]);
-					out[x] += volumeMultiplier*out[x];
+					out[x] += volumeMultiplier * out[x];
 				}
 				totalAmplitude /= out.length;
-				
-				if(voiceActivity &&
-						mService != null &&
-						mService.isConnected() &&
-						mService.getCurrentUser() != null) {					
-					if(totalAmplitude >= detectionThreshold) {
+
+				if (voiceActivity && mService != null && mService.isConnected()
+						&& mService.getCurrentUser() != null) {
+					if (totalAmplitude >= detectionThreshold) {
 						lastDetection = System.currentTimeMillis();
 					}
-					
-					if(System.currentTimeMillis() - lastDetection <= DETECTION_DELAY) {
-						if(talkState != AudioOutputHost.STATE_TALKING) {
-							mService.getAudioHost().setTalkState(mService.getCurrentUser(), AudioOutputHost.STATE_TALKING);
+
+					if (System.currentTimeMillis() - lastDetection <= DETECTION_DELAY) {
+						if (talkState != AudioOutputHost.STATE_TALKING) {
+							mService.getAudioHost().setTalkState(
+									mService.getCurrentUser(),
+									AudioOutputHost.STATE_TALKING);
 							talkState = AudioOutputHost.STATE_TALKING;
 						}
 					} else {
-						if(talkState != AudioOutputHost.STATE_PASSIVE) {
-							mService.getAudioHost().setTalkState(mService.getCurrentUser(), AudioOutputHost.STATE_PASSIVE);
+						if (talkState != AudioOutputHost.STATE_PASSIVE) {
+							mService.getAudioHost().setTalkState(
+									mService.getCurrentUser(),
+									AudioOutputHost.STATE_PASSIVE);
 							talkState = AudioOutputHost.STATE_PASSIVE;
 						}
 					}
 				}
-				
+
 				final int compressedSize = Math.min(audioQuality / (100 * 8),
 						127);
 				final byte[] compressed = new byte[compressedSize];
 				synchronized (Native.class) {
-					if(codec == MumbleProtocol.CODEC_OPUS) {
-						NativeAudio.opusEncoderCtl(opusEncoder, NativeAudio.OPUS_SET_BITRATE_REQUEST, audioQuality);
-						NativeAudio.opusEncode(opusEncoder, out, frameSize, compressed, compressedSize);
-					} else if(codec == MumbleProtocol.CODEC_BETA || codec == MumbleProtocol.CODEC_ALPHA) {
+					if (codec == MumbleProtocol.CODEC_OPUS) {
+						NativeAudio.opusEncoderCtl(opusEncoder,
+								NativeAudio.OPUS_SET_BITRATE_REQUEST,
+								audioQuality);
+						NativeAudio.opusEncode(opusEncoder, out, frameSize,
+								compressed, compressedSize);
+					} else if (codec == MumbleProtocol.CODEC_BETA
+							|| codec == MumbleProtocol.CODEC_ALPHA) {
 						Native.celt_encode(celtEncoder, out, compressed,
 								compressedSize);
 					}
@@ -230,9 +230,9 @@ public class RecordThread implements Runnable, Observer {
 				while (!outputQueue.isEmpty()) {
 					int flags = 0;
 					flags |= codec << 5;
-					outputBuffer[0] = (byte)(flags & 0xff);
+					outputBuffer[0] = (byte) (flags & 0xff);
 
-					if(codec == MumbleProtocol.CODEC_OPUS) {
+					if (codec == MumbleProtocol.CODEC_OPUS) {
 						pds.rewind();
 						pds.next();
 						seq += 1;
@@ -241,7 +241,8 @@ public class RecordThread implements Runnable, Observer {
 						long header = frame.length;
 						pds.writeLong(header);
 						pds.append(frame);
-					} else if(codec == MumbleProtocol.CODEC_BETA || codec == MumbleProtocol.CODEC_ALPHA) {
+					} else if (codec == MumbleProtocol.CODEC_BETA
+							|| codec == MumbleProtocol.CODEC_ALPHA) {
 						pds.rewind();
 						// skip flags
 						pds.next();
@@ -261,42 +262,54 @@ public class RecordThread implements Runnable, Observer {
 							pds.append(tmp);
 						}
 					}
-					
-					if(talkState == AudioOutputHost.STATE_TALKING || !voiceActivity) {
+
+					if (talkState == AudioOutputHost.STATE_TALKING
+							|| !voiceActivity) {
 						mService.sendUdpMessage(outputBuffer, pds.size());
 					}
 				}
 			}
 		} finally {
-			if (ar != null) {
-				ar.release();
+			if (audioRecord != null) {
+				audioRecord.stop();
 			}
+			recording = false;
 		}
+	}
+
+	public boolean isRecording() {
+		return recording;
 	}
 
 	@Override
 	protected final void finalize() {
 		if (speexResamplerState != 0)
 			Native.speex_resampler_destroy(speexResamplerState);
-		
-		if(opusEncoder != 0)
+
+		if (opusEncoder != 0)
 			NativeAudio.opusEncoderDestroy(opusEncoder);
-		
-		if(celtEncoder != 0)
+
+		if (celtEncoder != 0)
 			Native.celt_encoder_destroy(celtEncoder);
-		
-		if(celtMode != 0)
+
+		if (celtMode != 0)
 			Native.celt_mode_destroy(celtMode);
-		
+
 		Settings.getInstance(mService).deleteObserver(this);
+		
+		audioRecord.release();
 	}
-	
+
 	@Override
 	public void update(Observable observable, Object data) {
 		Settings settings = (Settings) observable;
-		volumeMultiplier = settings.getAmplitudeBoostMultiplier();
-		detectionThreshold = settings.getDetectionThreshold();
-		callMode = settings.getCallMode();
-		audioQuality = settings.getAudioQuality();
+		if(data == Settings.OBSERVER_KEY_ALL) {
+			voiceActivity = settings.isVoiceActivity();
+			detectionThreshold = settings.getDetectionThreshold();
+			callMode = settings.getCallMode();
+			audioQuality = settings.getAudioQuality();
+		} else if(data == Settings.OBSERVER_KEY_AMPLITUDE) {
+			volumeMultiplier = settings.getAmplitudeBoostMultiplier();
+		}
 	}
 }
