@@ -118,6 +118,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 
 	private ProgressDialog mProgressDialog;
 	private Button mTalkButton;
+	private View pttView;
 	
 	// Fragments
 	private ChannelListFragment listFragment;
@@ -181,7 +182,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         // Set up PTT button.
     	
     	mTalkButton = (Button) findViewById(R.id.pushtotalk);
-    	
+    	pttView = findViewById(R.id.pushtotalk_view);
     	mTalkButton.setOnTouchListener(new OnTouchListener() {
 			
 			@Override
@@ -199,7 +200,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 						setPushToTalk(false);
 				}
 				
-				return false; // We return false so that the selector that changes the background still fires.
+				return true; // We return true so that the selector that changes the background does not fire.
 			}
 		});
     	
@@ -293,28 +294,21 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     // Settings observer
     @Override
     public void update(Observable observable, Object data) {
-    	Settings settings = (Settings)observable;
-    	
     	if(data == Settings.OBSERVER_KEY_ALL) {
         	updatePTTConfiguration(); // Update push-to-talk
-        	
-    		// Turn on voice activity if applicable
-    		if(!mService.isRecording() && !settings.isPushToTalk())
-    			mService.setRecording(true);
-    		// Turn off recording if switching to PTT
-    		if(mService.isRecording() && settings.isPushToTalk()) {
-    			setPushToTalk(false);
-    		}
     	}
     }
     
     private void updatePTTConfiguration() {
-    	mTalkButton.setVisibility(settings.isPushToTalk() && settings.isPushToTalkButtonShown() ? View.VISIBLE : View.GONE);
+    	pttView.setVisibility(settings.isPushToTalk() && settings.isPushToTalkButtonShown() ? View.VISIBLE : View.GONE);
     }
     
     public void setPushToTalk(final boolean talking) {
     	if(mService.isRecording() != talking)
         	mService.setRecording(talking);
+    	
+    	if(pttView != null)
+    		pttView.setBackgroundResource(talking ? R.color.abs__holo_blue_light : R.color.push_to_talk_background);
     }
     
     /* (non-Javadoc)
@@ -645,11 +639,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         
 		// Load messages
 		reloadChat();
-		
-		// Start recording for voice activity, as there is no push to talk button.
-		if(settings.isVoiceActivity() && !mService.isRecording()) {
-			mService.setRecording(true);
-		}
 		
 		// Restore push to talk state, if toggled.
 		if(settings.isPushToTalk() && 

@@ -36,6 +36,7 @@
             android:layout_weight="1" />
 
         <LinearLayout
+            android:id="@+id/pushtotalk_view"
             android:layout_width="match_parent"
             android:layout_height="51dp"
             android:gravity="center_horizontal"
@@ -48,13 +49,13 @@
 
             <Button
                 android:id="@+id/pushtotalk"
-                style="@style/Plumble.BorderlessButton"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:text="@string/ptt"
                 android:textSize="12sp"
                 android:textColor="#858585"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:background="@null" />
         </LinearLayout>
     </LinearLayout>
 

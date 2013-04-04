@@ -29,6 +29,7 @@ import android.util.Log;
 import android.util.Xml;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -347,6 +348,13 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			new PublicServerFetchTask() {
 				protected void onPostExecute(List<PublicServer> result) {
 					super.onPostExecute(result);
+					
+					if(result == null) {
+						// Handle error
+						Toast.makeText(ServerList.this, R.string.error_fetching_servers, Toast.LENGTH_SHORT).show();
+						return;
+					}
+					
 					if(publicServerListFragment.isVisible())
 						publicServerListFragment.setServers(result);
 				};
