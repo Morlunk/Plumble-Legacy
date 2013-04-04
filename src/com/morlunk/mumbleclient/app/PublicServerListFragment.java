@@ -104,8 +104,6 @@ public class PublicServerListFragment extends SherlockFragment implements OnItem
 				showFilterDialog();
 				return true;
 			}
-		} else {
-			Toast.makeText(getActivity(), R.string.fetchingServers, Toast.LENGTH_LONG).show();
 		}
 		return super.onOptionsItemSelected(item);
 	}

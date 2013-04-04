@@ -41,6 +41,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 
 import com.google.protobuf.Message.Builder;
 import com.morlunk.mumbleclient.Globals;
@@ -1352,16 +1353,18 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	@Override
 	public void update(Observable observable, Object data) {
 		Settings settings = (Settings) observable;
-
-		// Create PTT overlay
-		dismissPTTOverlay();
-		if (settings.isPushToTalk()
-				&& !settings.getHotCorner().equals(
-						Settings.ARRAY_HOT_CORNER_NONE)) {
-			createPTTOverlay();
-		}
 		
-		// Handle voice activity
-		setRecording(settings.isVoiceActivity());
+		if(data.equals(Settings.OBSERVER_KEY_ALL)) {
+			// Create PTT overlay
+			dismissPTTOverlay();
+			if (settings.isPushToTalk()
+					&& !settings.getHotCorner().equals(
+							Settings.ARRAY_HOT_CORNER_NONE)) {
+				createPTTOverlay();
+			}
+			
+			// Handle voice activity
+			setRecording(settings.isVoiceActivity());
+		}
 	}
 }
