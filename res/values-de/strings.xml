@@ -131,4 +131,6 @@
     <string name="register">Registrieren</string>
     <string name="userControl">Benutzerkontrolle</string>
     <string name="registerSelfSuccess">Registrationsanfrage gesendet</string>
+    <string name="error_fetching_servers">Fehler beim Abrufen der Serverliste!\nÜberprüfe deine Internetverbindung.</string>
+    <string name="coming_soon">Diese Funktion ist demnächst verfügbar.</string>
 </resources>
