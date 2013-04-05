@@ -132,4 +132,5 @@
     <string name="userControl">Kontrola użytkownika</string>
     <string name="registerSelfSuccess">Wysłano żądanie rejestracji</string>
     <string name="error_fetching_servers">Wystąpił błąd podczas pobierania publicznej listy serwerów!\nSprawdź swoje połączenie z internetem.</string>
+    <string name="coming_soon">Funkcja będzie dostępna wkrótce.</string>
 </resources>
