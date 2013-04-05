@@ -522,10 +522,12 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 			}.execute();
 			return true;
 		case R.id.menu_user_comment:
-			
+			// TODO
+			Toast.makeText(this, R.string.coming_soon, Toast.LENGTH_SHORT).show();
 			return true;
 		case R.id.menu_user_information:
-			
+			// TODO
+			Toast.makeText(this, R.string.coming_soon, Toast.LENGTH_SHORT).show();
 			return true;
 		case R.id.menu_clear_chat:
 			mService.clearChat();

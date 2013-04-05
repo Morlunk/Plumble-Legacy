@@ -70,6 +70,7 @@ public class Settings extends Observable {
 	public static final String PREF_CERT = "certificatePath";
 	public static final String PREF_CERT_PASSWORD = "certificatePassword";
 
+	/* TODO reimplement with new channel list
 	public static final String PREF_CHANNELLIST_ROW_HEIGHT = "channellistrowheight";
 	public static final String DEFAULT_CHANNELLIST_ROW_HEIGHT = "35";
 
@@ -78,7 +79,8 @@ public class Settings extends Observable {
 
 	public static final String PREF_COLORIZE_THRESHOLD = "colorthresholdnumusers";
 	public static final String DEFAULT_COLORIZE_THRESHOLD = "5";
-
+	*/
+	
 	public static final String PREF_FORCE_TCP = "forceTcp";
 	public static final Boolean DEFAULT_FORCE_TCP = false;
 	
@@ -176,6 +178,8 @@ public class Settings extends Observable {
 	public boolean isTextToSpeechEnabled() {
 		return preferences.getBoolean(PREF_USE_TTS, DEFAULT_USE_TTS);
 	}
+	
+	/*
 
 	public int getChannelListRowHeight() {
 		return Integer.parseInt(preferences.getString(
@@ -192,6 +196,8 @@ public class Settings extends Observable {
 		return Integer.parseInt(preferences.getString(
 				Settings.PREF_COLORIZE_THRESHOLD, DEFAULT_COLORIZE_THRESHOLD));
 	}
+	
+	*/
 	
 	public boolean isTcpForced() {
 		return preferences.getBoolean(PREF_FORCE_TCP, DEFAULT_FORCE_TCP);

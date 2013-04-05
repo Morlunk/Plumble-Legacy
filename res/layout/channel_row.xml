@@ -9,13 +9,13 @@
     
     <TextView 
         android:id="@+id/channel_row_count"
-        android:layout_width="wrap_content"
+        android:layout_width="50dp"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:layout_marginLeft="38dp"
-        android:layout_marginRight="8dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:textColor="@color/abs__holo_blue_light"
-        android:text="(1)"/>
+        android:text="(10)"/>
     
     <TextView 
         android:id="@+id/channel_row_name"

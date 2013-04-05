@@ -49,6 +49,7 @@
             android:key="theme"
             android:summary="@string/themeSum"
             android:title="@string/theme" />
+        <!--
         <ListPreference
             android:defaultValue="35"
             android:entries="@array/rowheightText"
@@ -68,6 +69,7 @@
             android:key="colorthresholdnumusers"
             android:summary="@string/colorthresholdSum"
             android:title="@string/colorthreshold" />
+            -->
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/advancedAudio" >
         <CheckBoxPreference android:title="@string/disableOpus" android:key="disableOpus" android:summary="@string/disableOpusSum" android:defaultValue="false"/><EditTextPreference

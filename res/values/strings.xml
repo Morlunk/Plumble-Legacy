@@ -132,4 +132,5 @@
     <string name="userControl">User Control</string>
     <string name="registerSelfSuccess">Sent registration request</string>
     <string name="error_fetching_servers">Error fetching servers!\nCheck your internet connection.</string>
+    <string name="coming_soon">This feature is coming soon.</string>
 </resources>
