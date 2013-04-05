@@ -307,8 +307,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	if(mService.isRecording() != talking)
         	mService.setRecording(talking);
     	
+    	int pushToTalkBackground = mViewPager != null ? R.color.push_to_talk_background : 0; // Use special 'second action bar' look for background of paged.
+    	
     	if(pttView != null)
-    		pttView.setBackgroundResource(talking ? R.color.abs__holo_blue_light : R.color.push_to_talk_background);
+    		pttView.setBackgroundResource(talking ? R.color.abs__holo_blue_light : pushToTalkBackground);
     }
     
     /* (non-Javadoc)
