@@ -60,13 +60,9 @@ public class ChannelListFragment extends SherlockFragment implements
 		usersAdapter.updateChannelList();
 		usersAdapter.notifyDataSetChanged();
 		
-		// Expand channels with users
+		// Always make sure channels are expanded
 		for(int i=0;i<usersAdapter.getGroupCount();i++) {
-			Channel channel = usersAdapter.channels.get(i);
-			if(channel.userCount > 0)
-				channelUsersList.expandGroup(i);
-			else
-				channelUsersList.collapseGroup(i);
+			channelUsersList.expandGroup(i);
 		}
 	}
 
