@@ -1,66 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/RelativeLayout01"
-	android:layout_height="wrap_content"
-	android:layout_width="fill_parent"
-	android:padding="8dp">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
-	<ImageView
-		android:layout_width="32dp"
-		android:layout_height="32dp"
-	    android:layout_centerVertical="true"
-		android:id="@+id/userRowState"
-		android:src="@drawable/plumble" />
-	<TextView
-		android:layout_height="wrap_content"
-		android:text="[Name]"
-		android:id="@+id/userRowName"
-		android:ellipsize="end"
-		android:layout_width="wrap_content"
-		android:lines="1"
-		android:singleLine="true"
-		android:textSize="16sp"
-		android:paddingLeft="10dp"
-		android:layout_centerVertical="true"
-		android:layout_toRightOf="@+id/userRowState" 
-		android:layout_toLeftOf="@+id/userFlags"/>
-	<!--
-		singleLine is deprecated but it is the only way to get ellipsize work
-		it seems. 'inputType text, maxLines 1' didn't work. It's a known issue
-		that Google has been unable to reproduce in 1½ years
-		http://code.google.com/p/android/issues/detail?id=882 Will see what
-		happens first, they remove support for singleLine or they manage to
-		reproduce the error. :p
-	-->
-	<LinearLayout
-	    android:id="@+id/userFlags"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true" >
+    <LinearLayout
+        android:id="@+id/channel_user_row_title"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:padding="4dp" >
 
-		<ImageView
-		    android:id="@+id/activeChatState"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:src="@drawable/ic_action_chat_light" />
+        <ImageView
+            android:id="@+id/userRowState"
+            android:layout_width="32dp"
+            android:layout_height="match_parent"
+            android:src="@drawable/plumble" />
+
+        <TextView
+            android:id="@+id/userRowName"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:ellipsize="end"
+            android:lines="1"
+            android:paddingLeft="10dp"
+            android:singleLine="true"
+            android:text="[Name]"
+            android:textSize="16sp"
+            android:gravity="center_vertical"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/userFlags"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:background="@color/push_to_talk_background">
+
+        <ImageView
+            android:id="@+id/channel_user_row_chat"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_action_chat_dark"
+            android:layout_weight="1"
+            android:padding="2dp"
+            android:scaleType="center"
+            style="@style/Plumble.BorderlessButton" />
 
         <ImageView
             android:id="@+id/localMuteState"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-			android:layout_marginLeft="10dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_muted_local"/>
+            style="@style/Plumble.BorderlessButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="2dp"
+            android:scaleType="center"
+            android:src="@drawable/ic_action_audio_muted" />
 
         <ImageView
             android:id="@+id/commentState"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-			android:layout_marginLeft="10dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_comment"/>
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:scaleType="center"
+            android:src="@drawable/ic_action_comment"
+            android:layout_weight="1"
+            android:padding="2dp"
+            style="@style/Plumble.BorderlessButton" />
+        
+        <!-- 
+        <ImageView
+            android:id="@+id/channel_user_row_info"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:scaleType="center"
+            android:src="@drawable/ic_action_info_dark"
+            android:layout_weight="1"
+            android:padding="2dp"
+            style="@style/Plumble.BorderlessButton" />
+            -->
     </LinearLayout>
-
-</RelativeLayout>
+</LinearLayout>

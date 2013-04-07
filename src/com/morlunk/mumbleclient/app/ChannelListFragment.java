@@ -11,29 +11,23 @@ import net.sf.mumble.MumbleProto.RequestBlob;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
-import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.morlunk.mumbleclient.R;
-import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
@@ -156,21 +150,8 @@ public class ChannelListFragment extends SherlockFragment implements
 		channelUsersList.setAdapter(usersAdapter);
 		registerForContextMenu(channelUsersList);
 	}
-
+	
 	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * android.support.v4.app.Fragment#onCreateContextMenu(android.view.ContextMenu
-	 * , android.view.View, android.view.ContextMenu.ContextMenuInfo)
-	 */
-	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v,
-			ContextMenuInfo menuInfo) {
-		super.onCreateContextMenu(menu, v, menuInfo);
-		getActivity().getMenuInflater().inflate(R.menu.channel_list_context,
-				menu);
-	}
 
 	public boolean onContextItemSelected(MenuItem item) {
 		ExpandableListContextMenuInfo info = (ExpandableListContextMenuInfo) item
@@ -187,6 +168,8 @@ public class ChannelListFragment extends SherlockFragment implements
 		}
 		return false;
 	}
+	
+	*/
 
 	public void setChatTarget(User chatTarget) {
 		User oldTarget = selectedUser;
@@ -201,12 +184,16 @@ public class ChannelListFragment extends SherlockFragment implements
 	@Override
 	public boolean onChildClick(ExpandableListView parent, View v,
 			int groupPosition, int childPosition, long id) {
+		View flagsView = v.findViewById(R.id.userFlags);
+		flagsView.setVisibility(flagsView.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
+		/*
 		User listSelectedUser = (User) usersAdapter.getChild(groupPosition,
 				childPosition);
 		User newSelectedUser = selectedUser == listSelectedUser ? null
 				: listSelectedUser; // Unset if is already selected user
 		setChatTarget(newSelectedUser);
 		channelProvider.setChatTarget(newSelectedUser);
+		*/
 		return true;
 	}
 
@@ -226,22 +213,12 @@ public class ChannelListFragment extends SherlockFragment implements
 
 		private final Map<User, Boolean> userCommentsSeen = new HashMap<User, Boolean>();
 
-		private final Drawable chatDrawable; // Changes depending on theme.
-
 		public UserListAdapter(final Context context,
 				final MumbleService service) {
 			// FIXME fix service code, no singletons
 			this.context = context;
 			this.service = MumbleService.getCurrentService();
 			this.dbAdapter = this.service.getDatabaseAdapter();
-
-			// Fetch theme dependent icon
-			Settings settings = Settings.getInstance(context);
-			chatDrawable = getResources()
-					.getDrawable(
-							settings.getTheme().equals(
-									Settings.ARRAY_THEME_LIGHTDARK) ? R.drawable.ic_action_chat_light
-									: R.drawable.ic_action_chat_dark);
 		}
 
 		/**
@@ -301,20 +278,45 @@ public class ChannelListFragment extends SherlockFragment implements
 		}
 
 		private void refreshElements(final View view, final User user) {
+			final View titleView = view.findViewById(R.id.channel_user_row_title);
 			final TextView name = (TextView) view
 					.findViewById(R.id.userRowName);
 			final ImageView comment = (ImageView) view
 					.findViewById(R.id.commentState);
 			final ImageView localMute = (ImageView) view
 					.findViewById(R.id.localMuteState);
-			final ImageView chatActive = (ImageView) view
-					.findViewById(R.id.activeChatState);
+			final ImageView chat = (ImageView) view
+					.findViewById(R.id.channel_user_row_chat);
+			//final ImageView info = (ImageView) view.findViewById(R.id.channel_user_row_info);
 			
 			name.setText(user.name);
 
 			refreshTalkingState(view, user);
 
-			localMute.setVisibility(user.localMuted ? View.VISIBLE : View.GONE);
+			chat.setImageResource(selectedUser != null && selectedUser.equals(user) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
+			chat.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					User oldUser = selectedUser;
+					boolean activated = selectedUser == null || !selectedUser.equals(user);
+					selectedUser = activated ? user : null;
+					channelProvider.setChatTarget(selectedUser);
+					chat.setImageResource(activated ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
+					if(oldUser != null)
+						refreshUser(oldUser); // Update chat icon of old user when changing targets
+				}
+			});
+			
+			localMute.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
+			localMute.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					user.localMuted = !user.localMuted;
+					localMute.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
+				}
+			});
 
 			if (!userCommentsSeen.containsKey(user)) {
 				String commentData = user.commentHash != null ? user.commentHash
@@ -325,15 +327,22 @@ public class ChannelListFragment extends SherlockFragment implements
 								user.name, commentData) : false);
 			}
 
-			comment.setImageResource(userCommentsSeen.get(user) ? R.drawable.ic_comment_seen
-					: R.drawable.ic_comment);
+			comment.setImageResource(userCommentsSeen.get(user) ? R.drawable.ic_action_comment
+					: R.drawable.ic_action_comment_active);
 			comment.setVisibility(user.comment != null
 					|| user.commentHash != null ? View.VISIBLE : View.GONE);
 			comment.setOnClickListener(new OnCommentClickListener(user));
-
-			chatActive.setImageDrawable(chatDrawable);
-			chatActive.setVisibility(user.equals(selectedUser) ? View.VISIBLE
-					: View.GONE);
+			
+			/*
+			info.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					// TODO Auto-generated method stub
+					
+				}
+			});
+			*/
 
 			Channel channel = user.getChannel();
 			DisplayMetrics metrics = getResources().getDisplayMetrics();
@@ -342,8 +351,8 @@ public class ChannelListFragment extends SherlockFragment implements
 			float margin = (getNestedLevel(channel) + 1)
 					* TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
 							25, metrics);
-			view.setPadding((int) margin, view.getPaddingTop(),
-					view.getPaddingRight(), view.getPaddingBottom());
+			titleView.setPadding((int) margin, titleView.getPaddingTop(),
+					titleView.getPaddingRight(), titleView.getPaddingBottom());
 		}
 
 		private void refreshTalkingState(final View view, final User user) {
@@ -400,6 +409,9 @@ public class ChannelListFragment extends SherlockFragment implements
 						.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				v = inflater.inflate(R.layout.channel_user_row, null);
 			}
+			
+			View flagsView = v.findViewById(R.id.userFlags);
+			flagsView.setVisibility(View.GONE);
 
 			User user = (User) getChild(groupPosition, childPosition);
 
@@ -532,7 +544,7 @@ public class ChannelListFragment extends SherlockFragment implements
 				if (MumbleService.getCurrentService() != null
 						&& !MumbleService.getCurrentService()
 								.isConnectedServerPublic()) {
-					commentView.setImageResource(R.drawable.ic_comment_seen);
+					commentView.setImageResource(R.drawable.ic_action_comment);
 					dbAdapter.setCommentSeen(
 							user.name,
 							user.commentHash != null ? user.commentHash
