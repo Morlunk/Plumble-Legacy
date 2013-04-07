@@ -50,7 +50,6 @@
 
             <ImageView
                 android:id="@+id/channel_user_row_chat_image"
-                style="@style/Plumble.BorderlessButton"
                 android:layout_width="match_parent"
                 android:layout_height="32dp"
                 android:scaleType="center"
@@ -76,7 +75,6 @@
 
             <ImageView
                 android:id="@+id/channel_user_row_mute_image"
-                style="@style/Plumble.BorderlessButton"
                 android:layout_width="match_parent"
                 android:layout_height="32dp"
                 android:scaleType="center"
