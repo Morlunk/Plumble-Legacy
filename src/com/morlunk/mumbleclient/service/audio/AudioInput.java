@@ -4,9 +4,13 @@ import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
 
+import android.annotation.SuppressLint;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.media.MediaRecorder.AudioSource;
+import android.media.audiofx.AcousticEchoCanceler;
+import android.os.Build.VERSION;
 import android.util.Log;
 
 import com.morlunk.mumbleclient.Globals;
@@ -34,7 +38,6 @@ public class AudioInput implements Runnable, Observer {
 	private float volumeMultiplier;
 	private int audioQuality;
 	private boolean voiceActivity;
-	private String callMode;
 	private int detectionThreshold = 1400;
 	
 	// Network audio data
@@ -65,6 +68,7 @@ public class AudioInput implements Runnable, Observer {
 	private boolean running;
 	private Thread recordThread;
 
+	@SuppressLint("InlinedApi")
 	public AudioInput(final MumbleService service, final int codec) {
 		mService = service;
 		this.codec = codec;
@@ -74,7 +78,6 @@ public class AudioInput implements Runnable, Observer {
 
 		voiceActivity = settings.isVoiceActivity();
 		detectionThreshold = settings.getDetectionThreshold();
-		callMode = settings.getCallMode();
 		audioQuality = settings.getAudioQuality();
 		volumeMultiplier = settings.getAmplitudeBoostMultiplier();
 
@@ -124,23 +127,16 @@ public class AudioInput implements Runnable, Observer {
 			speexResamplerState = 0;
 		}
 
-		int audioSource = MediaRecorder.AudioSource.DEFAULT;
-
-		if (callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
-			audioSource = (MediaRecorder.AudioSource.MIC);
-		} else if (callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
-			audioSource = (MediaRecorder.AudioSource.DEFAULT);
-		}
-
-		audioRecord = new AudioRecord(audioSource, recordingSampleRate,
+		audioRecord = new AudioRecord(VERSION.SDK_INT >= 11 ? AudioSource.VOICE_COMMUNICATION : AudioSource.DEFAULT, recordingSampleRate,
 				AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
 				64 * 1024);
 
 		/*
-		 * if(VERSION.SDK_INT >= 16 && AcousticEchoCanceler.isAvailable()) {
-		 * Log.d(Globals.LOG_TAG, "Enabled echo cancellation.");
-		 * AcousticEchoCanceler.create(ar.getAudioSessionId()); }
-		 */
+		if(VERSION.SDK_INT >= 16 && AcousticEchoCanceler.isAvailable()) {
+			Log.d(Globals.LOG_TAG, "Enabled echo cancellation. "+audioRecord.getAudioSessionId());
+			AcousticEchoCanceler.create(audioRecord.getAudioSessionId());
+		}
+		*/
 	}
 
 	@Override
@@ -354,7 +350,6 @@ public class AudioInput implements Runnable, Observer {
 		if (data == Settings.OBSERVER_KEY_ALL) {
 			voiceActivity = settings.isVoiceActivity();
 			detectionThreshold = settings.getDetectionThreshold();
-			callMode = settings.getCallMode();
 			audioQuality = settings.getAudioQuality();
 		} else if (data == Settings.OBSERVER_KEY_AMPLITUDE) {
 			volumeMultiplier = settings.getAmplitudeBoostMultiplier();
