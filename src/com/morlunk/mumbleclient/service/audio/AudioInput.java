@@ -35,6 +35,7 @@ public class AudioInput implements Runnable, Observer {
 	private int audioQuality;
 	private boolean voiceActivity;
 	private String callMode;
+	private int detectionThreshold = 1400;
 	
 	// Network audio data
 	private static int frameSize;
@@ -50,13 +51,12 @@ public class AudioInput implements Runnable, Observer {
 	// Opus native instances
 	private long opusEncoder;
 
+	private final MumbleService mService;
 	private final int framesPerPacket = 6;
 	private final LinkedList<byte[]> outputQueue = new LinkedList<byte[]>();
 	private final short[] resampleBuffer = new short[MumbleProtocol.FRAME_SIZE];
 	private int seq;
 	private final long speexResamplerState;
-	private final MumbleService mService;
-	private int detectionThreshold = 1400;
 	private long lastDetection = 0;
 	private int talkState = AudioOutputHost.STATE_PASSIVE;
 
