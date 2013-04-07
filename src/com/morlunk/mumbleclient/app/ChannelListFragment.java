@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import net.sf.mumble.MumbleProto.RequestBlob;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -281,20 +282,23 @@ public class ChannelListFragment extends SherlockFragment implements
 			final View titleView = view.findViewById(R.id.channel_user_row_title);
 			final TextView name = (TextView) view
 					.findViewById(R.id.userRowName);
-			final ImageView comment = (ImageView) view
-					.findViewById(R.id.commentState);
-			final ImageView localMute = (ImageView) view
-					.findViewById(R.id.localMuteState);
-			final ImageView chat = (ImageView) view
-					.findViewById(R.id.channel_user_row_chat);
-			final ImageView registered = (ImageView) view.findViewById(R.id.channel_user_row_registered);
+			final View comment = view.findViewById(R.id.channel_user_row_comment);
+			final ImageView commentImage = (ImageView) view
+					.findViewById(R.id.channel_user_row_comment_image);
+			final View localMute = view.findViewById(R.id.channel_user_row_mute);
+			final ImageView localMuteImage = (ImageView) view
+					.findViewById(R.id.channel_user_row_mute_image);
+			final View chat = view.findViewById(R.id.channel_user_row_chat);
+			final ImageView chatImage = (ImageView) view
+					.findViewById(R.id.channel_user_row_chat_image);
+			final View registered = view.findViewById(R.id.channel_user_row_registered);
 			//final ImageView info = (ImageView) view.findViewById(R.id.channel_user_row_info);
 			
 			name.setText(user.name);
 
 			refreshTalkingState(view, user);
 
-			chat.setImageResource(selectedUser != null && selectedUser.equals(user) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
+			chatImage.setImageResource(selectedUser != null && selectedUser.equals(user) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
 			chat.setOnClickListener(new OnClickListener() {
 				
 				@Override
@@ -303,19 +307,19 @@ public class ChannelListFragment extends SherlockFragment implements
 					boolean activated = selectedUser == null || !selectedUser.equals(user);
 					selectedUser = activated ? user : null;
 					channelProvider.setChatTarget(selectedUser);
-					chat.setImageResource(activated ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
+					chatImage.setImageResource(activated ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
 					if(oldUser != null)
 						refreshUser(oldUser); // Update chat icon of old user when changing targets
 				}
 			});
 			
-			localMute.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
+			localMuteImage.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
 			localMute.setOnClickListener(new OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
 					user.localMuted = !user.localMuted;
-					localMute.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
+					localMuteImage.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
 				}
 			});
 
@@ -328,7 +332,7 @@ public class ChannelListFragment extends SherlockFragment implements
 								user.name, commentData) : false);
 			}
 
-			comment.setImageResource(userCommentsSeen.get(user) ? R.drawable.ic_action_comment
+			commentImage.setImageResource(userCommentsSeen.get(user) ? R.drawable.ic_action_comment
 					: R.drawable.ic_action_comment_active);
 			comment.setVisibility(user.comment != null
 					|| user.commentHash != null ? View.VISIBLE : View.GONE);
@@ -404,6 +408,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			return 0;
 		}
 
+		@SuppressLint("InlinedApi")
 		@Override
 		public View getChildView(int groupPosition, int childPosition,
 				boolean isLastChild, View v, ViewGroup arg4) {
@@ -542,7 +547,7 @@ public class ChannelListFragment extends SherlockFragment implements
 
 			@Override
 			public void onClick(View v) {
-				ImageView commentView = (ImageView) v;
+				ImageView commentView = (ImageView) v.findViewById(R.id.channel_user_row_comment_image);
 
 				if (MumbleService.getCurrentService() != null
 						&& !MumbleService.getCurrentService()
