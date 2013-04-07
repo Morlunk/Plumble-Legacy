@@ -15,7 +15,6 @@ import junit.framework.Assert;
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.UserRemove;
 import net.sf.mumble.MumbleProto.UserState;
-import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -41,7 +40,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.WindowManager.LayoutParams;
 
 import com.google.protobuf.Message.Builder;
 import com.morlunk.mumbleclient.Globals;
@@ -52,8 +50,8 @@ import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
+import com.morlunk.mumbleclient.service.audio.AudioInput;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
-import com.morlunk.mumbleclient.service.audio.RecordThread;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
@@ -85,11 +83,10 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		@Override
 		public void setTalkState(final User user, final int talkState) {
-			user.talkingState = talkState;
-
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
+					user.talkingState = talkState;
 				}
 
 				@Override
@@ -320,7 +317,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				@Override
 				public void process() {
 					if (!canSpeak() && isRecording()) {
-						setRecording(false);
+						setPushToTalk(false);
 					}
 				}
 
@@ -541,8 +538,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	private Server connectedServer;
 
 	private Thread mClientThread;
-	private RecordThread mRecordThread;
-	private Thread mRecordThreadInstance;
+	private AudioInput mAudioInput;
 
 	private Notification mStatusNotification;
 	private NotificationCompat.Builder mStatusNotificationBuilder;
@@ -620,7 +616,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	public void disconnect() {
 		// Call disconnect on the connection.
 		// It'll notify us with DISCONNECTED when it's done.
-		this.setRecording(false);
 		connectedServer = null;
 		if (mClient != null) {
 			mClient.disconnect();
@@ -783,7 +778,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	}
 
 	public boolean isRecording() {
-		return mRecordThread.isRecording();
+		return mAudioInput.isRecording();
 	}
 
 	public boolean isDeafened() {
@@ -898,28 +893,21 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	public ServiceAudioOutputHost getAudioHost() {
 		return mAudioHost;
 	}
-
-	@TargetApi(16)
-	public void setRecording(final boolean state) {
+	
+	public void setPushToTalk(final boolean state) {
 		if (mProtocol == null || mProtocol.currentUser == null)
 			return;
-
-		if (state && mRecordThreadInstance == null) {
-			// start record
-			mRecordThreadInstance = new Thread(mRecordThread, "record");
-			mRecordThreadInstance.start();
-
-			if (settings.isPushToTalk()) {
-				// Continuously talk if using PTT.
-				mAudioHost.setTalkState(mProtocol.currentUser,
-						AudioOutputHost.STATE_TALKING);
-			}
-		} else if (mRecordThreadInstance != null && !state) {
-			// stop record
-			mRecordThreadInstance.interrupt();
-			mRecordThreadInstance = null;
-			mAudioHost.setTalkState(mProtocol.currentUser,
+		
+		Assert.assertTrue("Push to talk not on, but setPushToTalk called!", !settings.isVoiceActivity());
+		
+		if (state) {
+			mAudioHost.setTalkState(getCurrentUser(),
+					AudioOutputHost.STATE_TALKING);
+			mAudioInput.startRecording();
+		} else {
+			mAudioHost.setTalkState(getCurrentUser(),
 					AudioOutputHost.STATE_PASSIVE);
+			mAudioInput.stopRecording();
 		}
 	}
 
@@ -1269,12 +1257,12 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				if (event.getAction() == MotionEvent.ACTION_DOWN) {
-					setRecording(true);
+					setPushToTalk(true);
 					// Vibrate to provide haptic feedback
 					vibrator.vibrate(10);
 					overlayView.setBackgroundColor(0xAA33b5e5);
 				} else if (event.getAction() == MotionEvent.ACTION_UP) {
-					setRecording(false);
+					setPushToTalk(false);
 					overlayView.setBackgroundColor(0);
 				}
 				return false;
@@ -1319,10 +1307,10 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			}
 			updateFavourites();
 			if(synced) {
-				// Initialize recording thread
-				mRecordThread = new RecordThread(this, settings.isVoiceActivity(), mProtocol.codec);
+				// Initialize audio input
+				mAudioInput = new AudioInput(this, mProtocol.codec);
 				if(settings.isVoiceActivity())
-					setRecording(true); // Immediately begin record if using voice activity
+					mAudioInput.startRecording(); // Immediately begin record if using voice activity
 				
 				showNotification();
 			}
@@ -1330,7 +1318,16 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		case MumbleConnectionHost.STATE_DISCONNECTED:
 			settings.deleteObserver(this);
 			serviceState = CONNECTION_STATE_DISCONNECTED;
-			mRecordThread = null;
+			if(mAudioInput != null) {
+				try {
+					mAudioInput.stopRecordingAndBlock();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} finally {
+					mAudioInput.terminate();
+					mAudioInput = null;
+				}
+			}
 			hideNotification();
 			break;
 		default:
@@ -1364,7 +1361,14 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			}
 			
 			// Handle voice activity
-			setRecording(settings.isVoiceActivity());
+			try {
+				mAudioInput.stopRecordingAndBlock(); // We block because we want to wait before restarting recording to avoid a concurrent modificatione exception.
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} finally {
+				if(settings.isVoiceActivity())
+					mAudioInput.startRecording();
+			}
 		}
 	}
 }
