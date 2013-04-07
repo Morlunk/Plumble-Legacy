@@ -316,9 +316,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
 				public void process() {
-					if (!canSpeak() && isRecording()) {
-						setPushToTalk(false);
-					}
 				}
 
 				@Override
