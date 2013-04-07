@@ -872,6 +872,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	public void setChatTarget(User chatTarget) {
 		this.chatTarget = chatTarget;
 		chatFragment.setChatTarget(chatTarget);
+		
+		if(mViewPager != null && chatTarget != null)
+			mViewPager.setCurrentItem(1, true); // Scroll over to chat view if targeting a new user
 	}
 	
 	/**

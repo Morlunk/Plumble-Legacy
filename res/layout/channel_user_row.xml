@@ -68,6 +68,15 @@
             android:padding="2dp"
             style="@style/Plumble.BorderlessButton" />
         
+        <ImageView
+            android:id="@+id/channel_user_row_registered"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:scaleType="center"
+            android:src="@drawable/ic_registered"
+            android:layout_weight="1"
+            android:padding="2dp"/>
+        
         <!-- 
         <ImageView
             android:id="@+id/channel_user_row_info"

@@ -287,6 +287,7 @@ public class ChannelListFragment extends SherlockFragment implements
 					.findViewById(R.id.localMuteState);
 			final ImageView chat = (ImageView) view
 					.findViewById(R.id.channel_user_row_chat);
+			final ImageView registered = (ImageView) view.findViewById(R.id.channel_user_row_registered);
 			//final ImageView info = (ImageView) view.findViewById(R.id.channel_user_row_info);
 			
 			name.setText(user.name);
@@ -343,6 +344,8 @@ public class ChannelListFragment extends SherlockFragment implements
 				}
 			});
 			*/
+			
+			registered.setVisibility(user.isRegistered ? View.VISIBLE : View.GONE);
 
 			Channel channel = user.getChannel();
 			DisplayMetrics metrics = getResources().getDisplayMetrics();
