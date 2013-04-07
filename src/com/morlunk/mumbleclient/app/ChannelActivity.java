@@ -184,6 +184,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	mTalkButton = (Button) findViewById(R.id.pushtotalk);
     	pttView = findViewById(R.id.pushtotalk_view);
     	mTalkButton.setOnTouchListener(new OnTouchListener() {
+    		
+    		private static final int TOGGLE_INTERVAL = 500; // 500ms is the interval needed to toggle push to talk.
+    		private long lastTouch = 0;
 			
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
@@ -196,8 +199,14 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 				} else if(event.getAction() == MotionEvent.ACTION_UP) {
 					if(settings.isPushToTalkToggle())
 						setPushToTalk(!mService.isRecording());
-					else
-						setPushToTalk(false);
+					else {
+						if(System.currentTimeMillis()-lastTouch <= TOGGLE_INTERVAL) {
+							// Do nothing. We leave the push to talk on, as it has toggled.
+						} else {
+							setPushToTalk(false);
+							lastTouch = System.currentTimeMillis();
+						}
+					}
 				}
 				
 				return true; // We return true so that the selector that changes the background does not fire.
