@@ -133,4 +133,9 @@
     <string name="registerSelfSuccess">Wysłano żądanie rejestracji</string>
     <string name="error_fetching_servers">Wystąpił błąd podczas pobierania publicznej listy serwerów!\nSprawdź swoje połączenie z internetem.</string>
     <string name="coming_soon">Funkcja będzie dostępna wkrótce.</string>
+    <string name="channel_user_row_chat">CZAT</string>
+    <string name="channel_user_row_mute">WYCISZ</string>
+    <string name="channel_user_row_muted">WYCISZONY</string>
+    <string name="channel_user_row_comment">KOMENTARZ</string>
+    <string name="channel_user_row_registered">ZAREJESTROWANY</string>
 </resources>
