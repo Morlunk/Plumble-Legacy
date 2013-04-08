@@ -288,6 +288,8 @@ public class ChannelListFragment extends SherlockFragment implements
 			final View localMute = view.findViewById(R.id.channel_user_row_mute);
 			final ImageView localMuteImage = (ImageView) view
 					.findViewById(R.id.channel_user_row_mute_image);
+			final TextView localMuteText = (TextView) view
+					.findViewById(R.id.channel_user_row_mute_text);
 			final View chat = view.findViewById(R.id.channel_user_row_chat);
 			final ImageView chatImage = (ImageView) view
 					.findViewById(R.id.channel_user_row_chat_image);
@@ -313,12 +315,14 @@ public class ChannelListFragment extends SherlockFragment implements
 				}
 			});
 			
+			localMuteText.setText(user.localMuted ? R.string.channel_user_row_muted : R.string.channel_user_row_mute);
 			localMuteImage.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
 			localMute.setOnClickListener(new OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
 					user.localMuted = !user.localMuted;
+					localMuteText.setText(user.localMuted ? R.string.channel_user_row_muted : R.string.channel_user_row_mute);
 					localMuteImage.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
 				}
 			});

@@ -135,6 +135,7 @@
     <string name="coming_soon">This feature is coming soon.</string>
     <string name="channel_user_row_chat">CHAT</string>
     <string name="channel_user_row_mute">MUTE</string>
+    <string name="channel_user_row_muted">MUTED</string>
     <string name="channel_user_row_comment">COMMENT</string>
     <string name="channel_user_row_registered">REGISTERED</string>
 </resources>
