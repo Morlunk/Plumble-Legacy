@@ -122,7 +122,7 @@
     <string name="retrieving">Empfangen…</string>
     <string name="search_name">Name</string>
     <string name="search_country">Land</string>
-    <string name="preferences_immutable">Diese Einstellung kann nicht geändert werden solange Sie mit einem Server verbunden sind.</string>
+    <string name="preferences_immutable">Diese Einstellung kann nicht geändert werden, solange du mit einem Server verbunden bist.</string>
     <string name="fullscreen">Vollbild</string>
     <string name="fullscreen_chat">Chat</string>
     <string name="fullscreen_channel">Kanal</string>
@@ -133,4 +133,9 @@
     <string name="registerSelfSuccess">Registrationsanfrage gesendet</string>
     <string name="error_fetching_servers">Fehler beim Abrufen der Serverliste!\nÜberprüfe deine Internetverbindung.</string>
     <string name="coming_soon">Diese Funktion ist demnächst verfügbar.</string>
+    <string name="channel_user_row_chat">CHAT</string>
+    <string name="channel_user_row_mute">STUMM STELLEN</string>
+    <string name="channel_user_row_muted">STUMM</string>
+    <string name="channel_user_row_comment">KOMMENTAR</string>
+    <string name="channel_user_row_registered">REGISTRIERT</string>
 </resources>
