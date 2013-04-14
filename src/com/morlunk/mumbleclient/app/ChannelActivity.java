@@ -361,6 +361,10 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         	mService.setActivityVisible(true);
         	mService.clearChatNotification();
         }
+        
+        // Update channel list
+        if(listFragment != null && listFragment.isVisible() && mService != null)
+        	listFragment.updateChannelList();
     }
     
     @Override
