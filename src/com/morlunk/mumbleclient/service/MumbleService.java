@@ -841,11 +841,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	}
 
 	@Override
-	public void onStart(final Intent intent, final int startId) {
-		handleCommand(intent);
-	}
-
-	@Override
 	public int onStartCommand(final Intent intent, final int flags,
 			final int startId) {
 		return handleCommand(intent);
@@ -962,18 +957,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	}
 
 	private int handleCommand(final Intent intent) {
-		// When using START_STICKY the onStartCommand can be called with
-		// null intent after the whole service process has been killed.
-		// Such scenario doesn't make sense for the service process so
-		// returning START_NOT_STICKY for now.
-		//
-		// Leaving the null check in though just in case.
-		//
-		// TODO: Figure out the correct start type.
-		if (intent == null) {
-			return START_NOT_STICKY;
-		}
-
 		Log.i(Globals.LOG_TAG, "MumbleService: Starting service");
 
 		Server server = intent.getParcelableExtra(MumbleService.EXTRA_SERVER);
@@ -997,8 +980,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 		final String certificatePath = settings.getCertificatePath();
 		final String certificatePassword = settings.getCertificatePassword();
-
-		doConnectionDisconnect();
 
 		mProtocolHost = new ServiceProtocolHost();
 		mConnectionHost = new ServiceConnectionHost();
@@ -1085,6 +1066,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			tts.stop();
 			tts.shutdown();
 		}
+		
+		stopSelf();
 	}
 
 	void hideNotification() {

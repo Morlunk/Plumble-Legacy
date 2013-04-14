@@ -65,6 +65,12 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 	}
 	
 	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		updateServers();
+	}
+	
+	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_server_list, container, false);
@@ -128,7 +134,8 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 		alertBuilder.show();
 	}
 	
-	public void setServers(List<Server> servers) {
+	public void updateServers() {
+		List<Server> servers = connectHandler.getServers();
 		serverAdapter = new ServerAdapter(getActivity(), servers);
 		serverGrid.setAdapter(serverAdapter);
 		

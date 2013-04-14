@@ -111,8 +111,7 @@ public class DbAdapter {
 	}
 
 	public final void close() {
-		if(db.isOpen())
-			dbHelper.close();
+		dbHelper.close();
 	}
 
 	public final long createServer(

@@ -7,8 +7,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -19,7 +17,6 @@ import android.content.pm.ApplicationInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -31,14 +28,15 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.crittercism.app.Crittercism;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
+import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.PublicServer;
 import com.morlunk.mumbleclient.app.db.Server;
-import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
 
 /**
@@ -54,6 +52,7 @@ interface ServerConnectHandler {
 	public void connectToServer(Server server);
 	public void connectToPublicServer(PublicServer server);
 	public void publicServerFavourited();
+	public List<Server> getServers();
 }
 
 /**
@@ -65,133 +64,12 @@ interface ServerConnectHandler {
  * @author pcgod
  *
  */
-public class ServerList extends ConnectedListActivity implements ServerInfoListener, ServerConnectHandler {
+public class ServerList extends SherlockFragmentActivity implements ServerInfoListener, ServerConnectHandler {
 
-	private static final String STATE_WAIT_CONNECTION = "com.morlunk.mumbleclient.ServerList.WAIT_CONNECTION";
-	
-	private ServerServiceObserver mServiceObserver;
 	private ServerListFragment serverListFragment;
 	private PublicServerListFragment publicServerListFragment;
 	private ViewPager pager;
 	
-	@Override
-	public final boolean onCreateOptionsMenu(final Menu menu) {
-		super.onCreateOptionsMenu(menu);
-		getSupportMenuInflater().inflate(R.menu.activity_server_list, menu);
-		
-		return true;
-	}
-	
-	@Override
-	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.menu_preferences:
-			final Intent prefs = new Intent(this, Preferences.class);
-			startActivity(prefs);
-			return true;
-		}
-		serverListFragment.onOptionsItemSelected(item);
-		publicServerListFragment.onOptionsItemSelected(item);
-		return false;
-	}
-
-	/**
-	 * Monitors the connection state after clicking a server entry.
-	 */
-	private final boolean checkConnectionState() {
-		switch (mService.getConnectionState()) {
-		case MumbleService.CONNECTION_STATE_CONNECTING:
-		case MumbleService.CONNECTION_STATE_SYNCHRONIZING:
-		case MumbleService.CONNECTION_STATE_CONNECTED:
-			unregisterConnectionReceiver();
-			final Intent i = new Intent(this, ChannelActivity.class);
-			startActivity(i);
-			return true;
-		case MumbleService.CONNECTION_STATE_DISCONNECTED:
-			// TODO: Error message checks.
-			// This can be reached if the user leaves ServerList after clicking
-			// server but before the connection intent reaches the service.
-			// In this case the service connects and can be disconnected before
-			// the connection state is checked again.
-			Log.i(Globals.LOG_TAG, "ServerList: Disconnected");
-			break;
-		default:
-			Assert.fail("Unknown connection state");
-		}
-
-		return false;
-	}
-	
-	private void registerConnectionReceiver() {
-		if (mServiceObserver != null) {
-			return;
-		}
-
-		mServiceObserver = new ServerServiceObserver();
-
-		if (mService != null) {
-			mService.registerObserver(mServiceObserver);
-		}
-	}
-
-	private void unregisterConnectionReceiver() {
-		if (mServiceObserver == null) {
-			return;
-		}
-
-		if (mService != null) {
-			mService.unregisterObserver(mServiceObserver);
-		}
-
-		mServiceObserver = null;
-	}
-
-	/**
-	 * Starts connecting to a server.
-	 *
-	 * @param id
-	 */
-	public void connectToServer(final Server server) {
-		registerConnectionReceiver();
-		
-		final Intent connectionIntent = new Intent(this, MumbleService.class);
-		connectionIntent.setAction(MumbleService.ACTION_CONNECT);
-		connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
-		startService(connectionIntent);
-	}
-
-	/**
-	 * Starts connecting to a public server.
-	 *
-	 * @param id
-	 */
-	public void connectToPublicServer(final PublicServer server) {
-		
-		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-		
-		// Allow username entry
-		final EditText usernameField = new EditText(this);
-		usernameField.setHint(R.string.serverUsername);
-		alertBuilder.setView(usernameField);
-
-		alertBuilder.setTitle(R.string.connectToServer);
-		
-		alertBuilder.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				PublicServer newServer = server;
-				newServer.setUsername(usernameField.getText().toString());
-				registerConnectionReceiver();
-				Intent connectionIntent = new Intent(ServerList.this, MumbleService.class);
-				connectionIntent.setAction(MumbleService.ACTION_CONNECT);
-				connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
-				startService(connectionIntent);
-			}
-		});
-		
-		alertBuilder.show();
-	}
-
 	@Override
 	protected final void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -204,10 +82,7 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			Log.i(Globals.LOG_TAG, "Crittercism disabled in debug build.");
 		}
 		
-		// Create the service observer. If such exists, onServiceBound will
-		// register it.
 		if (savedInstanceState != null) {
-			mServiceObserver = new ServerServiceObserver();
 			serverListFragment = (ServerListFragment) getSupportFragmentManager().getFragment(savedInstanceState, ServerListFragment.class.getName());
 			publicServerListFragment = (PublicServerListFragment) getSupportFragmentManager().getFragment(savedInstanceState, PublicServerListFragment.class.getName());
 		} else {
@@ -279,38 +154,78 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 			alertBuilder.show();
 		}
 	}
-
+	
 	@Override
-	protected void onDisconnected() {
-		// Suppress the default disconnect behavior.
+	public final boolean onCreateOptionsMenu(final Menu menu) {
+		super.onCreateOptionsMenu(menu);
+		getSupportMenuInflater().inflate(R.menu.activity_server_list, menu);
+		
+		return true;
+	}
+	
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.menu_preferences:
+			final Intent prefs = new Intent(this, Preferences.class);
+			startActivity(prefs);
+			return true;
+		}
+		serverListFragment.onOptionsItemSelected(item);
+		publicServerListFragment.onOptionsItemSelected(item);
+		return false;
 	}
 
-	@Override
-	protected void onPause() {
-		unregisterConnectionReceiver();
-		super.onPause();
+	/**
+	 * Starts connecting to a server.
+	 *
+	 * @param id
+	 */
+	public void connectToServer(final Server server) {
+		final Intent connectionIntent = new Intent(this, MumbleService.class);
+		connectionIntent.setAction(MumbleService.ACTION_CONNECT);
+		connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
+		startService(connectionIntent);
+		final Intent channelListIntent = new Intent(this, ChannelActivity.class);
+		startActivity(channelListIntent);
+	}
+
+	/**
+	 * Starts connecting to a public server.
+	 *
+	 * @param id
+	 */
+	public void connectToPublicServer(final PublicServer server) {
+		
+		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+		
+		// Allow username entry
+		final EditText usernameField = new EditText(this);
+		usernameField.setHint(R.string.serverUsername);
+		alertBuilder.setView(usernameField);
+
+		alertBuilder.setTitle(R.string.connectToServer);
+		
+		alertBuilder.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				PublicServer newServer = server;
+				newServer.setUsername(usernameField.getText().toString());
+				Intent connectionIntent = new Intent(ServerList.this, MumbleService.class);
+				connectionIntent.setAction(MumbleService.ACTION_CONNECT);
+				connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
+				startService(connectionIntent);
+			}
+		});
+		
+		alertBuilder.show();
 	}
 	
 	@Override
 	protected void onSaveInstanceState(final Bundle outState) {
 		super.onSaveInstanceState(outState);
-		if (mServiceObserver != null) {
-			outState.putBoolean(STATE_WAIT_CONNECTION, true);
-		}
 		getSupportFragmentManager().putFragment(outState, ServerListFragment.class.getName(), serverListFragment);
 		getSupportFragmentManager().putFragment(outState, PublicServerListFragment.class.getName(), publicServerListFragment);
-	}
-
-	@Override
-	protected void onServiceBound() {
-		if (mServiceObserver != null) {
-			if (!checkConnectionState()) {
-				mService.registerObserver(mServiceObserver);
-			}
-		}
-		
-		if(serverListFragment != null && serverListFragment.isAdded())
-			fillFavoritesList();
 	}
 	
 	private Server parseServerUri(Uri data) {
@@ -337,10 +252,13 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 		Server server = new Server(-1, "", host, port, username, password);
 		return server;
 	}
-
-	private void fillFavoritesList() {
-		List<Server> servers = mService.getDatabaseAdapter().fetchAllServers();
-		serverListFragment.setServers(servers);
+	
+	public List<Server> getServers() {
+		DbAdapter dbAdapter = new DbAdapter(this);
+		dbAdapter.open();
+		List<Server> servers = dbAdapter.fetchAllServers();
+		dbAdapter.close();
+		return servers;
 	}
 	
 	private void fillPublicList() {
@@ -364,21 +282,13 @@ public class ServerList extends ConnectedListActivity implements ServerInfoListe
 
 	@Override
 	public void serverInfoUpdated() {
-		fillFavoritesList();
+		serverListFragment.updateServers();
 	}
 	
 	public void publicServerFavourited() {
-		fillFavoritesList();
 		pager.setCurrentItem(0, true);
+		serverListFragment.updateServers();
 	};
-
-	private class ServerServiceObserver extends BaseServiceObserver {
-		@Override
-		public void onConnectionStateChanged(final int state)
-			throws RemoteException {
-			checkConnectionState();
-		}
-	}
 	
 	private class ServerListPagerAdapter extends FragmentPagerAdapter {
 

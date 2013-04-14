@@ -14,7 +14,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -132,12 +131,6 @@ public class ChannelListFragment extends SherlockFragment implements
 		
 		return view;
 	}
-	
-	@Override
-	public void onStart() {
-		super.onStart();
-		updateChannelList();
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -165,10 +158,19 @@ public class ChannelListFragment extends SherlockFragment implements
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 
+		// If the service is already bound, configure channel list immediately. Otherwise, we'll receive a call to do this later from the activity.
+		if(channelProvider.getService() != null && channelProvider.getService().isConnected())
+			onActivityServiceBound();
+		
+		registerForContextMenu(channelUsersList);
+	}
+	
+	public void onActivityServiceBound() {
 		usersAdapter = new UserListAdapter(getActivity(),
 				channelProvider.getService());
 		channelUsersList.setAdapter(usersAdapter);
-		registerForContextMenu(channelUsersList);
+        updateChannelList();
+        scrollToUser(channelProvider.getService().getCurrentUser());
 	}
 	
 	/*
@@ -235,9 +237,8 @@ public class ChannelListFragment extends SherlockFragment implements
 
 		public UserListAdapter(final Context context,
 				final MumbleService service) {
-			// FIXME fix service code, no singletons
 			this.context = context;
-			this.service = MumbleService.getCurrentService();
+			this.service = service;
 			this.dbAdapter = this.service.getDatabaseAdapter();
 		}
 

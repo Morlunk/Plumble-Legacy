@@ -107,13 +107,15 @@ public class ServerInfo extends SherlockDialogFragment {
 
 		String username = (usernameEdit).getText().toString().trim();
 
-		DbAdapter db = MumbleService.getCurrentService().getDatabaseAdapter();
+		DbAdapter db = new DbAdapter(getActivity());
 		
+		db.open();
 		if (server != null) {
 			db.updateServer(server.getId(), name, host, port, username, server.getPassword());
 		} else {
 			db.createServer(name, host, port, username, "");
 		}
+		db.close();
 
 		dismiss();
 		serverListener.serverInfoUpdated();

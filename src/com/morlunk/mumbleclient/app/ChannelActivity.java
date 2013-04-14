@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
 
+import junit.framework.Assert;
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
 import net.sf.mumble.MumbleProto.UserRemove;
 import net.sf.mumble.MumbleProto.UserState;
@@ -15,17 +16,20 @@ import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
@@ -47,6 +51,7 @@ import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.morlunk.mumbleclient.Globals;
@@ -56,6 +61,7 @@ import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
+import com.morlunk.mumbleclient.service.MumbleService.LocalBinder;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
@@ -80,13 +86,47 @@ interface TokenDialogFragmentListener {
 }
 
 
-public class ChannelActivity extends ConnectedActivity implements ChannelProvider, TokenDialogFragmentListener, Observer {
+public class ChannelActivity extends SherlockFragmentActivity implements ChannelProvider, TokenDialogFragmentListener, Observer {
 
 	public static final String JOIN_CHANNEL = "join_channel";
 	public static final String SAVED_STATE_VISIBLE_CHANNEL = "visible_channel";
 	public static final String SAVED_STATE_CHAT_TARGET = "chat_target";
 	public static final Integer PROXIMITY_SCREEN_OFF_WAKE_LOCK = 32; // Undocumented feature! This will allow us to enable the phone proximity sensor.
+	
+	/**
+	 * The MumbleService instance that drives this activity's data.
+	 */
+	private MumbleService mService;
+	
+	/**
+	 * An observer that monitors the state of the service.
+	 */
+	private ChannelServiceObserver mObserver;
+	
+	/**
+	 * Management of service connection state.
+	 */
+	private ServiceConnection conn = new ServiceConnection() {
 
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			LocalBinder localBinder = (LocalBinder)service;
+			mObserver = new ChannelServiceObserver();
+			mService = localBinder.getService();
+			mService.registerObserver(mObserver);
+	        
+			// If we're not going to receive the onConnected call to setup fragments, set them up here.
+	        if(mService.isConnected() && (listFragment == null || chatFragment == null))
+	        	setupFragments();
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			mService = null;
+			finish();
+		}
+	};
+	
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide fragments for each of the
      * sections. We use a {@link android.support.v4.app.FragmentPagerAdapter} derivative, which will
@@ -130,23 +170,17 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 	
 	// Proximity sensor
 	private WakeLock proximityLock;
-	
 	private Settings settings;
 	
 	public final DialogInterface.OnClickListener onDisconnectConfirm = new DialogInterface.OnClickListener() {
 		@Override
 		public void onClick(final DialogInterface dialog, final int which) {
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					mService.disconnect();
-				}
-			}).start();
+			disconnect();
 		}
 	};
 	
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {    	
 		settings = Settings.getInstance(this);
 		settings.addObserver(this);
 		
@@ -217,85 +251,14 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         
         mViewPager = (ViewPager) findViewById(R.id.pager);
         
-        // If view pager is present, configure phone UI.
-        if(mViewPager != null) {
-            // Create the adapter that will return a fragment for each of the three primary sections
-            // of the app.
-            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-            // Set up the ViewPager with the sections adapter.
-            mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
-				
-				@Override
-				public void onPageSelected(int arg0) {
-					// Hide keyboard if moving to channel list.
-					if(arg0 == 0) {
-						InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-			            imm.hideSoftInputFromWindow(mViewPager.getApplicationWindowToken(), 0);
-					}
-					// Update indicator
-					channelsIndicator.setVisibility(arg0 == 0 ? View.VISIBLE : View.INVISIBLE);
-					chatIndicator.setVisibility(arg0 == 1 ? View.VISIBLE : View.INVISIBLE);
-				}
-				
-				@Override
-				public void onPageScrolled(int arg0, float arg1, int arg2) { }
-				
-				@Override
-				public void onPageScrollStateChanged(int arg0) { }
-			});
-        	
-            if(savedInstanceState != null &&
-            		savedInstanceState.containsKey(ChannelListFragment.class.getName()) &&
-					savedInstanceState.containsKey(ChannelChatFragment.class.getName())) {
-				// Load existing fragments
-				listFragment = (ChannelListFragment) getSupportFragmentManager().getFragment(savedInstanceState, ChannelListFragment.class.getName());
-				chatFragment = (ChannelChatFragment) getSupportFragmentManager().getFragment(savedInstanceState, ChannelChatFragment.class.getName());
-			} else {
-		        // Create fragments
-		        listFragment = new ChannelListFragment();
-		        chatFragment = new ChannelChatFragment();
-			}
-            
-            mViewPager.setAdapter(mSectionsPagerAdapter);
-            
-            // Set up tabs
-            getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-            
-            View channelTabView = getLayoutInflater().inflate(R.layout.channel_tab_view, null);
-            channelsIndicator = channelTabView.findViewById(R.id.tab_channels_indicator);
-            chatIndicator = channelTabView.findViewById(R.id.tab_chat_indicator);
-            
-            ImageButton channelsButton = (ImageButton) channelTabView.findViewById(R.id.tab_channels);
-            ImageButton chatButton = (ImageButton) channelTabView.findViewById(R.id.tab_chat);
-            channelsButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					mViewPager.setCurrentItem(0, true);
-				}
-			});
-            chatButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					mViewPager.setCurrentItem(1, true);
-				}
-			});
-            
-            getSupportActionBar().setCustomView(channelTabView);
-            
-        } else {
-        	// Otherwise, create tablet UI.
-	        listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
-	        chatFragment = (ChannelChatFragment) getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
-	        
-	        leftSplit = findViewById(R.id.left_split);
-	        rightSplit = findViewById(R.id.right_split);
-        }
-        
         if(savedInstanceState != null) {
 			chatTarget = (User) savedInstanceState.getParcelable(SAVED_STATE_CHAT_TARGET);
-			if(chatTarget != null) {
-				listFragment.setChatTarget(chatTarget);
-				chatFragment.setChatTarget(chatTarget);
+			if(savedInstanceState.containsKey(ChannelListFragment.class.getName()) &&
+					savedInstanceState.containsKey(ChannelChatFragment.class.getName()) &&
+					mViewPager != null) {
+				// Load existing fragments (viewpager code)
+				listFragment = (ChannelListFragment) getSupportFragmentManager().getFragment(savedInstanceState, ChannelListFragment.class.getName());
+				chatFragment = (ChannelChatFragment) getSupportFragmentManager().getFragment(savedInstanceState, ChannelChatFragment.class.getName());
 			}
         }
     }
@@ -348,7 +311,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     @Override
     protected void onResume() {
     	super.onResume();
-    	
+
+    	// Bind to service
+    	Intent serviceIntent = new Intent(this, MumbleService.class);
+		bindService(serviceIntent, conn, 0);
+		
     	if(settings.getCallMode().equals(Settings.ARRAY_CALL_MODE_VOICE))
     		setProximityEnabled(true);
     		
@@ -360,12 +327,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         if(mService != null && settings.isChatNotifyEnabled()) {
         	mService.setActivityVisible(true);
         	mService.clearChatNotification();
-        }
-        
-        // Update channel list and make sure user is visible
-        if(listFragment != null && listFragment.isVisible() && mService != null && mService.isConnected()) {
-        	listFragment.updateChannelList();
-        	listFragment.scrollToUser(mService.getCurrentUser());
         }
     }
     
@@ -384,6 +345,9 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         	//	mService.setRecording(false);
         	//}
     	}
+
+    	// Unbind to service
+		unbindService(conn);
     }
     
     @Override
@@ -621,51 +585,6 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     	
     	return super.onKeyUp(keyCode, event);
     }
-    
-    /**
-	 * Handles activity initialization when the Service has connected.
-	 *
-	 * Should be called when there is a reason to believe that the connection
-	 * might have became valid. The connection MUST be established but other
-	 * validity criteria may still be unfilled such as server synchronization
-	 * being complete.
-	 *
-	 * The method implements the logic required for making sure that the
-	 * Connected service is in such a state that it fills all the connection
-	 * criteria for ChannelList.
-	 *
-	 * The method also takes care of making sure that its initialization code
-	 * is executed only once so calling it several times doesn't cause problems.
-	 */
-    
-	@Override
-	protected void onConnected() {
-		// We are now connected! \o/
-		
-		if (mProgressDialog != null) {
-			mProgressDialog.dismiss();
-			mProgressDialog = null;
-		}
-		
-		// Tell the service that we are now visible.
-        mService.setActivityVisible(true);
-        
-        // Update user control
-        updateUserControlMenuItems();
-		
-		// Send access tokens after connection.
-		sendAccessTokens();
-        
-		// Load messages
-		reloadChat();
-		
-		// Restore push to talk state, if toggled.
-		if(settings.isPushToTalk() && 
-				settings.isPushToTalkButtonShown() && 
-				mService.isRecording()) {
-			setPushToTalk(true);
-		}
-	}
 
 	/**
 	 * Retrieves and sends the access tokens for the active server from the database.
@@ -702,31 +621,152 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		};
 		accessTask.execute(tokens);
 	}
+	
+	/**
+	 * Sets up the channel and chat fragments.
+	 */
+	private void setupFragments() {
+		if(mViewPager != null) {
+            // Create the adapter that will return a fragment for each of the three primary sections
+            // of the app.
+            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+            // Set up the ViewPager with the sections adapter.
+            mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
+				
+				@Override
+				public void onPageSelected(int arg0) {
+					// Hide keyboard if moving to channel list.
+					if(arg0 == 0) {
+						InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			            imm.hideSoftInputFromWindow(mViewPager.getApplicationWindowToken(), 0);
+					}
+					// Update indicator
+					channelsIndicator.setVisibility(arg0 == 0 ? View.VISIBLE : View.INVISIBLE);
+					chatIndicator.setVisibility(arg0 == 1 ? View.VISIBLE : View.INVISIBLE);
+				}
+				
+				@Override
+				public void onPageScrolled(int arg0, float arg1, int arg2) { }
+				
+				@Override
+				public void onPageScrollStateChanged(int arg0) { }
+			});
+        	
+            if(listFragment == null)
+            	listFragment = new ChannelListFragment();
+		    if(chatFragment == null)
+		    	chatFragment = new ChannelChatFragment();
+           
+            mViewPager.setAdapter(mSectionsPagerAdapter);
+            
+            // Set up tabs
+            getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+            
+            View channelTabView = getLayoutInflater().inflate(R.layout.channel_tab_view, null);
+            channelsIndicator = channelTabView.findViewById(R.id.tab_channels_indicator);
+            chatIndicator = channelTabView.findViewById(R.id.tab_chat_indicator);
+            
+            ImageButton channelsButton = (ImageButton) channelTabView.findViewById(R.id.tab_channels);
+            ImageButton chatButton = (ImageButton) channelTabView.findViewById(R.id.tab_chat);
+            channelsButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mViewPager.setCurrentItem(0, true);
+				}
+			});
+            chatButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mViewPager.setCurrentItem(1, true);
+				}
+			});
+            
+            getSupportActionBar().setCustomView(channelTabView);
+            
+        } else {
+        	// Otherwise, create tablet UI.
+	        listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
+	        chatFragment = (ChannelChatFragment) getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
+	        
+	        // We let the fragments know we have a service bound, and to go ahead and configure themselves.
+	        listFragment.onActivityServiceBound();
+	        
+	        leftSplit = findViewById(R.id.left_split);
+	        rightSplit = findViewById(R.id.right_split);
+        }
+	}
+    
+    /**
+	 * Handles activity initialization when the Service has connected.
+	 *
+	 * Should be called when there is a reason to believe that the connection
+	 * might have became valid. The connection MUST be established but other
+	 * validity criteria may still be unfilled such as server synchronization
+	 * being complete.
+	 *
+	 * The method implements the logic required for making sure that the
+	 * Connected service is in such a state that it fills all the connection
+	 * criteria for ChannelList.
+	 *
+	 * The method also takes care of making sure that its initialization code
+	 * is executed only once so calling it several times doesn't cause problems.
+	 */
+    
+	protected void onConnected() {
+		// We are now connected! \o/
+		
+		// If view pager is present, configure phone UI.
+        setupFragments();
+		
+		if (mProgressDialog != null) {
+			mProgressDialog.dismiss();
+			mProgressDialog = null;
+		}
+		
+		// Tell the service that we are now visible.
+        mService.setActivityVisible(true);
+        
+        // Update user control
+        updateUserControlMenuItems();
+		
+		// Send access tokens after connection.
+		sendAccessTokens();
+        
+		// Load messages
+		reloadChat();
+		
+		// Restore push to talk state, if toggled.
+		if(settings.isPushToTalk() && 
+				settings.isPushToTalkButtonShown() && 
+				mService.isRecording()) {
+			setPushToTalk(true);
+		}
+
+		if(chatTarget != null) {
+			listFragment.setChatTarget(chatTarget);
+			chatFragment.setChatTarget(chatTarget);
+		}
+	}
 
 	/**
 	 * Handles activity initialization when the Service is connecting.
 	 */
-	@Override
 	protected void onConnecting() {
 		showProgressDialog(R.string.connectionProgressConnectingMessage);
 	}
-
-	@Override
+	
 	protected void onSynchronizing() {
 		showProgressDialog(R.string.connectionProgressSynchronizingMessage);
 	}
 	
-	@Override
-	protected void onDisconnected() {
-		super.onDisconnected();
-	}
-	
-	/* (non-Javadoc)
-	 * @see com.morlunk.mumbleclient.app.ConnectedActivity#createServiceObserver()
-	 */
-	@Override
-	protected BaseServiceObserver createServiceObserver() {
-		return new ChannelServiceObserver();
+	protected void disconnect() {
+		new AsyncTask<Void, Void, Void>() {
+			@Override
+			protected Void doInBackground(Void... params) {
+				mService.disconnect();
+				return null;
+			}
+		}.execute();
 	}
 	
 	private void showProgressDialog(final int message) {
@@ -741,13 +781,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 					@Override
 					public void onCancel(final DialogInterface dialog) {
 						mProgressDialog.setMessage(getString(R.string.connectionProgressDisconnectingMessage));
-						new Thread(new Runnable() {
-							
-							@Override
-							public void run() {
-								mService.disconnect();								
-							}
-						}).start();
+						disconnect();
 					}
 				});
 		} else {
@@ -938,6 +972,39 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
     }
 
     class ChannelServiceObserver extends BaseServiceObserver {
+    	
+    	@Override
+    	public void onConnectionStateChanged(int state) throws RemoteException {
+    		switch (state) {
+    		case MumbleService.CONNECTION_STATE_CONNECTING:
+    			Log.i(Globals.LOG_TAG, String.format(
+    				"%s: Connecting",
+    				getClass().getName()));
+    			onConnecting();
+    			break;
+    		case MumbleService.CONNECTION_STATE_SYNCHRONIZING:
+    			Log.i(Globals.LOG_TAG, String.format(
+    				"%s: Synchronizing",
+    				getClass().getName()));
+    			onSynchronizing();
+    			break;
+    		case MumbleService.CONNECTION_STATE_CONNECTED:
+    			Log.i(Globals.LOG_TAG, String.format(
+    				"%s: Connected",
+    				getClass().getName()));
+    			onConnected();
+    			break;
+    		case MumbleService.CONNECTION_STATE_DISCONNECTED:
+    			Log.i(Globals.LOG_TAG, String.format(
+    				"%s: Disconnected",
+    				getClass().getName()));
+    			finish();
+    			break;
+    		default:
+    			Assert.fail("Unknown connection state");
+    		}
+    	}
+    	
 		@Override
 		public void onMessageReceived(final Message msg) throws RemoteException {
 			updateChat();
