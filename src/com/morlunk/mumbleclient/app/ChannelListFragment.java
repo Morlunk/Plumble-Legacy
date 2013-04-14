@@ -157,15 +157,15 @@ public class ChannelListFragment extends SherlockFragment implements
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-
-		// If the service is already bound, configure channel list immediately. Otherwise, we'll receive a call to do this later from the activity.
-		if(channelProvider.getService() != null && channelProvider.getService().isConnected())
-			onActivityServiceBound();
+		
+		// If service is bound, update. Otherwise, we should receive a request to do so once bound from activity.
+		if(channelProvider.getService() != null)
+			onServiceBound();
 		
 		registerForContextMenu(channelUsersList);
 	}
 	
-	public void onActivityServiceBound() {
+	public void onServiceBound() {
 		usersAdapter = new UserListAdapter(getActivity(),
 				channelProvider.getService());
 		channelUsersList.setAdapter(usersAdapter);

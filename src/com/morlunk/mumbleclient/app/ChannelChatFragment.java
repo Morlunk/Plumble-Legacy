@@ -45,6 +45,15 @@ public class ChannelChatFragment extends SherlockFragment {
 		}
 	}
 	
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		
+		// If service is bound, update. Otherwise, we should receive a request to do so once bound from activity.
+		if(channelProvider.getService() != null)
+			onServiceBound();
+	}
+	
 	/* (non-Javadoc)
 	 * @see android.support.v4.app.Fragment#onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle)
 	 */
@@ -105,6 +114,14 @@ public class ChannelChatFragment extends SherlockFragment {
 				chatScroll.smoothScrollTo(0, chatText.getHeight());
 			}
 		});
+	}
+	
+	public void onServiceBound() {
+		clear();
+		for(String message : channelProvider.getService().getChatMessages()) {
+			if(message != null)
+				addChatMessage(message);
+		}
 	}
 
 	void sendMessage(final TextView v) {

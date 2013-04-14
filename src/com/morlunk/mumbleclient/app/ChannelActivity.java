@@ -43,6 +43,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -253,13 +254,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
         
         if(savedInstanceState != null) {
 			chatTarget = (User) savedInstanceState.getParcelable(SAVED_STATE_CHAT_TARGET);
-			if(savedInstanceState.containsKey(ChannelListFragment.class.getName()) &&
-					savedInstanceState.containsKey(ChannelChatFragment.class.getName()) &&
-					mViewPager != null) {
-				// Load existing fragments (viewpager code)
-				listFragment = (ChannelListFragment) getSupportFragmentManager().getFragment(savedInstanceState, ChannelListFragment.class.getName());
-				chatFragment = (ChannelChatFragment) getSupportFragmentManager().getFragment(savedInstanceState, ChannelChatFragment.class.getName());
-			}
         }
     }
     
@@ -291,15 +285,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
     @Override
     protected void onSaveInstanceState(Bundle outState) {
     	super.onSaveInstanceState(outState);
-    	
-    	if(mViewPager != null) {
-    		try {
-    			getSupportFragmentManager().putFragment(outState, ChannelListFragment.class.getName(), listFragment);
-    			getSupportFragmentManager().putFragment(outState, ChannelChatFragment.class.getName(), chatFragment);
-    		} catch (Exception e) {
-    			Log.w(Globals.LOG_TAG, "Issue with storing fragments in the fragment manager. Non-fatal.");
-			}
-    	}
 		
 		if(chatTarget != null)
 			outState.putParcelable(SAVED_STATE_CHAT_TARGET, chatTarget);
@@ -344,10 +329,11 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
         	//if(settings.isPushToTalk() && !mTalkToggleBox.isChecked()) {
         	//	mService.setRecording(false);
         	//}
-    	}
 
-    	// Unbind to service
-		unbindService(conn);
+        	// Unbind to service
+    		mService.unregisterObserver(mObserver);
+    		unbindService(conn);
+    	}
     }
     
     @Override
@@ -626,6 +612,11 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 	 * Sets up the channel and chat fragments.
 	 */
 	private void setupFragments() {
+        if(listFragment == null)
+        	listFragment = new ChannelListFragment();
+	    if(chatFragment == null)
+	    	chatFragment = new ChannelChatFragment();
+	    
 		if(mViewPager != null) {
             // Create the adapter that will return a fragment for each of the three primary sections
             // of the app.
@@ -651,11 +642,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 				@Override
 				public void onPageScrollStateChanged(int arg0) { }
 			});
-        	
-            if(listFragment == null)
-            	listFragment = new ChannelListFragment();
-		    if(chatFragment == null)
-		    	chatFragment = new ChannelChatFragment();
            
             mViewPager.setAdapter(mSectionsPagerAdapter);
             
@@ -685,12 +671,12 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
             
         } else {
         	// Otherwise, create tablet UI.
-	        listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
-	        chatFragment = (ChannelChatFragment) getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
-	        
-	        // We let the fragments know we have a service bound, and to go ahead and configure themselves.
-	        listFragment.onActivityServiceBound();
-	        
+        	listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
+        	chatFragment = (ChannelChatFragment) getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
+        	
+        	listFragment.onServiceBound();
+        	chatFragment.onServiceBound();
+        	
 	        leftSplit = findViewById(R.id.left_split);
 	        rightSplit = findViewById(R.id.right_split);
         }
@@ -731,9 +717,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		
 		// Send access tokens after connection.
 		sendAccessTokens();
-        
-		// Load messages
-		reloadChat();
 		
 		// Restore push to talk state, if toggled.
 		if(settings.isPushToTalk() && 
@@ -883,17 +866,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 	}
 	
 	/**
-	 * Reloads the chat with data from the service.
-	 */
-	public void reloadChat() {
-		chatFragment.clear();
-		for(String message : mService.getChatMessages()) {
-			if(message != null)
-				chatFragment.addChatMessage(message);
-		}
-	}
-	
-	/**
 	 * Updates the chat with latest messages from the service.
 	 */
 	public void updateChat() {
@@ -969,6 +941,10 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
             }
             return null;
         }
+        
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+        }
     }
 
     class ChannelServiceObserver extends BaseServiceObserver {
@@ -1017,9 +993,11 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		
 		@Override
 		public void onCurrentChannelChanged() throws RemoteException {
-			listFragment.updateChannelList();
-			listFragment.expandChannel(getCurrentUser().getChannel());
-			listFragment.scrollToUser(getCurrentUser());
+			if(mService.isConnected()) {
+				listFragment.updateChannelList();
+				listFragment.expandChannel(getCurrentUser().getChannel());
+				listFragment.scrollToUser(getCurrentUser());
+			}
 		}
 		
 		@Override
