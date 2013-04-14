@@ -1089,8 +1089,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 	void hideNotification() {
 		// Clear notifications
-		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		nm.cancelAll();
+		stopForeground(true);
 	}
 
 	void showNotification() {
@@ -1132,8 +1131,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		mStatusNotificationBuilder = builder;
 		mStatusNotification = mStatusNotificationBuilder.build();
 
-		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.notify(STATUS_NOTIFICATION_ID, mStatusNotification);
+		startForeground(STATUS_NOTIFICATION_ID, mStatusNotification);
 	}
 
 	public void showChatNotification() {
