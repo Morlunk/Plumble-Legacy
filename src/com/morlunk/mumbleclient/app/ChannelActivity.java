@@ -362,9 +362,11 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
         	mService.clearChatNotification();
         }
         
-        // Update channel list
-        if(listFragment != null && listFragment.isVisible() && mService != null)
+        // Update channel list and make sure user is visible
+        if(listFragment != null && listFragment.isVisible() && mService != null && mService.isConnected()) {
         	listFragment.updateChannelList();
+        	listFragment.scrollToUser(mService.getCurrentUser());
+        }
     }
     
     @Override
@@ -950,6 +952,7 @@ public class ChannelActivity extends ConnectedActivity implements ChannelProvide
 		public void onCurrentChannelChanged() throws RemoteException {
 			listFragment.updateChannelList();
 			listFragment.expandChannel(getCurrentUser().getChannel());
+			listFragment.scrollToUser(getCurrentUser());
 		}
 		
 		@Override

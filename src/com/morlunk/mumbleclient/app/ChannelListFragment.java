@@ -12,7 +12,10 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.graphics.Typeface;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -92,6 +95,22 @@ public class ChannelListFragment extends SherlockFragment implements
 	 */
 	public void removeUser(User user) {
 		usersAdapter.notifyDataSetChanged();
+	}
+	
+	/**
+	 * Scrolls to the passed user, if they are not visible.
+	 * @param user
+	 */
+	@SuppressLint("NewApi")
+	public void scrollToUser(User user) {
+		Channel userChannel = user.getChannel();
+		int channelPosition = usersAdapter.channels.indexOf(userChannel);
+		int userPosition = MumbleService.getCurrentService().getChannelUsers(userChannel).indexOf(user);
+		int flatPosition = channelUsersList.getFlatListPosition(ExpandableListView.getPackedPositionForChild(channelPosition, userPosition));
+		if(VERSION.SDK_INT >= 8)
+			channelUsersList.smoothScrollToPosition(flatPosition);
+		else
+			channelUsersList.setSelectedChild(channelPosition, userPosition, false);
 	}
 
 	/*
@@ -297,6 +316,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			//final ImageView info = (ImageView) view.findViewById(R.id.channel_user_row_info);
 			
 			name.setText(user.name);
+			name.setTypeface(null, user.equals(service.getCurrentUser()) ? Typeface.BOLD : Typeface.NORMAL);
 
 			refreshTalkingState(view, user);
 
