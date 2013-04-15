@@ -128,6 +128,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			mService = null;
+			unbindService(conn);
 		}
 	};
 	
@@ -854,11 +855,12 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 	 */
 	protected void reconnect(Server server) {
 		// Reconnect
-		final Intent connectionIntent = new Intent(ChannelActivity.this, MumbleService.class);
+		final Intent connectionIntent = new Intent(getApplicationContext(), MumbleService.class);
 		connectionIntent.setAction(MumbleService.ACTION_CONNECT);
 		connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
 		startService(connectionIntent);
-		bindService(connectionIntent, conn, 0);
+		finish();
+		startActivity(new Intent(this, ChannelActivity.class));
 	}
 	
 	protected void disconnect() {
