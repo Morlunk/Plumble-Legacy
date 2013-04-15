@@ -35,7 +35,10 @@ public class ServerInfo extends SherlockDialogFragment {
 		if(getArguments() != null) {
 			long serverId = this.getArguments().getLong("serverId", -1);
 			if(serverId != -1) {
-				server = MumbleService.getCurrentService().getDatabaseAdapter().fetchServer(serverId);
+				DbAdapter adapter = new DbAdapter(activity);
+				adapter.open();
+				server = adapter.fetchServer(serverId);
+				adapter.close();
 			}
 		}
 		
