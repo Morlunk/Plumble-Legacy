@@ -23,7 +23,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignLeft="@id/tab_channels"
             android:layout_alignRight="@id/tab_channels"
-            android:background="@color/abs__holo_blue_light"/>
+            android:background="@color/holo_blue_light"/>
     </RelativeLayout>
 
     <RelativeLayout
@@ -45,7 +45,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignLeft="@id/tab_chat"
             android:layout_alignRight="@id/tab_chat"
-            android:background="@color/abs__holo_blue_light"
+            android:background="@color/holo_blue_light"
             android:visibility="gone"/>
     </RelativeLayout>
 

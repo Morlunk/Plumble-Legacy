@@ -280,7 +280,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
     	int pushToTalkBackground = mViewPager != null ? R.color.push_to_talk_background : 0; // Use special 'second action bar' look for background of paged.
     	
     	if(pttView != null)
-    		pttView.setBackgroundResource(talking ? R.color.abs__holo_blue_light : pushToTalkBackground);
+    		pttView.setBackgroundResource(talking ? R.color.holo_blue_light : pushToTalkBackground);
     }
     
     /* (non-Javadoc)
