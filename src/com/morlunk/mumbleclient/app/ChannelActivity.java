@@ -129,6 +129,10 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 			// If we're not going to receive the onConnected call to setup fragments, set them up here.
 	        if(mService.isConnected() && (listFragment == null || chatFragment == null))
 	        	setupFragments();
+	        
+	        // We never receive the connecting message. Show dialog.
+	        if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_CONNECTING)
+    			onConnecting();
 		}
 
 		/**
