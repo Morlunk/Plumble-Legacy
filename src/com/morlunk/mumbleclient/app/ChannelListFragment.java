@@ -163,7 +163,9 @@ public class ChannelListFragment extends SherlockFragment implements
 		super.onResume();
 		
 		// Update channel list when resuming.
-		if(channelProvider.getService() != null && channelProvider.getService().isConnected())
+		if(usersAdapter != null && 
+				channelProvider.getService() != null && 
+				channelProvider.getService().isConnected())
 	        updateChannelList();
 	}
 	
