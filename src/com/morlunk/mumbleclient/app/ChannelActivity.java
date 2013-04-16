@@ -59,6 +59,7 @@ import com.actionbarsherlock.view.MenuItem;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
+import com.morlunk.mumbleclient.app.TokenDialogFragment.TokenDialogFragmentProvider;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
@@ -84,12 +85,8 @@ interface ChannelProvider {
 	public MumbleService getService();
 }
 
-interface TokenDialogFragmentListener {
-	public void updateAccessTokens(List<String> tokens);
-}
 
-
-public class ChannelActivity extends SherlockFragmentActivity implements ChannelProvider, TokenDialogFragmentListener, Observer {
+public class ChannelActivity extends SherlockFragmentActivity implements ChannelProvider, TokenDialogFragmentProvider, Observer {
 
 	/*
 	 * Disconnect extras sent in result intent.
@@ -555,6 +552,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 			return true;
 		case R.id.menu_preferences:
 			Intent intent = new Intent(this, Preferences.class);
+			intent.putExtra(Preferences.EXTRA_CONNECTED, true);
 			startActivity(intent);
 			return true;
 		case R.id.menu_disconnect_item:
@@ -637,6 +635,21 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		};
 		accessTask.execute(tokens);
 	}
+
+	@Override
+	public List<String> getTokens() {
+		return mService.getDatabaseAdapter().fetchAllTokens(mService.getConnectedServer().getId());
+	}
+
+	@Override
+	public void addToken(String string) {
+		mService.getDatabaseAdapter().createToken(mService.getConnectedServer().getId(), string);
+	}
+
+	@Override
+	public void deleteToken(String string) {
+		mService.getDatabaseAdapter().deleteToken(mService.getConnectedServer().getId(), string);
+	};
 	
 	/**
 	 * Sets up the channel and chat fragments.
@@ -1087,5 +1100,5 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		public void onPermissionDenied(String reason, int denyType) throws RemoteException {
 			permissionDenied(reason, DenyType.valueOf(denyType));
 		}
-	};
+	}
 }

@@ -1,16 +1,9 @@
 package com.morlunk.mumbleclient.app;
 
-import java.util.List;
-
-import android.app.SearchManager;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.MatrixCursor;
 import android.net.Uri;
-
-import com.morlunk.mumbleclient.service.MumbleService;
-import com.morlunk.mumbleclient.service.model.Channel;
 
 public class ChannelSearchProvider extends ContentProvider {
 
@@ -40,6 +33,11 @@ public class ChannelSearchProvider extends ContentProvider {
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection,
 			String[] selectionArgs, String sortOrder) {
+		
+		// Sometimes you have to break the things you care about. FIXME
+		// I wanted to remove that service singleton. Will re-add search before this hits play store. -AC
+		
+		/*
 		if(MumbleService.getCurrentService() == null)
 			return null;
 		
@@ -63,8 +61,9 @@ public class ChannelSearchProvider extends ContentProvider {
 				cursor.addRow(new Object[] { x, channel.name, channel.id });
 			}
 		}
-		
 		return cursor;
+		*/
+		return null;
 	}
 
 	@Override

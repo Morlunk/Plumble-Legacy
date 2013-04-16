@@ -157,6 +157,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				}
 			});
 		}
+
+		@Override
+		public boolean isDeafened() {
+			return getCurrentUser().selfDeafened;
+		}
 	}
 
 	public class ServiceConnectionHost extends AbstractHost implements
@@ -528,10 +533,12 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	public static final String EXTRA_MESSAGE = "mumbleclient.extra.MESSAGE";
 	public static final String EXTRA_CONNECTION_STATE = "mumbleclient.extra.CONNECTION_STATE";
 	public static final String EXTRA_SERVER = "mumbleclient.extra.SERVER";
-
+	
+	public static final String MUMBLE_NOTIFICATION_ACTION_KEY = "notificationKey";
+	public static final String MUMBLE_NOTIFICATION_ACTION_MUTE = "mute";
+	public static final String MUMBLE_NOTIFICATION_ACTION_DEAFEN = "deafen";
+	
 	public static final Integer STATUS_NOTIFICATION_ID = 1;
-
-	private static MumbleService currentService;
 
 	private MumbleConnection mClient;
 	private MumbleProtocol mProtocol;
@@ -590,16 +597,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	private ServiceProtocolHost mProtocolHost;
 	private ServiceConnectionHost mConnectionHost;
 	public ServiceAudioOutputHost mAudioHost;
-
-	/**
-	 * Gets the current mumble service (the last one spawned). This is /such/ a
-	 * bad design pattern to be using with Android services. FIXME
-	 * 
-	 * @return
-	 */
-	public static MumbleService getCurrentService() {
-		return currentService;
-	}
 
 	public DbAdapter getDatabaseAdapter() {
 		return dbAdapter;
@@ -854,8 +851,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		chatFormatter = new PlumbleChatFormatter(this);
 
-		currentService = this;
-
 		dbAdapter = new DbAdapter(this);
 		dbAdapter.open();
 	}
@@ -875,6 +870,22 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	@Override
 	public int onStartCommand(final Intent intent, final int flags,
 			final int startId) {
+		/* Handle notification intents. */
+		if(intent != null &&
+				intent.getExtras() != null && 
+				intent.getExtras().containsKey(MUMBLE_NOTIFICATION_ACTION_KEY)) {
+			String keyString = intent.getExtras().getString(MUMBLE_NOTIFICATION_ACTION_KEY);
+			
+			if(keyString.equals(MUMBLE_NOTIFICATION_ACTION_MUTE)) {
+				setMuted(!isMuted());
+			}
+			
+			if(keyString.equals(MUMBLE_NOTIFICATION_ACTION_DEAFEN)) {
+				setDeafened(!isDeafened());
+			}
+			
+			return START_NOT_STICKY;
+		}
 		return handleCommand(intent);
 	}
 
@@ -1118,15 +1129,15 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		builder.setOngoing(true);
 
 		// Add notification triggers
-		Intent muteIntent = new Intent(this, MumbleNotificationService.class);
+		Intent muteIntent = new Intent(this, MumbleService.class);
 		muteIntent.putExtra(
-				MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_KEY,
-				MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_TALK);
+				MUMBLE_NOTIFICATION_ACTION_KEY,
+				MUMBLE_NOTIFICATION_ACTION_MUTE);
 
-		Intent deafenIntent = new Intent(this, MumbleNotificationService.class);
+		Intent deafenIntent = new Intent(this, MumbleService.class);
 		deafenIntent.putExtra(
-				MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_KEY,
-				MumbleNotificationService.MUMBLE_NOTIFICATION_ACTION_DEAFEN);
+				MUMBLE_NOTIFICATION_ACTION_KEY,
+				MUMBLE_NOTIFICATION_ACTION_DEAFEN);
 
 		builder.addAction(R.drawable.ic_action_microphone,
 				getString(R.string.mute), PendingIntent.getService(this, 0,

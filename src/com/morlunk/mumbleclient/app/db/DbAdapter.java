@@ -249,7 +249,7 @@ public class DbAdapter {
 		return tokens;
 	}
 	
-	public boolean deleteToken(String token, long serverId) {
+	public boolean deleteToken(long serverId, String token) {
 		return db.delete(TABLE_TOKENS, TOKENS_VALUE + " = ? AND " + TOKENS_SERVER + " = ?", new String[] { token, String.valueOf(serverId) }) > 0;
 	}
 	

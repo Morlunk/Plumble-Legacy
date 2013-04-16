@@ -22,6 +22,7 @@ import net.sf.mumble.MumbleProto.TextMessage;
 import net.sf.mumble.MumbleProto.UDPTunnel;
 import net.sf.mumble.MumbleProto.UserRemove;
 import net.sf.mumble.MumbleProto.UserState;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Log;
 
@@ -34,6 +35,7 @@ import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
 
+@SuppressLint("UseSparseArrays")
 public class MumbleProtocol {
 	public enum MessageType {
 		// TODO find out what 'Unknown' is. Without that extra enum value, servers will crash.
@@ -436,6 +438,7 @@ public class MumbleProtocol {
 
 		final int type = buffer[0] >> 5 & 0x7;
 		if (type == UDPMESSAGETYPE_UDPPING) {
+			/*
 			final long timestamp = ((long) (buffer[1] & 0xFF) << 56) |
 								   ((long) (buffer[2] & 0xFF) << 48) |
 								   ((long) (buffer[3] & 0xFF) << 40) |
@@ -445,7 +448,8 @@ public class MumbleProtocol {
 								   ((long) (buffer[7] & 0xFF) << 8) |
 								   ((buffer[8] & 0xFF));
 
-			//conn.refreshUdpLimit(timestamp + UDP_PING_TRESHOLD);
+			conn.refreshUdpLimit(timestamp + UDP_PING_TRESHOLD);
+			*/
 		} else {
 			processVoicePacket(buffer);
 		}

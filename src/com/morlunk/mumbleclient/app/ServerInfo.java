@@ -16,7 +16,6 @@ import com.actionbarsherlock.app.SherlockDialogFragment;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
-import com.morlunk.mumbleclient.service.MumbleService;
 
 public class ServerInfo extends SherlockDialogFragment {
 	private EditText nameEdit;

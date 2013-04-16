@@ -197,7 +197,7 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 						connectToServer(server);
 					}
 				});
-				alertBuilder.setNegativeButton(android.R.string.ok, new OnClickListener() {
+				alertBuilder.setNegativeButton(android.R.string.cancel, new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();

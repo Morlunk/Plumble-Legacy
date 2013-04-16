@@ -31,8 +31,8 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.morlunk.mumbleclient.R;
+import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
-import com.morlunk.mumbleclient.service.MumbleService;
 
 /**
  * Displays a list of servers, and allows the user to connect and edit them.
@@ -126,7 +126,10 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 		alertBuilder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				MumbleService.getCurrentService().getDatabaseAdapter().deleteServer(server.getId());
+				DbAdapter adapter = new DbAdapter(getActivity());
+				adapter.open();
+				adapter.deleteServer(server.getId());
+				adapter.close();
 				serverAdapter.remove(server);
 			}
 		});

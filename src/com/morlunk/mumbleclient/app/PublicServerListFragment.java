@@ -39,8 +39,8 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
+import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.PublicServer;
-import com.morlunk.mumbleclient.service.MumbleService;
 
 /**
  * Displays a list of public servers that can be connected to, sorted, and favourited.
@@ -279,7 +279,10 @@ public class PublicServerListFragment extends SherlockFragment implements OnItem
 					alertBuilder.setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							MumbleService.getCurrentService().getDatabaseAdapter().createServer(server.getName(), server.getHost(), server.getPort(), usernameField.getText().toString(), "");
+							DbAdapter adapter = new DbAdapter(getActivity());
+							adapter.open();
+							adapter.createServer(server.getName(), server.getHost(), server.getPort(), usernameField.getText().toString(), "");
+							adapter.close();
 							connectHandler.publicServerFavourited();
 						}
 					});

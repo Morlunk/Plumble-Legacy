@@ -16,7 +16,6 @@ import android.util.Log;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
-import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.PacketDataStream;
 import com.morlunk.mumbleclient.service.audio.AudioUser.PacketReadyHandler;
 import com.morlunk.mumbleclient.service.model.User;
@@ -152,9 +151,7 @@ public class AudioOutput implements Runnable {
 
 			// If there is output, play it now if not deafened.
 			if (mix.size() > 0 && 
-					MumbleService.getCurrentService() != null && 
-					MumbleService.getCurrentService().getCurrentUser()!= null && 
-					!MumbleService.getCurrentService().getCurrentUser().selfDeafened) {
+					!host.isDeafened()) {
 				// Mix all the frames into one array.
 				mix(out, mix);
 				

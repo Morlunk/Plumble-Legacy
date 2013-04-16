@@ -104,7 +104,7 @@ public class ChannelListFragment extends SherlockFragment implements
 	public void scrollToUser(User user) {
 		Channel userChannel = user.getChannel();
 		int channelPosition = usersAdapter.channels.indexOf(userChannel);
-		int userPosition = MumbleService.getCurrentService().getChannelUsers(userChannel).indexOf(user);
+		int userPosition = channelProvider.getService().getChannelUsers(userChannel).indexOf(user);
 		int flatPosition = channelUsersList.getFlatListPosition(ExpandableListView.getPackedPositionForChild(channelPosition, userPosition));
 		if(VERSION.SDK_INT >= 8)
 			channelUsersList.smoothScrollToPosition(flatPosition);
@@ -574,8 +574,8 @@ public class ChannelListFragment extends SherlockFragment implements
 			public void onClick(View v) {
 				ImageView commentView = (ImageView) v.findViewById(R.id.channel_user_row_comment_image);
 
-				if (MumbleService.getCurrentService() != null
-						&& !MumbleService.getCurrentService()
+				if (channelProvider.getService() != null
+						&& !channelProvider.getService()
 								.isConnectedServerPublic()) {
 					commentView.setImageResource(R.drawable.ic_action_comment);
 					dbAdapter.setCommentSeen(
@@ -612,7 +612,7 @@ public class ChannelListFragment extends SherlockFragment implements
 					new AsyncTask<Void, Void, Void>() {
 						@Override
 						protected Void doInBackground(Void... params) {
-							MumbleService.getCurrentService().sendTcpMessage(
+							channelProvider.getService().sendTcpMessage(
 									MessageType.RequestBlob, blobBuilder);
 							// TODO fix. This is messy, we're polling until we
 							// get a comment response.

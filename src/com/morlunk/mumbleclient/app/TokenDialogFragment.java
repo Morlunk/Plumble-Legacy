@@ -26,12 +26,17 @@ import android.widget.TextView.OnEditorActionListener;
 
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
-import com.morlunk.mumbleclient.app.db.DbAdapter;
-import com.morlunk.mumbleclient.service.MumbleService;
 
 public class TokenDialogFragment extends DialogFragment {
+
+	interface TokenDialogFragmentProvider {
+		public List<String> getTokens();
+		public void addToken(String string);
+		public void deleteToken(String string);
+		public void updateAccessTokens(List<String> tokens);
+	}
 	
-	private TokenDialogFragmentListener tokenListener;
+	private TokenDialogFragmentProvider tokenProvider;
 	
 	private List<String> tokens;
 	
@@ -39,8 +44,6 @@ public class TokenDialogFragment extends DialogFragment {
 	private TokenAdapter tokenAdapter;
 	
 	private EditText tokenField;
-	
-	private DbAdapter dbAdapter;
 	
 	public static TokenDialogFragment newInstance() {
 		TokenDialogFragment dialogFragment = new TokenDialogFragment();
@@ -52,14 +55,13 @@ public class TokenDialogFragment extends DialogFragment {
 		super.onAttach(activity);
 		
 		try {
-			tokenListener = (TokenDialogFragmentListener)activity;
+			tokenProvider = (TokenDialogFragmentProvider)activity;
 		} catch(ClassCastException exception) {
 			throw new ClassCastException(activity.toString() + " must implement TokenDialogFragmentListener");
 		}
 		
-		dbAdapter = MumbleService.getCurrentService().getDatabaseAdapter();
-		tokens = dbAdapter.fetchAllTokens(MumbleService.getCurrentService().getConnectedServer().getId());
 		
+		tokens = tokenProvider.getTokens();
 		tokenAdapter = new TokenAdapter(activity, tokens);
 	}
 	
@@ -113,8 +115,8 @@ public class TokenDialogFragment extends DialogFragment {
 	public void onDismiss(DialogInterface dialog) {
 		super.onDismiss(dialog);
 		
-		if(tokenListener != null) {
-			tokenListener.updateAccessTokens(tokens);
+		if(tokenProvider != null) {
+			tokenProvider.updateAccessTokens(tokens);
 		}
 	}
 	
@@ -133,9 +135,7 @@ public class TokenDialogFragment extends DialogFragment {
 		tokens.add(tokenText);
 		tokenAdapter.notifyDataSetChanged();
 		
-		dbAdapter.open();
-		dbAdapter.createToken(MumbleService.getCurrentService().getConnectedServer().getId(), tokenText);
-		dbAdapter.close();
+		tokenProvider.addToken(tokenText);
 		
 		if(Build.VERSION.SDK_INT >= 8)
 			tokenList.smoothScrollToPosition(tokens.size()-1);
@@ -165,7 +165,7 @@ public class TokenDialogFragment extends DialogFragment {
 				
 				@Override
 				public void onClick(View v) {
-					dbAdapter.deleteToken(token, MumbleService.getCurrentService().getConnectedServer().getId());
+					tokenProvider.deleteToken(token);
 					tokens.remove(position);
 					notifyDataSetChanged();
 				}

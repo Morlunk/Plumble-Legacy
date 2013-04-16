@@ -25,7 +25,6 @@ import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
-import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.PlumbleCertificateManager;
 
 /**
@@ -39,6 +38,8 @@ interface PreferenceProvider {
 
 public class Preferences extends SherlockPreferenceActivity implements PreferenceProvider {
 
+	public static final String EXTRA_CONNECTED = "connected";
+	
 	// A list of preference keys that can't be changed when connected to a server.
 	private static final String[] IMMUTABLE_WHEN_CONNECTED = new String[] {
 		Settings.PREF_GENERATE_CERT,
@@ -61,12 +62,18 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 
 	private static Context context;
 	
+	private boolean connected = false;
+	
 	@SuppressLint("NewApi")
 	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Preferences.context = this;
+		
+		Bundle bundle = getIntent().getExtras();
+		if(bundle != null)
+			connected = bundle.getBoolean(EXTRA_CONNECTED);
 		
 		if(android.os.Build.VERSION.SDK_INT >= 11) {
 			getFragmentManager().beginTransaction().replace(android.R.id.content, new PreferencesFragment()).commit();
@@ -83,18 +90,14 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 		
 		super.onDestroy();
 	}
-
-	public static Context getContext() {
-		return Preferences.context;
-	}
 	
 	/**
 	 * Sets up all necessary programmatic preference modifications.
 	 * @param preferenceProvider
 	 */
-	private static void configurePreferences(final PreferenceProvider preferenceProvider) {
+	private void configurePreferences(final PreferenceProvider preferenceProvider) {
 		// Disable options that are immutable when connected
-		if(MumbleService.getCurrentService() != null && MumbleService.getCurrentService().isConnected()) {
+		if(connected) {
 			for(String key : IMMUTABLE_WHEN_CONNECTED) {
 				Preference preference = preferenceProvider.findPreference(key);
 				preference.setEnabled(false);
@@ -138,7 +141,7 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 		}
 	}
 	
-	private static void updateAudioInput(PreferenceProvider preferenceProvider, String newValue) {		
+	private void updateAudioInput(PreferenceProvider preferenceProvider, String newValue) {		
 		Preference pttSettingsPreference = preferenceProvider.findPreference(PTT_SETTINGS_KEY);
 		Preference voiceSettingsPreference = preferenceProvider.findPreference(VOICE_SETTINGS_KEY);
 
@@ -151,7 +154,7 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 	 * Updates the passed preference with the certificate paths found on external storage.
 	 * @param preference The ListPreference to update.
 	 */
-	private static void updateCertificatePath(ListPreference preference) throws NullPointerException {
+	private void updateCertificatePath(ListPreference preference) throws NullPointerException {
 		File externalStorageDirectory = Environment.getExternalStorageDirectory();
 		File plumbleFolder = new File(externalStorageDirectory, CERTIFICATE_FOLDER);
 		
@@ -177,7 +180,7 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 		for(int x=0;x<certificateFiles.size();x++) {
 			certificateNames[x] = certificateFiles.get(x).getName();
 		}
-		certificateNames[certificateNames.length-1] = getContext().getResources().getString(R.string.noCert);
+		certificateNames[certificateNames.length-1] = getResources().getString(R.string.noCert);
 		
 		preference.setEntries(certificateNames);
 		preference.setEntryValues(certificatePaths);
@@ -187,7 +190,7 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 	 * Generates a new certificate and sets it as active.
 	 * @param certificateList If passed, will update the list of certificates available. Messy.
 	 */
-	private static void generateCertificate(final ListPreference certificateList) {
+	private void generateCertificate(final ListPreference certificateList) {
 		AsyncTask<File, Void, X509Certificate> task = new AsyncTask<File, Void, X509Certificate>() {
 			
 			private ProgressDialog loadingDialog;
@@ -197,9 +200,9 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 			protected void onPreExecute() {
 				super.onPreExecute();
 				
-				loadingDialog = new ProgressDialog(getContext());
+				loadingDialog = new ProgressDialog(Preferences.this);
 				loadingDialog.setIndeterminate(true);
-				loadingDialog.setMessage(getContext().getResources().getString(R.string.generateCertProgress));
+				loadingDialog.setMessage(getResources().getString(R.string.generateCertProgress));
 				loadingDialog.setOnCancelListener(new OnCancelListener() {
 					
 					@Override
@@ -216,7 +219,7 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 				try {
 					X509Certificate certificate = PlumbleCertificateManager.createCertificate(certificatePath);
 					
-					Settings settings = Settings.getInstance(getContext());
+					Settings settings = Settings.getInstance(Preferences.this);
 					settings.setCertificatePath(certificatePath.getAbsolutePath());
 					return certificate;
 				} catch (Exception e) {
@@ -234,9 +237,9 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 						certificateList.setValue(certificatePath.getAbsolutePath());
 					}
 					
-					Toast.makeText(getContext(), context.getString(R.string.generateCertSuccess, certificatePath.getName()), Toast.LENGTH_SHORT).show();
+					Toast.makeText(Preferences.this, context.getString(R.string.generateCertSuccess, certificatePath.getName()), Toast.LENGTH_SHORT).show();
 				} else {
-					Toast.makeText(getContext(), R.string.generateCertFailure, Toast.LENGTH_SHORT).show();
+					Toast.makeText(Preferences.this, R.string.generateCertFailure, Toast.LENGTH_SHORT).show();
 				}
 				
 				loadingDialog.dismiss();
@@ -252,8 +255,9 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 		task.execute(certificatePath);
 	}
 	
+	@SuppressLint("ValidFragment")
 	@TargetApi(11)
-	public static class PreferencesFragment extends PreferenceFragment implements PreferenceProvider {
+	class PreferencesFragment extends PreferenceFragment implements PreferenceProvider {
 		
 		/* (non-Javadoc)
 		 * @see android.support.v4.app.Fragment#onCreate(android.os.Bundle)
