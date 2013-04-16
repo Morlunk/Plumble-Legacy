@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -19,7 +18,6 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
-import android.preference.PreferenceFragment;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
@@ -75,12 +73,12 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 		if(bundle != null)
 			connected = bundle.getBoolean(EXTRA_CONNECTED);
 		
-		if(android.os.Build.VERSION.SDK_INT >= 11) {
-			getFragmentManager().beginTransaction().replace(android.R.id.content, new PreferencesFragment()).commit();
-		} else {
+		//if(android.os.Build.VERSION.SDK_INT >= 11) {
+		//	getFragmentManager().beginTransaction().replace(android.R.id.content, new PreferencesFragment()).commit();
+		//} else {
 			addPreferencesFromResource(R.xml.preferences);
 			configurePreferences(this);
-		}
+		//}
 	}
 	
 	@Override
@@ -255,13 +253,9 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 		task.execute(certificatePath);
 	}
 	
-	@SuppressLint("ValidFragment")
-	@TargetApi(11)
+	/*
 	class PreferencesFragment extends PreferenceFragment implements PreferenceProvider {
 		
-		/* (non-Javadoc)
-		 * @see android.support.v4.app.Fragment#onCreate(android.os.Bundle)
-		 */
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
@@ -271,4 +265,5 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 			configurePreferences(this);
 		}
 	}
+	*/
 }
