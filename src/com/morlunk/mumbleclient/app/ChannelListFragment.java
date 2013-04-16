@@ -62,13 +62,6 @@ public class ChannelListFragment extends SherlockFragment implements
 			channelUsersList.expandGroup(i);
 		}
 	}
-
-	/**
-	 * Updates the users display with the data from the channelProvider.
-	 */
-	public void updateChannel(Channel channel) {
-		usersAdapter.notifyDataSetChanged();
-	}
 	
 	public void expandChannel(Channel channel) {
 		channelUsersList.expandGroup(usersAdapter.channels.indexOf(channel));
@@ -104,7 +97,7 @@ public class ChannelListFragment extends SherlockFragment implements
 	public void scrollToUser(User user) {
 		Channel userChannel = user.getChannel();
 		int channelPosition = usersAdapter.channels.indexOf(userChannel);
-		int userPosition = channelProvider.getService().getChannelUsers(userChannel).indexOf(user);
+		int userPosition = channelProvider.getService().getChannelMap().get(userChannel).indexOf(user);
 		int flatPosition = channelUsersList.getFlatListPosition(ExpandableListView.getPackedPositionForChild(channelPosition, userPosition));
 		if(VERSION.SDK_INT >= 8)
 			channelUsersList.smoothScrollToPosition(flatPosition);
@@ -165,6 +158,15 @@ public class ChannelListFragment extends SherlockFragment implements
 		registerForContextMenu(channelUsersList);
 	}
 	
+	@Override
+	public void onResume() {
+		super.onResume();
+		
+		// Update channel list when resuming.
+		if(channelProvider.getService() != null && channelProvider.getService().isConnected())
+	        updateChannelList();
+	}
+	
 	public void onServiceBound() {
 		usersAdapter = new UserListAdapter(getActivity(),
 				channelProvider.getService());
@@ -172,26 +174,6 @@ public class ChannelListFragment extends SherlockFragment implements
         updateChannelList();
         scrollToUser(channelProvider.getService().getCurrentUser());
 	}
-	
-	/*
-
-	public boolean onContextItemSelected(MenuItem item) {
-		ExpandableListContextMenuInfo info = (ExpandableListContextMenuInfo) item
-				.getMenuInfo();
-		User user = (User) usersAdapter.getChild(
-				ExpandableListView.getPackedPositionGroup(info.packedPosition),
-				ExpandableListView.getPackedPositionChild(info.packedPosition));
-
-		switch (item.getItemId()) {
-		case R.id.menu_local_mute_item:
-			user.localMuted = !user.localMuted;
-			usersAdapter.refreshUser(user);
-			return true;
-		}
-		return false;
-	}
-	
-	*/
 
 	public void setChatTarget(User chatTarget) {
 		User oldTarget = selectedUser;
@@ -231,7 +213,8 @@ public class ChannelListFragment extends SherlockFragment implements
 		private final Context context;
 		private final MumbleService service;
 		private final DbAdapter dbAdapter;
-		protected List<Channel> channels = new ArrayList<Channel>();
+		private List<Channel> channels = new ArrayList<Channel>();
+		private Map<Channel, List<User>> channelMap = new HashMap<Channel, List<User>>();
 
 		private final Map<User, Boolean> userCommentsSeen = new HashMap<User, Boolean>();
 
@@ -247,6 +230,7 @@ public class ChannelListFragment extends SherlockFragment implements
 		 */
 		public void updateChannelList() {
 			this.channels = service.getSortedChannelList();
+			this.channelMap = service.getChannelMap();
 		}
 
 		public void refreshUser(User user) {
@@ -256,7 +240,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			int channelPosition = channels.indexOf(user.getChannel());
 			if (!channelUsersList.isGroupExpanded(channelPosition))
 				return;
-			int userPosition = service.getChannelUsers(user.getChannel()).indexOf(user);
+			int userPosition = channelMap.get(user.getChannel()).indexOf(user);
 			long packedPosition = ExpandableListView.getPackedPositionForChild(
 					channelPosition, userPosition);
 			int position = channelUsersList.getFlatListPosition(packedPosition);
@@ -285,7 +269,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			int channelPosition = channels.indexOf(user.getChannel());
 			if (!channelUsersList.isGroupExpanded(channelPosition))
 				return;
-			int userPosition = service.getChannelUsers(user.getChannel()).indexOf(user);
+			int userPosition = channelMap.get(user.getChannel()).indexOf(user);
 			long packedPosition = ExpandableListView.getPackedPositionForChild(
 					channelPosition, userPosition);
 			int position = channelUsersList.getFlatListPosition(packedPosition);
@@ -424,7 +408,7 @@ public class ChannelListFragment extends SherlockFragment implements
 		@Override
 		public Object getChild(int groupPosition, int childPosition) {
 			Channel channel = channels.get(groupPosition);
-			List<User> channelUsers = service.getChannelUsers(channel);
+			List<User> channelUsers = channelMap.get(channel);
 			return channelUsers.get(childPosition);
 		}
 

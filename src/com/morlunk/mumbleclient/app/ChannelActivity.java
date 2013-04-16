@@ -1061,7 +1061,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		@Override
 		public void onChannelUpdated(Channel channel) throws RemoteException {
 			if(mService.isConnected())
-				listFragment.updateChannel(channel);
+				listFragment.updateChannelList();
 		}
 		
 		@Override
@@ -1073,7 +1073,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		@Override
 		public void onUserAdded(final User user) throws RemoteException {
 			if(mService.isConnected())
-				listFragment.updateChannel(user.getChannel());
+				listFragment.updateChannelList();
 		}
 
 		@Override
