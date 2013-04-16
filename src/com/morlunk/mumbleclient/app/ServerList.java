@@ -7,11 +7,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.sf.mumble.MumbleProto.Reject.RejectType;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
@@ -37,6 +40,7 @@ import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.PublicServer;
 import com.morlunk.mumbleclient.app.db.Server;
+import com.morlunk.mumbleclient.service.MumbleProtocol.DisconnectReason;
 import com.morlunk.mumbleclient.service.MumbleService;
 
 /**
@@ -66,6 +70,8 @@ interface ServerConnectHandler {
  */
 public class ServerList extends SherlockFragmentActivity implements ServerInfoListener, ServerConnectHandler {
 
+	public static final int CHANNEL_ACTIVITY_REQUEST = 1;
+	
 	private ServerListFragment serverListFragment;
 	private PublicServerListFragment publicServerListFragment;
 	private ViewPager pager;
@@ -175,6 +181,80 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		publicServerListFragment.onOptionsItemSelected(item);
 		return false;
 	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if(requestCode == CHANNEL_ACTIVITY_REQUEST) {
+			if(resultCode == RESULT_OK) {
+				// Check to see if we received an error that caused the disconnect, indicate the user if so.
+				DisconnectReason reason = DisconnectReason.values()[data.getIntExtra(ChannelActivity.EXTRA_DISCONNECT_TYPE, 0)];
+				final Server server = data.getParcelableExtra(ChannelActivity.EXTRA_SERVER);
+				AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+				alertBuilder.setTitle(R.string.disconnected);
+				alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						connectToServer(server);
+					}
+				});
+				alertBuilder.setNegativeButton(android.R.string.ok, new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				});
+				
+				switch (reason) {
+				case Generic:
+					String response = data.getStringExtra(ChannelActivity.EXTRA_GENERIC_REASON);
+					alertBuilder.setMessage(response);
+					break;
+
+				case Kick:
+					String kickReason = data.getStringExtra(ChannelActivity.EXTRA_KICK_REASON);
+					alertBuilder.setMessage(getString(R.string.kickedMessage, kickReason));
+					break;
+				
+				case Reject:
+					String rejectReason = data.getStringExtra(ChannelActivity.EXTRA_REJECT_REASON);
+					RejectType rejectType = RejectType.values()[data.getIntExtra(ChannelActivity.EXTRA_REJECT_TYPE, 0)];
+					alertBuilder.setMessage(rejectReason);
+					if(rejectType == RejectType.WrongUserPW || rejectType == RejectType.WrongServerPW) {		
+						// Allow password entry
+						final EditText passwordField = new EditText(this);
+						passwordField.setHint(R.string.serverPassword);
+						alertBuilder.setView(passwordField);
+
+						alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								// Update server in database if it's not public (id = -1)
+								if(server.getId() != -1) {
+									DbAdapter adapter = new DbAdapter(ServerList.this);
+									adapter.open();
+									adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
+									adapter.close();
+								}
+								server.setPassword(passwordField.getText().toString());
+
+								// Reconnect
+								connectToServer(server);
+							}
+						});
+					}
+					break;
+				}
+				alertBuilder.show();
+			}
+		}
+	}
+	
+	@Override
+	protected void onSaveInstanceState(final Bundle outState) {
+		super.onSaveInstanceState(outState);
+		getSupportFragmentManager().putFragment(outState, ServerListFragment.class.getName(), serverListFragment);
+		getSupportFragmentManager().putFragment(outState, PublicServerListFragment.class.getName(), publicServerListFragment);
+	}
 
 	/**
 	 * Starts connecting to a server.
@@ -187,7 +267,7 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
 		startService(connectionIntent);
 		final Intent channelListIntent = new Intent(this, ChannelActivity.class);
-		startActivity(channelListIntent);
+		startActivityForResult(channelListIntent, CHANNEL_ACTIVITY_REQUEST);
 	}
 
 	/**
@@ -215,17 +295,12 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 				connectionIntent.setAction(MumbleService.ACTION_CONNECT);
 				connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
 				startService(connectionIntent);
+				final Intent channelListIntent = new Intent(ServerList.this, ChannelActivity.class);
+				startActivityForResult(channelListIntent, CHANNEL_ACTIVITY_REQUEST);
 			}
 		});
 		
 		alertBuilder.show();
-	}
-	
-	@Override
-	protected void onSaveInstanceState(final Bundle outState) {
-		super.onSaveInstanceState(outState);
-		getSupportFragmentManager().putFragment(outState, ServerListFragment.class.getName(), serverListFragment);
-		getSupportFragmentManager().putFragment(outState, PublicServerListFragment.class.getName(), publicServerListFragment);
 	}
 	
 	private Server parseServerUri(Uri data) {

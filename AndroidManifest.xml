@@ -48,6 +48,7 @@
 
         <service
             android:name=".service.MumbleService"
+            android:stopWithTask="true"
             android:enabled="true" />
         <service
             android:name=".service.MumbleNotificationService"

@@ -29,7 +29,9 @@ public interface MumbleProtocolHost {
 
 	public void messageSent(Message msg);
 
-	public void setError(Reject reject);
+	public void setReject(Reject reject);
+	
+	public void setKick(UserRemove kick);
 
 	public void setSynchronized(boolean synced);
 
@@ -42,4 +44,5 @@ public interface MumbleProtocolHost {
 	public void permissionDenied(String reason, int denyType);
 
 	public void userUpdated(User user);
+
 }

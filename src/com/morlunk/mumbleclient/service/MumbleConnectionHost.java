@@ -1,5 +1,7 @@
 package com.morlunk.mumbleclient.service;
 
+import net.sf.mumble.MumbleProto.Reject;
+
 
 /**
  * Callback interface for Connection to communicate back to the service.
@@ -13,8 +15,7 @@ public interface MumbleConnectionHost {
 	public final static int STATE_CONNECTED = 2;
 
 	public void setConnectionState(int state);
-
-	public void setError(Object error);
-
+	public void setReject(Reject reject);
+	public void setGenericError(String error);
 	public boolean hasError();
 }

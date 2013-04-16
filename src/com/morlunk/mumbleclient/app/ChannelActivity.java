@@ -10,7 +10,6 @@ import java.util.Observer;
 import junit.framework.Assert;
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
 import net.sf.mumble.MumbleProto.Reject;
-import net.sf.mumble.MumbleProto.Reject.RejectType;
 import net.sf.mumble.MumbleProto.UserRemove;
 import net.sf.mumble.MumbleProto.UserState;
 import android.annotation.SuppressLint;
@@ -48,7 +47,6 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -63,8 +61,8 @@ import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
-import com.morlunk.mumbleclient.app.db.Server;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
+import com.morlunk.mumbleclient.service.MumbleProtocol.DisconnectReason;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.MumbleService.LocalBinder;
 import com.morlunk.mumbleclient.service.model.Channel;
@@ -93,6 +91,17 @@ interface TokenDialogFragmentListener {
 
 public class ChannelActivity extends SherlockFragmentActivity implements ChannelProvider, TokenDialogFragmentListener, Observer {
 
+	/*
+	 * Disconnect extras sent in result intent.
+	 */
+	public static final String EXTRA_SERVER = "server";
+	public static final String EXTRA_DISCONNECT_TYPE = "disconnect_type";
+	public static final String EXTRA_REJECT_TYPE = "reject_type";
+	public static final String EXTRA_REJECT_REASON = "reject_reason";
+	public static final String EXTRA_KICK_ACTOR = "kick_actor";
+	public static final String EXTRA_KICK_REASON = "kick_reason";
+	public static final String EXTRA_GENERIC_REASON = "generic_reason";
+	
 	public static final String JOIN_CHANNEL = "join_channel";
 	public static final String SAVED_STATE_VISIBLE_CHANNEL = "visible_channel";
 	public static final String SAVED_STATE_CHAT_TARGET = "chat_target";
@@ -125,10 +134,34 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 	        	setupFragments();
 		}
 
+		/**
+		 * Called when service disconnects.
+		 * Propagate any error information, and return to the server selection screen.
+		 */
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
-			mService = null;
-			unbindService(conn);
+			Intent returnIntent = new Intent(); // Return any error data from service
+			returnIntent.putExtra(EXTRA_SERVER, mService.getConnectedServer());
+			if(mService.getDisconnectReason() != null) {
+				Log.d(Globals.LOG_TAG, "Disconnect reason: "+mService.getDisconnectReason());
+				returnIntent.putExtra(EXTRA_DISCONNECT_TYPE, mService.getDisconnectReason().ordinal());
+				if(mService.getDisconnectReason() == DisconnectReason.Generic) {
+					returnIntent.putExtra(EXTRA_GENERIC_REASON, mService.getGenericDisconnectReason());
+				} else if(mService.getDisconnectReason() == DisconnectReason.Kick) {
+					UserRemove kickReason = mService.getKickReason();
+					returnIntent.putExtra(EXTRA_KICK_REASON, kickReason.getReason());
+					returnIntent.putExtra(EXTRA_KICK_ACTOR, kickReason.getActor());
+				} else if(mService.getDisconnectReason() == DisconnectReason.Reject) {
+					Reject rejectReason = mService.getRejectReason();
+					returnIntent.putExtra(EXTRA_REJECT_REASON, rejectReason.getReason());
+					returnIntent.putExtra(EXTRA_REJECT_TYPE, rejectReason.getType().ordinal());
+				}
+				setResult(RESULT_OK, returnIntent);
+			} else {
+				setResult(RESULT_CANCELED, returnIntent);
+			}
+			
+			finish();
 		}
 	};
 	
@@ -739,130 +772,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		showProgressDialog(R.string.connectionProgressSynchronizingMessage);
 	}
 	
-	protected void onDisconnected() {
-		final Object response = mService.getDisconnectResponse();
-		final Server server = mService.getConnectedServer();
-
-		if(response != null) {
-			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-			if(response instanceof Reject) {
-				Reject reject = (Reject)response;
-				if(reject.getType() == RejectType.WrongUserPW || reject.getType() == RejectType.WrongServerPW) {		
-					// Allow password entry
-					final EditText passwordField = new EditText(this);
-					passwordField.setHint(R.string.serverPassword);
-					alertBuilder.setView(passwordField);
-
-					alertBuilder.setTitle(reject.getReason());
-
-					alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							// Update server in database if it's not public (id = -1)
-							if(server.getId() != -1) {
-								DbAdapter adapter = new DbAdapter(ChannelActivity.this);
-								adapter.open();
-								adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
-								adapter.close();
-							}
-							server.setPassword(passwordField.getText().toString());
-							
-							// Reconnect
-							reconnect(server);
-						}
-					});
-					alertBuilder.setOnCancelListener(new OnCancelListener() {
-						@Override
-						public void onCancel(DialogInterface dialog) {
-							finish();
-						}
-					});
-				} else {
-
-					alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							reconnect(server);
-						}
-					});
-					alertBuilder.setNegativeButton(android.R.string.ok, new OnClickListener() {
-						@Override
-						public void onClick(DialogInterface arg0, int arg1) {
-							finish();
-						}
-					});
-					alertBuilder.setOnCancelListener(new OnCancelListener() {
-						@Override
-						public void onCancel(DialogInterface dialog) {
-							finish();
-						}
-					});
-					alertBuilder.setMessage(reject.getReason());
-				}
-			} else if (response instanceof UserRemove) {
-				UserRemove remove = (UserRemove) response;
-
-				alertBuilder.setTitle(R.string.disconnected);
-
-				alertBuilder.setPositiveButton("Ok", new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						finish();
-					}
-				});
-				alertBuilder.setOnCancelListener(new OnCancelListener() {
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						finish();
-					}
-				});
-				alertBuilder.setMessage(getResources().getString(R.string.kickedMessage, remove.getReason()));
-			} else if(response instanceof String) {
-				String responseString = (String) response;
-				alertBuilder.setTitle(R.string.disconnected);
-
-				alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						reconnect(server);
-					}
-				});
-				alertBuilder.setNegativeButton(android.R.string.ok, new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface arg0, int arg1) {
-						finish();
-					}
-				});
-				alertBuilder.setOnCancelListener(new OnCancelListener() {
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						finish();
-					}
-				});
-				alertBuilder.setMessage(responseString);
-			}
-
-			alertBuilder.show();
-
-		} else if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_DISCONNECTED){
-			finish();
-		}
-	}
-	
-	/**
-	 * Called to reconnect after mService destruction. Used to reinstantiate the service and bind.
-	 * @param server
-	 */
-	protected void reconnect(Server server) {
-		// Reconnect
-		final Intent connectionIntent = new Intent(getApplicationContext(), MumbleService.class);
-		connectionIntent.setAction(MumbleService.ACTION_CONNECT);
-		connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
-		startService(connectionIntent);
-		finish();
-		startActivity(new Intent(this, ChannelActivity.class));
-	}
-	
 	protected void disconnect() {
 		new AsyncTask<Void, Void, Void>() {
 			@Override
@@ -1095,7 +1004,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
     			Log.i(Globals.LOG_TAG, String.format(
     				"%s: Disconnected",
     				getClass().getName()));
-    			onDisconnected();
     			break;
     		default:
     			Assert.fail("Unknown connection state");
@@ -1153,10 +1061,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 
 		@Override
 		public void onUserRemoved(final User user, UserRemove remove) throws RemoteException {
-			if(user.equals(mService.getCurrentUser())) {
-				Log.i(Globals.LOG_TAG, String.format("Kicked: \"%s\"", remove.getReason()));
-				mService.setDisconnectResponse(remove);
-			}
 			listFragment.removeUser(user);
 			updateChat();
 		}

@@ -49,6 +49,7 @@ import com.morlunk.mumbleclient.app.ChannelActivity;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.app.db.Server;
+import com.morlunk.mumbleclient.service.MumbleProtocol.DisconnectReason;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.audio.AudioInput;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
@@ -201,13 +202,20 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 
 		@Override
-		public void setError(final Object reject) {
-			rejectResponse = reject;
+		public void setReject(Reject reject) {
+			disconnectReason = DisconnectReason.Reject;
+			rejectReason = reject;
+		}
+
+		@Override
+		public void setGenericError(String error) {
+			disconnectReason = DisconnectReason.Generic;
+			genericReason = error;
 		}
 
 		@Override
 		public boolean hasError() {
-			return rejectResponse != null;
+			return disconnectReason != null;
 		}
 	}
 
@@ -369,20 +377,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 
 		@Override
-		public void setError(final Reject reject) {
-			handler.post(new ServiceProtocolMessage() {
-				@Override
-				protected void broadcast(final BaseServiceObserver observer) {
-				}
-
-				@Override
-				protected void process() {
-					rejectResponse = reject;
-				}
-			});
-		}
-
-		@Override
 		public void setSynchronized(final boolean synced) {
 			handler.post(new ServiceProtocolMessage() {
 				@Override
@@ -507,6 +501,18 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				}
 			});
 		}
+
+		@Override
+		public void setReject(Reject reject) {
+			disconnectReason = DisconnectReason.Reject;
+			rejectReason = reject;
+		}
+
+		@Override
+		public void setKick(UserRemove kick) {
+			disconnectReason = DisconnectReason.Kick;
+			kickReason = kick;
+		}
 	}
 
 	public static final int CONNECTION_STATE_DISCONNECTED = 0;
@@ -558,9 +564,14 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	boolean synced;
 	int serviceState;
 
-	// Will be either a `UserRemove` or a `Reject` response. TODO make this
-	// cleaner.
-	Object rejectResponse;
+	/** @category Disconnect */
+	private DisconnectReason disconnectReason;
+	/** @category Disconnect */
+	private Reject rejectReason;
+	/** @category Disconnect */
+	private UserRemove kickReason;
+	/** @category Disconnect */
+	private String genericReason;
 
 	private PlumbleChatFormatter chatFormatter;
 
@@ -739,19 +750,40 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 		return null;
 	}
-
-	public void setDisconnectResponse(Object reject) {
-		rejectResponse = reject;
+	
+	/**
+	 * Returns the reason that the user was disconnected.
+	 * More data can be obtained from the disconnection-specific methods.
+	 * @category Disconnect
+	 * @return The reason the user was disconnected
+	 */
+	
+	public DisconnectReason getDisconnectReason() {
+		return disconnectReason;
 	}
 
 	/**
-	 * @return Either a `UserRemove` or `Reject` object, depending on the reason
-	 *         for the diconnect.
+	 * @category Disconnect
 	 */
-	public Object getDisconnectResponse() {
-		Object response = rejectResponse;
-		rejectResponse = null; // Clear error
-		return response;
+	public Reject getRejectReason() {
+		Assert.assertEquals(disconnectReason, DisconnectReason.Reject);
+		return rejectReason;
+	}
+	
+	/**
+	 * @category Disconnect
+	 */
+	public UserRemove getKickReason() {
+		Assert.assertEquals(disconnectReason, DisconnectReason.Kick);
+		return kickReason;
+	}
+	
+	/**
+	 * @category Disconnect
+	 */
+	public String getGenericDisconnectReason() {
+		Assert.assertEquals(disconnectReason, DisconnectReason.Generic);
+		return genericReason;
 	}
 
 	public boolean isActivityVisible() {
