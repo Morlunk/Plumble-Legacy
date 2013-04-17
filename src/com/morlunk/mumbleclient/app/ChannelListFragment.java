@@ -191,32 +191,25 @@ public class ChannelListFragment extends SherlockFragment implements
 	public boolean onChildClick(ExpandableListView parent, View v,
 			int groupPosition, int childPosition, long id) {
 		View flagsView = v.findViewById(R.id.userFlags);
+		User user = (User) usersAdapter.getChild(groupPosition, childPosition);
+		if(flagsView.getVisibility() == View.GONE)
+			usersAdapter.selectedUsers.add(user);
+		else
+			usersAdapter.selectedUsers.remove(user);
 		flagsView.setVisibility(flagsView.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
-		/*
-		User listSelectedUser = (User) usersAdapter.getChild(groupPosition,
-				childPosition);
-		User newSelectedUser = selectedUser == listSelectedUser ? null
-				: listSelectedUser; // Unset if is already selected user
-		setChatTarget(newSelectedUser);
-		channelProvider.setChatTarget(newSelectedUser);
-		*/
 		return true;
 	}
 
 	class UserListAdapter extends BaseExpandableListAdapter {
-		Comparator<User> userComparator = new Comparator<User>() {
-			@Override
-			public int compare(final User object1, final User object2) {
-				return object1.name.toLowerCase(Locale.ENGLISH).compareTo(
-						object2.name.toLowerCase(Locale.ENGLISH));
-			}
-		};
-
 		private final Context context;
 		private final MumbleService service;
 		private final DbAdapter dbAdapter;
 		private List<Channel> channels = new ArrayList<Channel>();
 		private Map<Channel, List<User>> channelMap = new HashMap<Channel, List<User>>();
+		/**
+		 * A list of the selected users. Used to restore the expanded state after reloading the adapter.
+		 */
+		private List<User> selectedUsers = new ArrayList<User>();
 
 		private final Map<User, Boolean> userCommentsSeen = new HashMap<User, Boolean>();
 
@@ -428,11 +421,11 @@ public class ChannelListFragment extends SherlockFragment implements
 						.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				v = inflater.inflate(R.layout.channel_user_row, null);
 			}
-			
-			View flagsView = v.findViewById(R.id.userFlags);
-			flagsView.setVisibility(View.GONE);
 
 			User user = (User) getChild(groupPosition, childPosition);
+			
+			View flagsView = v.findViewById(R.id.userFlags);
+			flagsView.setVisibility(selectedUsers.contains(user) ? View.VISIBLE : View.GONE);
 
 			refreshElements(v, user);
 			v.setTag(user);
