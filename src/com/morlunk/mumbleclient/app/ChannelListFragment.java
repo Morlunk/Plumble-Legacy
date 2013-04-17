@@ -1,10 +1,8 @@
 package com.morlunk.mumbleclient.app;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import net.sf.mumble.MumbleProto.RequestBlob;
@@ -549,6 +547,7 @@ public class ChannelListFragment extends SherlockFragment implements
 				this.user = user;
 			}
 
+			@SuppressLint("NewApi")
 			@Override
 			public void onClick(View v) {
 				ImageView commentView = (ImageView) v.findViewById(R.id.channel_user_row_comment_image);
