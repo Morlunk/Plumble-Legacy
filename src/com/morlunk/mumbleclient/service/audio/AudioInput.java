@@ -8,6 +8,7 @@ import android.annotation.SuppressLint;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
+import android.media.audiofx.AcousticEchoCanceler;
 import android.os.Build.VERSION;
 import android.util.Log;
 
@@ -66,7 +67,7 @@ public class AudioInput implements Runnable, Observer {
 	private boolean running;
 	private Thread recordThread;
 
-	@SuppressLint("InlinedApi")
+	@SuppressLint({ "InlinedApi", "NewApi" })
 	public AudioInput(final MumbleService service, final int codec) {
 		mService = service;
 		this.codec = codec;
@@ -125,7 +126,7 @@ public class AudioInput implements Runnable, Observer {
 			speexResamplerState = 0;
 		}
 
-		audioRecord = new AudioRecord(VERSION.SDK_INT >= 11 ? AudioSource.VOICE_COMMUNICATION : AudioSource.DEFAULT, recordingSampleRate,
+		audioRecord = new AudioRecord(AudioSource.MIC, recordingSampleRate,
 				AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
 				64 * 1024);
 

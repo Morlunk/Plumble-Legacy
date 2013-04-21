@@ -258,7 +258,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
     	pttView = findViewById(R.id.pushtotalk_view);
     	mTalkButton.setOnTouchListener(new OnTouchListener() {
     		
-    		private static final int TOGGLE_INTERVAL = 500; // 500ms is the interval needed to toggle push to talk.
+    		private static final int TOGGLE_INTERVAL = 250; // 250ms is the interval needed to toggle push to talk.
     		private long lastTouch = 0;
 			
 			@Override
@@ -765,12 +765,17 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		// Send access tokens after connection.
 		sendAccessTokens();
 		
-		// Restore push to talk state, if toggled.
+		// Restore push to talk state, if toggled. Otherwise make sure it's turned off.
 		if(settings.isPushToTalk() && 
-				settings.isPushToTalkButtonShown() && 
 				mService.isRecording()) {
-			setPushToTalk(true);
+			if(settings.isPushToTalkToggle() && settings.isPushToTalkButtonShown())
+				setPushToTalk(true);
+			else
+				mService.setPushToTalk(false);
 		}
+		
+		if(settings.isPushToTalk() &&
+				mService.isRecording())
 
 		if(chatTarget != null) {
 			listFragment.setChatTarget(chatTarget);
