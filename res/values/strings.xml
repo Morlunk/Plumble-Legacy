@@ -139,4 +139,5 @@
     <string name="channel_user_row_muted">MUTED</string>
     <string name="channel_user_row_comment">COMMENT</string>
     <string name="channel_user_row_registered">REGISTERED</string>
+    <string name="search_channel_users">%d users</string>
 </resources>

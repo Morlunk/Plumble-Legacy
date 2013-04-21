@@ -93,7 +93,7 @@ public class ChannelSearchProvider extends ContentProvider {
 			Channel channel = channels.get(x);
 			String channelNameLower = channel.name.toLowerCase(Locale.getDefault());
 			if(channelNameLower.contains(query))
-				cursor.addRow(new Object[] { x, INTENT_DATA_CHANNEL, channel.name, R.drawable.ic_action_channels, getContext().getString(R.string.channel), channel.id });
+				cursor.addRow(new Object[] { x, INTENT_DATA_CHANNEL, channel.name, R.drawable.ic_action_channels, getContext().getString(R.string.search_channel_users, channel.userCount), channel.id });
 		}
 		
 		List<User> users = mService.getUserList();
