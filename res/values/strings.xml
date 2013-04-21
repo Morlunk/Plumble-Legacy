@@ -70,7 +70,7 @@
     <string name="generateCertFailure">Failed to generate certificate.</string>
     <string name="generateCertProgress">Generating certificate…</string>
     <string name="search">Search</string>
-    <string name="searchHint">Channel search</string>
+    <string name="searchHint">Search channels and users</string>
     <string name="undocumentedWakeLock">Unfortunately, it doesn\'t look like we can provide proximity sensor wake lock support for your device. Please change the call mode to speakerphone.</string>
     <string name="amplifier">Amplifier</string>
     <string name="recordingVolume">Recording Volume Boost</string>
@@ -90,6 +90,7 @@
     <string name="lostConnection">Lost connection to the server.</string>
     <string name="resume">Resume</string>
     <string name="channel">Channel</string>
+    <string name="user">User</string>
     <string name="server">Server</string>
     <string name="chat_message_to">To</string>
     <string name="chat_notify_moved">%1$s moved in from %2$s by %3$s.</string>

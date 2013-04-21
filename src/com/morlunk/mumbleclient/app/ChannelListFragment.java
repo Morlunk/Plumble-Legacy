@@ -97,9 +97,11 @@ public class ChannelListFragment extends SherlockFragment implements
 		int channelPosition = usersAdapter.channels.indexOf(userChannel);
 		int userPosition = channelProvider.getService().getChannelMap().get(userChannel).indexOf(user);
 		int flatPosition = channelUsersList.getFlatListPosition(ExpandableListView.getPackedPositionForChild(channelPosition, userPosition));
-		if(VERSION.SDK_INT >= 8)
-			channelUsersList.smoothScrollToPosition(flatPosition);
-		else
+		if(VERSION.SDK_INT >= 11) {
+			DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+			int offset = (int) (displayMetrics.density*55); // 55dp offset
+			channelUsersList.smoothScrollToPositionFromTop(flatPosition, offset, 250);
+		} else
 			channelUsersList.setSelectedChild(channelPosition, userPosition, false);
 	}
 

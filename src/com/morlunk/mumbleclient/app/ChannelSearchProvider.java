@@ -1,6 +1,7 @@
 package com.morlunk.mumbleclient.app;
 
 import java.util.List;
+import java.util.Locale;
 
 import android.annotation.SuppressLint;
 import android.app.SearchManager;
@@ -14,11 +15,16 @@ import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.IBinder;
 
+import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.MumbleService.LocalBinder;
 import com.morlunk.mumbleclient.service.model.Channel;
+import com.morlunk.mumbleclient.service.model.User;
 
 public class ChannelSearchProvider extends ContentProvider {
+	
+	public static final String INTENT_DATA_CHANNEL = "channel";
+	public static final String INTENT_DATA_USER = "user";
 
 	ServiceConnection conn = new ServiceConnection() {
 		@Override
@@ -77,19 +83,27 @@ public class ChannelSearchProvider extends ContentProvider {
 				query += " ";
 		}
 		
-		query = query.toLowerCase();
+		query = query.toLowerCase(Locale.getDefault());
 		
-		MatrixCursor cursor = new MatrixCursor(new String[] { "_ID", SearchManager.SUGGEST_COLUMN_TEXT_1, SearchManager.SUGGEST_COLUMN_INTENT_DATA });
+		MatrixCursor cursor = new MatrixCursor(new String[] { "_ID", SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA, SearchManager.SUGGEST_COLUMN_TEXT_1, SearchManager.SUGGEST_COLUMN_ICON_1, SearchManager.SUGGEST_COLUMN_TEXT_2, SearchManager.SUGGEST_COLUMN_INTENT_DATA });
 		
 		List<Channel> channels = mService.getChannelList();
 		
 		for(int x=0;x<channels.size();x++) {
 			Channel channel = channels.get(x);
-			String channelNameLower = channel.name.toLowerCase();
-			if(channelNameLower.contains(query)) {
-				cursor.addRow(new Object[] { x, channel.name, channel.id });
-			}
+			String channelNameLower = channel.name.toLowerCase(Locale.getDefault());
+			if(channelNameLower.contains(query))
+				cursor.addRow(new Object[] { x, INTENT_DATA_CHANNEL, channel.name, R.drawable.ic_action_channels, getContext().getString(R.string.channel), channel.id });
 		}
+		
+		List<User> users = mService.getUserList();
+		for(int x=0;x<users.size();x++) {
+			User user = users.get(x);
+			String userNameLower = user.name.toLowerCase(Locale.getDefault());
+			if(userNameLower.contains(query))
+				cursor.addRow(new Object[] { x, INTENT_DATA_USER, user.name, R.drawable.ic_action_user_dark, getContext().getString(R.string.user), user.session });
+		}
+		
 		return cursor;
 	}
 
