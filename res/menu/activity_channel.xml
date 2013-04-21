@@ -12,7 +12,7 @@
             <item android:id="@+id/menu_user_information" android:title="@string/information" />
         </menu>
     </item><item android:id="@+id/menu_view_favorites_button" android:title="@string/viewFavorites"></item><item android:id="@+id/menu_clear_chat" android:title="@string/clearChat"></item>
-    <item android:id="@+id/menu_search" android:title="@string/search" android:actionViewClass="android.widget.SearchView" android:showAsAction="ifRoom|collapseActionView" android:icon="@drawable/ic_action_search"></item>
+    <item android:id="@+id/menu_search" android:title="@string/search" android:actionViewClass="com.actionbarsherlock.widget.SearchView" android:showAsAction="ifRoom|collapseActionView" android:icon="@drawable/ic_action_search"></item>
     <item android:id="@+id/menu_access_tokens_button" android:title="@string/accessTokens" android:showAsAction="never"></item>
     <item android:id="@+id/menu_amplifier" android:title="@string/amplifier" android:showAsAction="never"></item>
     <item android:id="@+id/menu_preferences" android:title="@string/preferences" android:showAsAction="never" android:icon="@drawable/ic_action_settings"></item>

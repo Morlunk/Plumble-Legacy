@@ -48,7 +48,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
@@ -56,6 +55,7 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.widget.SearchView;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
@@ -397,15 +397,14 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
     	return super.onPrepareOptionsMenu(menu);
     }
     
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB) 
+    @TargetApi(Build.VERSION_CODES.FROYO) 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getSupportMenuInflater().inflate(R.menu.activity_channel, menu);
         
         searchItem = menu.findItem(R.id.menu_search);
         
-        if(VERSION.SDK_INT >= 11) {
-        	// Only Honeycomb+ supports the notion of 'searchable info' and the SearchView. We should add search support for eclair+ in a later release. FIXME
+        if(VERSION.SDK_INT >= 8) { // SearchManager supported by Froyo+.
             SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
             SearchView searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
             searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
