@@ -292,18 +292,10 @@ public class ChannelListFragment extends SherlockFragment implements
 			final View titleView = view.findViewById(R.id.channel_user_row_title);
 			final TextView name = (TextView) view
 					.findViewById(R.id.userRowName);
-			final View comment = view.findViewById(R.id.channel_user_row_comment);
-			final ImageView commentImage = (ImageView) view
-					.findViewById(R.id.channel_user_row_comment_image);
-			final View localMute = view.findViewById(R.id.channel_user_row_mute);
-			final ImageView localMuteImage = (ImageView) view
-					.findViewById(R.id.channel_user_row_mute_image);
-			final TextView localMuteText = (TextView) view
-					.findViewById(R.id.channel_user_row_mute_text);
-			final View chat = view.findViewById(R.id.channel_user_row_chat);
-			final ImageView chatImage = (ImageView) view
-					.findViewById(R.id.channel_user_row_chat_image);
-			final View registered = view.findViewById(R.id.channel_user_row_registered);
+			final TextView comment = (TextView) view.findViewById(R.id.channel_user_row_comment);
+			final TextView localMute = (TextView) view.findViewById(R.id.channel_user_row_mute);
+			final TextView chat = (TextView) view.findViewById(R.id.channel_user_row_chat);
+			final TextView registered = (TextView) view.findViewById(R.id.channel_user_row_registered);
 			//final ImageView info = (ImageView) view.findViewById(R.id.channel_user_row_info);
 			
 			name.setText(user.name);
@@ -311,7 +303,8 @@ public class ChannelListFragment extends SherlockFragment implements
 
 			refreshTalkingState(view, user);
 
-			chatImage.setImageResource(chatTarget != null && chatTarget.equals(user) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
+			int chatImage = chatTarget != null && chatTarget.equals(user) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark;
+			chat.setCompoundDrawablesWithIntrinsicBounds(0, chatImage, 0, 0);
 			chat.setOnClickListener(new OnClickListener() {
 				
 				@Override
@@ -320,21 +313,24 @@ public class ChannelListFragment extends SherlockFragment implements
 					boolean activated = chatTarget == null || !chatTarget.equals(user);
 					chatTarget = activated ? user : null;
 					channelProvider.setChatTarget(chatTarget);
-					chatImage.setImageResource(activated ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
+					int image = activated ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark;
+					chat.setCompoundDrawablesWithIntrinsicBounds(0, image, 0, 0);
 					if(oldUser != null)
 						refreshUser(oldUser); // Update chat icon of old user when changing targets
 				}
 			});
 			
-			localMuteText.setText(user.localMuted ? R.string.channel_user_row_muted : R.string.channel_user_row_mute);
-			localMuteImage.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
+			localMute.setText(user.localMuted ? R.string.channel_user_row_muted : R.string.channel_user_row_mute);
+			int muteImage = user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted;
+			localMute.setCompoundDrawablesWithIntrinsicBounds(0, muteImage, 0, 0);
 			localMute.setOnClickListener(new OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
 					user.localMuted = !user.localMuted;
-					localMuteText.setText(user.localMuted ? R.string.channel_user_row_muted : R.string.channel_user_row_mute);
-					localMuteImage.setImageResource(user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted);
+					localMute.setText(user.localMuted ? R.string.channel_user_row_muted : R.string.channel_user_row_mute);
+					int image = user.localMuted ? R.drawable.ic_action_audio_muted_active : R.drawable.ic_action_audio_muted;
+					localMute.setCompoundDrawablesWithIntrinsicBounds(0, image, 0, 0);
 				}
 			});
 
@@ -347,8 +343,9 @@ public class ChannelListFragment extends SherlockFragment implements
 								user.name, commentData) : false);
 			}
 
-			commentImage.setImageResource(userCommentsSeen.get(user) ? R.drawable.ic_action_comment
-					: R.drawable.ic_action_comment_active);
+			int commentImage = userCommentsSeen.get(user) ? R.drawable.ic_action_comment
+					: R.drawable.ic_action_comment_active;
+			comment.setCompoundDrawablesWithIntrinsicBounds(0, commentImage, 0, 0);
 			comment.setVisibility(user.comment != null
 					|| user.commentHash != null ? View.VISIBLE : View.GONE);
 			comment.setOnClickListener(new OnCommentClickListener(user));
@@ -651,12 +648,12 @@ public class ChannelListFragment extends SherlockFragment implements
 			@SuppressLint("NewApi")
 			@Override
 			public void onClick(View v) {
-				ImageView commentView = (ImageView) v.findViewById(R.id.channel_user_row_comment_image);
+				TextView commentView = (TextView) v.findViewById(R.id.channel_user_row_comment);
 
 				if (channelProvider.getService() != null
 						&& !channelProvider.getService()
 								.isConnectedServerPublic()) {
-					commentView.setImageResource(R.drawable.ic_action_comment);
+					commentView.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_comment_seen, 0, 0);
 					dbAdapter.setCommentSeen(
 							user.name,
 							user.commentHash != null ? user.commentHash
