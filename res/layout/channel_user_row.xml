@@ -57,10 +57,13 @@
 
             <TextView
                 android:id="@+id/channel_user_row_chat_text"
+            	style="@style/Plumble.BorderlessButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
                 android:text="@string/channel_user_row_chat"
+                android:drawableTop="@drawable/ic_action_chat_dark"
+            	android:padding="2dp"
                 android:textColor="#FFFFFF"
                 android:textSize="10sp" />
         </LinearLayout>

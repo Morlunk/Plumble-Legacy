@@ -36,113 +36,61 @@
         android:id="@+id/channel_row_pane"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginBottom="-51dp"
         android:background="@color/push_to_talk_background"
+        android:baselineAligned="false"
         android:orientation="horizontal" >
 
-        <LinearLayout
-            android:id="@+id/channel_row_chat"
-            style="@style/Plumble.BorderlessButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="2dp" >
-
-            <ImageView
-                android:id="@+id/channel_row_chat_image"
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:scaleType="center"
-                android:src="@drawable/ic_action_chat_dark" />
-
             <TextView
-                android:id="@+id/channel_row_chat_text"
+                android:id="@+id/channel_row_chat"
+            	style="@style/Plumble.BorderlessButton"
+           	 	android:padding="2dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
                 android:text="@string/channel_user_row_chat"
+                android:drawableTop="@drawable/ic_action_chat_dark"
                 android:textColor="#FFFFFF"
+                android:layout_weight="1"
                 android:textSize="10sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/channel_row_join"
-            style="@style/Plumble.BorderlessButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="2dp" >
-
-            <ImageView
-                android:id="@+id/channel_row_join_image"
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:scaleType="center"
-                android:src="@drawable/ic_action_info_dark" />
 
             <TextView
-                android:id="@+id/channel_row_join_text"
+                android:id="@+id/channel_row_join"
+            	style="@style/Plumble.BorderlessButton"
+           	 	android:padding="2dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
                 android:text="@string/channel_row_join"
+                android:drawableTop="@drawable/ic_action_channels"
                 android:textColor="#FFFFFF"
+                android:layout_weight="1"
                 android:textSize="10sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/channel_row_comment"
-            style="@style/Plumble.BorderlessButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="2dp" >
-
-            <ImageView
-                android:id="@+id/channel_row_comment_image"
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:scaleType="center"
-                android:src="@drawable/ic_action_comment" />
 
             <TextView
-                android:id="@+id/channel_row_comment_text"
+                android:id="@+id/channel_row_comment"
+            	style="@style/Plumble.BorderlessButton"
+           	 	android:padding="2dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
                 android:text="@string/channel_user_row_comment"
+                android:drawableTop="@drawable/ic_action_comment"
                 android:textColor="#FFFFFF"
+                android:layout_weight="1"
                 android:textSize="10sp" />
-        </LinearLayout>
-        
-        <LinearLayout
-            android:id="@+id/channel_row_favourite"
-            style="@style/Plumble.BorderlessButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="2dp" >
-
-            <ImageView
-                android:id="@+id/channel_row_favourite_image"
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:scaleType="center"
-                android:src="@drawable/ic_action_favourite_off" />
 
             <TextView
-                android:id="@+id/channel_row_favourite_text"
+                android:id="@+id/channel_row_favourite"
+            	style="@style/Plumble.BorderlessButton"
+           	 	android:padding="2dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
                 android:text="@string/channel_row_favourite"
+                android:drawableTop="@drawable/ic_action_chat_dark"
                 android:textColor="#FFFFFF"
+                android:layout_weight="1"
                 android:textSize="10sp" />
-        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

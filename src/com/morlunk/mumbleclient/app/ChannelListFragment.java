@@ -23,7 +23,6 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.animation.LinearInterpolator;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.BaseExpandableListAdapter;
@@ -56,7 +55,7 @@ public class ChannelListFragment extends SherlockFragment implements
 	private ExpandableListView channelUsersList;
 	private UserListAdapter usersAdapter;
 
-	private User selectedUser;
+	private User chatTarget;
 
 	public void updateChannelList() {
 		usersAdapter.updateChannelList();
@@ -185,12 +184,12 @@ public class ChannelListFragment extends SherlockFragment implements
 	}
 
 	public void setChatTarget(User chatTarget) {
-		User oldTarget = selectedUser;
-		selectedUser = chatTarget;
+		User oldTarget = chatTarget;
+		chatTarget = chatTarget;
 		if (usersAdapter != null) {
 			if (oldTarget != null)
 				usersAdapter.refreshUser(oldTarget);
-			usersAdapter.refreshUser(selectedUser);
+			usersAdapter.refreshUser(chatTarget);
 		}
 	}
 
@@ -312,15 +311,15 @@ public class ChannelListFragment extends SherlockFragment implements
 
 			refreshTalkingState(view, user);
 
-			chatImage.setImageResource(selectedUser != null && selectedUser.equals(user) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
+			chatImage.setImageResource(chatTarget != null && chatTarget.equals(user) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
 			chat.setOnClickListener(new OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
-					User oldUser = selectedUser;
-					boolean activated = selectedUser == null || !selectedUser.equals(user);
-					selectedUser = activated ? user : null;
-					channelProvider.setChatTarget(selectedUser);
+					User oldUser = chatTarget;
+					boolean activated = chatTarget == null || !chatTarget.equals(user);
+					chatTarget = activated ? user : null;
+					channelProvider.setChatTarget(chatTarget);
 					chatImage.setImageResource(activated ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
 					if(oldUser != null)
 						refreshUser(oldUser); // Update chat icon of old user when changing targets
@@ -489,9 +488,28 @@ public class ChannelListFragment extends SherlockFragment implements
 			
 			Favourite favourite = service.getFavouriteForChannel(channel);
 
-			final View joinView = v.findViewById(R.id.channel_row_join);
-			final View favouriteView = v.findViewById(R.id.channel_row_favourite);
-			final ImageView favouriteImage = (ImageView) v.findViewById(R.id.channel_row_favourite_image);
+			final TextView joinView = (TextView) v.findViewById(R.id.channel_row_join);
+			final TextView favouriteView = (TextView) v.findViewById(R.id.channel_row_favourite);
+			final TextView chatView = (TextView) v.findViewById(R.id.channel_row_chat);
+			final TextView commentView = (TextView) v.findViewById(R.id.channel_row_comment);
+			
+			int chatImage = chatTarget != null && chatTarget.equals(channel) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark;
+			chatView.setCompoundDrawablesWithIntrinsicBounds(0, chatImage, 0, 0);
+			chatView.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					/*
+					User oldUser = selectedUser;
+					boolean activated = selectedUser == null || !selectedUser.equals(user);
+					selectedUser = activated ? user : null;
+					channelProvider.setChatTarget(selectedUser);
+					chatImage.setImageResource(activated ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
+					if(oldUser != null)
+						refreshUser(oldUser); // Update chat icon of old user when changing targets
+					*/
+				}
+			});
 			
 			joinView.setOnClickListener(new OnClickListener() {
 				
@@ -509,7 +527,8 @@ public class ChannelListFragment extends SherlockFragment implements
 				}
 			});
 
-			favouriteImage.setImageResource(favourite != null ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off);
+			int favouriteImage = favourite != null ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off;
+			favouriteView.setCompoundDrawablesWithIntrinsicBounds(0, favouriteImage, 0, 0);
 			favouriteView.setOnClickListener(new OnClickListener() {
 				
 				@Override
@@ -528,11 +547,21 @@ public class ChannelListFragment extends SherlockFragment implements
 						}
 						
 						protected void onPostExecute(Boolean result) {
-							favouriteImage.setImageResource(result ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off);
+							int image = result ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off;
+							favouriteView.setCompoundDrawablesWithIntrinsicBounds(0, image, 0, 0);
 							service.updateFavourites();
 						};
 						
 					}.execute(channel);
+				}
+			});
+			
+			commentView.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					// TODO Auto-generated method stub
+					
 				}
 			});
 			
@@ -589,13 +618,15 @@ public class ChannelListFragment extends SherlockFragment implements
 						Integer value = (Integer) animation.getAnimatedValue();
 						LinearLayout.LayoutParams layoutParams = (LayoutParams) pane.getLayoutParams();
 						layoutParams.bottomMargin = value.intValue();
-						pane.requestLayout();
+						if(!pane.isLayoutRequested()) // Prevent requestLayout from clogging
+							pane.requestLayout();
 					}
 				});
 				valueAnimator.start();
 			} else {
 				LinearLayout.LayoutParams layoutParams = (LayoutParams) pane.getLayoutParams();
 				layoutParams.bottomMargin = expand ? 0 : contractedMargin;
+				pane.requestLayout();
 			}
 		}
 
