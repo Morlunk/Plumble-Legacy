@@ -24,6 +24,9 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.TranslateAnimation;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.BaseExpandableListAdapter;
@@ -618,12 +621,35 @@ public class ChannelListFragment extends SherlockFragment implements
 		 * @param animated
 		 */
 		@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-		private void expandPane(Boolean expand, final View pane, boolean animated) {
-			ValueAnimator valueAnimator;
-			
+		private void expandPane(final Boolean expand, final View pane, boolean animated) {
+			if(animated) {
+				int from = expand ? pane.getLayoutParams().height : 0;
+				int to = expand ? 0 : pane.getLayoutParams().height;
+				TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, from, to);
+				translateAnimation.setDuration(200);
+				translateAnimation.setAnimationListener(new AnimationListener() {
+					@Override
+					public void onAnimationStart(Animation animation) {
+						pane.setVisibility(View.VISIBLE);
+					}
+					
+					@Override
+					public void onAnimationRepeat(Animation animation) { }
+					
+					@Override
+					public void onAnimationEnd(Animation animation) {
+						pane.setVisibility(expand ? View.VISIBLE : View.GONE);
+					}
+				});
+				pane.startAnimation(translateAnimation);
+			} else {
+				pane.setVisibility(expand ? View.VISIBLE : View.GONE);
+			}
+			/*
 			int contractedMargin = -pane.getLayoutParams().height;
 			
 			if(animated && VERSION.SDK_INT >= 11) {
+				ValueAnimator valueAnimator;
 				if(expand)
 					valueAnimator = ValueAnimator.ofInt(contractedMargin, 0);
 				else
@@ -646,6 +672,7 @@ public class ChannelListFragment extends SherlockFragment implements
 				layoutParams.bottomMargin = expand ? 0 : contractedMargin;
 				pane.requestLayout();
 			}
+			*/
 		}
 
 		@Override
@@ -708,7 +735,6 @@ public class ChannelListFragment extends SherlockFragment implements
 				builder.setTitle(R.string.comment);
 				builder.setPositiveButton(R.string.close, null);
 				final WebView webView = new WebView(context);
-				// TODO: Do it in better way?
 				final StringBuilder sb = new StringBuilder();
 				sb.append("<center>");
 				sb.append(getResources().getString(R.string.retrieving));
