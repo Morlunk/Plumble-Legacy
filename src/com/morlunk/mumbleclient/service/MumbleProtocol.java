@@ -77,7 +77,7 @@ public class MumbleProtocol {
 
 	public Map<Integer, Channel> channels = new HashMap<Integer, Channel>();
 	public Map<Integer, User> users = new HashMap<Integer, User>();
-	public Map<Channel, List<User>> channelMap = new HashMap<Channel, List<User>>();
+	public Map<Integer, List<User>> channelMap = new HashMap<Integer, List<User>>();
 	public Channel currentChannel = null;
 	public User currentUser = null;
 	public boolean canSpeak = true;
@@ -137,8 +137,8 @@ public class MumbleProtocol {
 
 		final MessageType t = MessageType.values()[type];
 
-		Channel channel;
-		User user;
+		Channel channel = null;
+		User user = null;
 
 		switch (t) {
 		case UDPTunnel:
@@ -241,30 +241,38 @@ public class MumbleProtocol {
 		case ChannelState:
 			final ChannelState cs = ChannelState.parseFrom(buffer);
 			channel = findChannel(cs.getChannelId());
-			if (channel != null) {
-				if (cs.hasName()) {
-					channel.name = cs.getName();
-				}
-				host.channelUpdated(channel);
-				break;
-			}
-
-			// New channel
-			channel = new Channel();
+			boolean channelAdded = channel == null;
+			if(channelAdded)
+				channel = new Channel();
+			
 			channel.id = cs.getChannelId();
-			channel.name = cs.getName();
-			channel.parent = cs.hasParent() ? cs.getParent() : -1;
-			channel.position = cs.getPosition();
-			channels.put(channel.id, channel);
-			channelMap.put(channel, new ArrayList<User>());
-			host.channelAdded(channel);
+			
+			if(cs.hasName())
+				channel.name = cs.getName();
+			if(cs.hasParent())
+				channel.parent = cs.getParent();
+			if(cs.hasPosition())
+				channel.position = cs.getPosition();
+			if(cs.hasDescription())
+				channel.description = cs.getDescription();
+			if(cs.hasDescriptionHash()) {
+				channel.descriptionHash = cs.getDescriptionHash();
+				channel.description = null;
+			}
+			
+			if(channelAdded) {
+				channels.put(channel.id, channel);
+				channelMap.put(channel.id, new ArrayList<User>());
+				host.channelAdded(channel);
+			} else
+				host.channelUpdated(channel);
 			break;
 		case ChannelRemove:
 			final ChannelRemove cr = ChannelRemove.parseFrom(buffer);
 			channel = findChannel(cr.getChannelId());
 			channel.removed = true;
 			channels.remove(channel.id);
-			channelMap.remove(channel);
+			channelMap.remove(channel.id);
 			host.channelRemoved(channel.id);
 			break;
 		case UserState:
@@ -312,12 +320,13 @@ public class MumbleProtocol {
 				user.name = us.getName();
 			}
 			
-			if(us.hasCommentHash()) {
-				user.commentHash = us.getCommentHash();
-			}
-			
 			if(us.hasComment()) {
 				user.comment = us.getComment();
+			}
+			
+			if(us.hasCommentHash()) {
+				user.commentHash = us.getCommentHash();
+				user.comment = null;
 			}
 
 			if (added || us.hasChannelId()) {
@@ -325,13 +334,13 @@ public class MumbleProtocol {
 				
 				if(user.getChannel() != null) {
 					// Remove from old channel
-					List<User> channelUsers = channelMap.get(user.getChannel());
+					List<User> channelUsers = channelMap.get(user.getChannel().id);
 					channelUsers.remove(user);
 				}
 				
 				user.setChannel(userChannel);
 				// Add to new channel
-				List<User> channelUsers = channelMap.get(userChannel);
+				List<User> channelUsers = channelMap.get(userChannel.id);
 				channelUsers.add(user);
 				sortChannelUsers(channelUsers);
 				
@@ -391,7 +400,7 @@ public class MumbleProtocol {
 				
 				// Remove the user from the channel as well.
 				user.getChannel().userCount--;
-				List<User> channelUsers = channelMap.get(user.getChannel());
+				List<User> channelUsers = channelMap.get(user.getChannel().id);
 				channelUsers.remove(user);
 
 				host.channelUpdated(user.getChannel());

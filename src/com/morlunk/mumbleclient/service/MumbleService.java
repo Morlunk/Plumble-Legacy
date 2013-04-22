@@ -635,7 +635,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		return null;
 	}
 
-	public Map<Channel, List<User>> getChannelMap() {
+	public Map<Integer, List<User>> getChannelMap() {
 		return mProtocol.channelMap;
 	}
 

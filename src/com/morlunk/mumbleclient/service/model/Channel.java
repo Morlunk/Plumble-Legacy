@@ -1,5 +1,7 @@
 package com.morlunk.mumbleclient.service.model;
 
+import com.google.protobuf.ByteString;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -20,7 +22,9 @@ public class Channel implements Parcelable {
 	public String name;
 	public int userCount;
 	public int position;
-	public int parent;
+	public int parent = -1;
+	public String description;
+	public ByteString descriptionHash;
 
 	/**
 	 * Value signaling whether this channel has just been removed.
@@ -71,6 +75,8 @@ public class Channel implements Parcelable {
 		dest.writeInt(userCount);
 		dest.writeInt(position);
 		dest.writeInt(parent);
+		dest.writeString(description);
+		dest.writeString(descriptionHash != null ? descriptionHash.toStringUtf8() : "");
 	}
 	
 	private void readFromParcel(final Parcel in) {
@@ -81,5 +87,7 @@ public class Channel implements Parcelable {
 		userCount = in.readInt();
 		position = in.readInt();
 		parent = in.readInt();
+		description = in.readString();
+		descriptionHash = ByteString.copyFromUtf8(in.readString());
 	}
 }

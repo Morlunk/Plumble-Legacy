@@ -1054,7 +1054,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		public void onCurrentChannelChanged() throws RemoteException {
 			if(mService.isConnected()) {
 				listFragment.updateChannelList();
-				listFragment.expandChannel(getCurrentUser().getChannel());
 				listFragment.scrollToUser(getCurrentUser());
 			}
 		}
@@ -1074,7 +1073,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		@Override
 		public void onChannelUpdated(Channel channel) throws RemoteException {
 			if(mService.isConnected())
-				listFragment.updateChannelList();
+				listFragment.updateChannel(channel);
 		}
 		
 		@Override

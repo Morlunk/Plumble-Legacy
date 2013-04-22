@@ -18,6 +18,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -34,9 +35,11 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.google.protobuf.ByteString;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
+import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleProtocol.MessageType;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
@@ -79,6 +82,14 @@ public class ChannelListFragment extends SherlockFragment implements
 	public void updateUser(User user) {
 		usersAdapter.refreshUser(user);
 	}
+	
+	public void updateChannel(Channel channel) {
+		usersAdapter.commentsSeen.put(channel, usersAdapter.dbAdapter.isCommentSeen(
+				channel.name,
+				channel.descriptionHash != null ? channel.descriptionHash
+						.toStringUtf8() : channel.description));
+		updateChannelList();
+	}
 
 	public void updateUserTalking(User user) {
 		usersAdapter.refreshTalkingState(user);
@@ -101,7 +112,7 @@ public class ChannelListFragment extends SherlockFragment implements
 	public void scrollToUser(User user) {
 		Channel userChannel = user.getChannel();
 		int channelPosition = usersAdapter.channels.indexOf(userChannel);
-		int userPosition = channelProvider.getService().getChannelMap().get(userChannel).indexOf(user);
+		int userPosition = channelProvider.getService().getChannelMap().get(userChannel.id).indexOf(user);
 		int flatPosition = channelUsersList.getFlatListPosition(ExpandableListView.getPackedPositionForChild(channelPosition, userPosition));
 		if(VERSION.SDK_INT >= 11) {
 			DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
@@ -185,7 +196,7 @@ public class ChannelListFragment extends SherlockFragment implements
 
 	public void setChatTarget(User chatTarget) {
 		User oldTarget = chatTarget;
-		chatTarget = chatTarget;
+		this.chatTarget = chatTarget;
 		if (usersAdapter != null) {
 			if (oldTarget != null)
 				usersAdapter.refreshUser(oldTarget);
@@ -212,7 +223,8 @@ public class ChannelListFragment extends SherlockFragment implements
 		private final MumbleService service;
 		private final DbAdapter dbAdapter;
 		private List<Channel> channels = new ArrayList<Channel>();
-		private Map<Channel, List<User>> channelMap = new HashMap<Channel, List<User>>();
+		@SuppressLint("UseSparseArrays") // Don't like 'em
+		private Map<Integer, List<User>> channelMap = new HashMap<Integer, List<User>>();
 		/**
 		 * A list of the selected users. Used to restore the expanded state after reloading the adapter.
 		 */
@@ -222,7 +234,7 @@ public class ChannelListFragment extends SherlockFragment implements
 		 */
 		private List<Channel> selectedChannels = new ArrayList<Channel>();
 
-		private final Map<User, Boolean> userCommentsSeen = new HashMap<User, Boolean>();
+		private final Map<Object, Boolean> commentsSeen = new HashMap<Object, Boolean>();
 
 		public UserListAdapter(final Context context,
 				final MumbleService service) {
@@ -246,7 +258,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			int channelPosition = channels.indexOf(user.getChannel());
 			if (!channelUsersList.isGroupExpanded(channelPosition))
 				return;
-			int userPosition = channelMap.get(user.getChannel()).indexOf(user);
+			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
 			long packedPosition = ExpandableListView.getPackedPositionForChild(
 					channelPosition, userPosition);
 			int position = channelUsersList.getFlatListPosition(packedPosition);
@@ -258,7 +270,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			if (user.comment != null
 					|| user.commentHash != null
 					&& !service.isConnectedServerPublic()) {
-				userCommentsSeen.put(user, dbAdapter.isCommentSeen(
+				commentsSeen.put(user, dbAdapter.isCommentSeen(
 						user.name,
 						user.commentHash != null ? user.commentHash
 								.toStringUtf8() : user.comment));
@@ -275,7 +287,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			int channelPosition = channels.indexOf(user.getChannel());
 			if (!channelUsersList.isGroupExpanded(channelPosition))
 				return;
-			int userPosition = channelMap.get(user.getChannel()).indexOf(user);
+			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
 			long packedPosition = ExpandableListView.getPackedPositionForChild(
 					channelPosition, userPosition);
 			int position = channelUsersList.getFlatListPosition(packedPosition);
@@ -334,16 +346,16 @@ public class ChannelListFragment extends SherlockFragment implements
 				}
 			});
 
-			if (!userCommentsSeen.containsKey(user)) {
+			if (!commentsSeen.containsKey(user)) {
 				String commentData = user.commentHash != null ? user.commentHash
 						.toStringUtf8() : user.comment;
-				userCommentsSeen.put(
+				commentsSeen.put(
 						user,
 						commentData != null ? dbAdapter.isCommentSeen(
 								user.name, commentData) : false);
 			}
 
-			int commentImage = userCommentsSeen.get(user) ? R.drawable.ic_action_comment
+			int commentImage = commentsSeen.get(user) ? R.drawable.ic_action_comment
 					: R.drawable.ic_action_comment_active;
 			comment.setCompoundDrawablesWithIntrinsicBounds(0, commentImage, 0, 0);
 			comment.setVisibility(user.comment != null
@@ -398,7 +410,7 @@ public class ChannelListFragment extends SherlockFragment implements
 		}
 
 		public int getNestedLevel(Channel channel) {
-			if (channel.parent != 0) {
+			if (channel.parent != -1) {
 				for (Channel c : channels) {
 					if (c.id == channel.parent) {
 						return 1 + getNestedLevel(c);
@@ -411,7 +423,7 @@ public class ChannelListFragment extends SherlockFragment implements
 		@Override
 		public Object getChild(int groupPosition, int childPosition) {
 			Channel channel = channels.get(groupPosition);
-			List<User> channelUsers = channelMap.get(channel);
+			List<User> channelUsers = channelMap.get(channel.id);
 			return channelUsers.get(childPosition);
 		}
 
@@ -552,15 +564,23 @@ public class ChannelListFragment extends SherlockFragment implements
 					}.execute(channel);
 				}
 			});
-			
-			commentView.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					// TODO Auto-generated method stub
-					
+
+			// Update comment state
+			commentView.setVisibility(channel.description != null
+					|| channel.descriptionHash != null ? View.VISIBLE : View.GONE);
+			if(channel.description != null || channel.descriptionHash != null) {
+				if (!commentsSeen.containsKey(channel)) {
+					commentsSeen.put(channel, dbAdapter.isCommentSeen(
+							channel.name,
+							channel.descriptionHash != null ? channel.descriptionHash
+									.toStringUtf8() : channel.description));
 				}
-			});
+
+				int commentImage = commentsSeen.get(channel) ? R.drawable.ic_action_comment
+						: R.drawable.ic_action_comment_active;
+				commentView.setCompoundDrawablesWithIntrinsicBounds(0, commentImage, 0, 0);
+				commentView.setOnClickListener(new OnCommentClickListener(channel));
+			}
 			
 			View channelTitle = v.findViewById(R.id.channel_row_title);
 			
@@ -640,24 +660,47 @@ public class ChannelListFragment extends SherlockFragment implements
 		private class OnCommentClickListener implements OnClickListener {
 
 			private User user;
-
+			private Channel channel;
+			
 			public OnCommentClickListener(User user) {
 				this.user = user;
+			}
+			
+			public OnCommentClickListener(Channel channel) {
+				this.channel = channel;
 			}
 
 			@SuppressLint("NewApi")
 			@Override
 			public void onClick(View v) {
-				TextView commentView = (TextView) v.findViewById(R.id.channel_user_row_comment);
-
+				String name = null;
+				String comment = null;
+				ByteString commentHash = null;
+				TextView commentView = null;
+				if(user != null) {
+					commentView = (TextView) v.findViewById(R.id.channel_user_row_comment);
+					name = user.name;
+					comment = user.comment;
+					commentHash = user.commentHash;
+					
+					commentsSeen.put(user, true);
+				} else if(channel != null) {
+					commentView = (TextView) v.findViewById(R.id.channel_row_comment);
+					name = channel.name;
+					comment = channel.description;
+					commentHash = channel.descriptionHash;
+					
+					commentsSeen.put(user, true);
+				}
+				
+				commentView.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_action_comment, 0, 0);
 				if (channelProvider.getService() != null
 						&& !channelProvider.getService()
 								.isConnectedServerPublic()) {
-					commentView.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_action_comment, 0, 0);
 					dbAdapter.setCommentSeen(
-							user.name,
-							user.commentHash != null ? user.commentHash
-									.toStringUtf8() : user.comment);
+							name,
+							commentHash != null ? commentHash
+									.toStringUtf8() : comment);
 				}
 
 				AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -676,35 +719,52 @@ public class ChannelListFragment extends SherlockFragment implements
 
 				final AlertDialog dialog = builder.show();
 
-				if (user.comment != null) {
-					webView.loadDataWithBaseURL("", user.comment, "text/html",
+				if (comment != null) {
+					webView.loadDataWithBaseURL("", comment, "text/html",
 							"utf-8", "");
-				} else if (user.commentHash != null) {
+				} else if (commentHash != null) {
+					BaseServiceObserver serviceObserver = new BaseServiceObserver() {
+						
+						@Override
+						public void onUserUpdated(User user) throws RemoteException {
+							if(user != null && 
+									user.equals(OnCommentClickListener.this.user) && 
+									user.comment != null &&
+									dialog.isShowing()) {
+								webView.loadDataWithBaseURL("", user.comment,
+										"text/html", "utf-8", "");
+								channelProvider.getService().unregisterObserver(this);
+							}
+						}
+						
+						@Override
+						public void onChannelUpdated(Channel channel)
+								throws RemoteException {
+							if(channel != null && 
+									channel.equals(OnCommentClickListener.this.channel) && 
+									channel.description != null &&
+									dialog.isShowing()) {
+								webView.loadDataWithBaseURL("", channel.description,
+										"text/html", "utf-8", "");
+								channelProvider.getService().unregisterObserver(this);
+							}
+						}
+					};
+					channelProvider.getService().registerObserver(serviceObserver);
+					
 					// Retrieve comment from blob
 					final RequestBlob.Builder blobBuilder = RequestBlob
 							.newBuilder();
-					blobBuilder.addSessionComment(user.session);
+					if(user != null)
+						blobBuilder.addSessionComment(user.session);
+					else if (channel != null)
+						blobBuilder.addChannelDescription(channel.id);
 
 					new AsyncTask<Void, Void, Void>() {
 						@Override
 						protected Void doInBackground(Void... params) {
-							channelProvider.getService().sendTcpMessage(
-									MessageType.RequestBlob, blobBuilder);
-							// TODO fix. This is messy, we're polling until we
-							// get a comment response.
-							while (user.comment == null && dialog.isShowing()) {
-								try {
-									Thread.sleep(100);
-								} catch (InterruptedException e) {
-									e.printStackTrace();
-								}
-							}
+							channelProvider.getService().sendTcpMessage(MessageType.RequestBlob, blobBuilder);
 							return null;
-						}
-
-						protected void onPostExecute(Void result) {
-							webView.loadDataWithBaseURL("", user.comment,
-									"text/html", "utf-8", "");
 						};
 					}.execute();
 				}

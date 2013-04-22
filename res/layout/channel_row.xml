@@ -87,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
                 android:text="@string/channel_row_favourite"
-                android:drawableTop="@drawable/ic_action_chat_dark"
+                android:drawableTop="@drawable/ic_action_favourite_off"
                 android:textColor="#FFFFFF"
                 android:layout_weight="1"
                 android:textSize="10sp" />
