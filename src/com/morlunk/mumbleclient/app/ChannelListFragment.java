@@ -6,12 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import net.sf.mumble.MumbleProto.RequestBlob;
+import android.animation.ValueAnimator;
+import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -19,12 +23,15 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.animation.LinearInterpolator;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
@@ -192,11 +199,12 @@ public class ChannelListFragment extends SherlockFragment implements
 			int groupPosition, int childPosition, long id) {
 		View flagsView = v.findViewById(R.id.userFlags);
 		User user = (User) usersAdapter.getChild(groupPosition, childPosition);
-		if(flagsView.getVisibility() == View.GONE)
+		boolean expand = !usersAdapter.selectedUsers.contains(user);
+		if(expand)
 			usersAdapter.selectedUsers.add(user);
 		else
 			usersAdapter.selectedUsers.remove(user);
-		flagsView.setVisibility(flagsView.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
+		usersAdapter.expandPane(expand, flagsView, true);
 		return true;
 	}
 
@@ -210,6 +218,10 @@ public class ChannelListFragment extends SherlockFragment implements
 		 * A list of the selected users. Used to restore the expanded state after reloading the adapter.
 		 */
 		private List<User> selectedUsers = new ArrayList<User>();
+		/**
+		 * A list of the selected channels. Used to restore the expanded state after reloading the adapter.
+		 */
+		private List<Channel> selectedChannels = new ArrayList<Channel>();
 
 		private final Map<User, Boolean> userCommentsSeen = new HashMap<User, Boolean>();
 
@@ -357,7 +369,7 @@ public class ChannelListFragment extends SherlockFragment implements
 
 			Channel channel = user.getChannel();
 			DisplayMetrics metrics = getResources().getDisplayMetrics();
-
+			
 			// Pad the view depending on channel's nested level.
 			float margin = (getNestedLevel(channel) + 1)
 					* TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
@@ -425,7 +437,7 @@ public class ChannelListFragment extends SherlockFragment implements
 			User user = (User) getChild(groupPosition, childPosition);
 			
 			View flagsView = v.findViewById(R.id.userFlags);
-			flagsView.setVisibility(selectedUsers.contains(user) ? View.VISIBLE : View.GONE);
+			expandPane(selectedUsers.contains(user), flagsView, false);
 
 			refreshElements(v, user);
 			v.setTag(user);
@@ -463,6 +475,9 @@ public class ChannelListFragment extends SherlockFragment implements
 				v = inflater.inflate(R.layout.channel_row, null);
 			}
 			final Channel channel = channels.get(groupPosition);
+			
+			final View pane = v.findViewById(R.id.channel_row_pane);
+			expandPane(selectedChannels.contains(channel), pane, false);
 
 			TextView nameView = (TextView) v
 					.findViewById(R.id.channel_row_name);
@@ -471,11 +486,31 @@ public class ChannelListFragment extends SherlockFragment implements
 
 			nameView.setText(channel.name);
 			countView.setText(String.format("(%d)", channel.userCount));
-
-			final ImageView favouriteImageView = (ImageView) v.findViewById(R.id.channel_row_favourite);
+			
 			Favourite favourite = service.getFavouriteForChannel(channel);
-			favouriteImageView.setImageResource(favourite != null ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off);
-			favouriteImageView.setOnClickListener(new OnClickListener() {
+
+			final View joinView = v.findViewById(R.id.channel_row_join);
+			final View favouriteView = v.findViewById(R.id.channel_row_favourite);
+			final ImageView favouriteImage = (ImageView) v.findViewById(R.id.channel_row_favourite_image);
+			
+			joinView.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					selectedChannels.remove(channel);
+					expandPane(false, pane, true);
+					new AsyncTask<Void, Void, Void>() {
+						@Override
+						protected Void doInBackground(Void... params) {
+							service.joinChannel(channel.id);
+							return null;
+						}
+					}.execute();
+				}
+			});
+
+			favouriteImage.setImageResource(favourite != null ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off);
+			favouriteView.setOnClickListener(new OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
@@ -493,7 +528,7 @@ public class ChannelListFragment extends SherlockFragment implements
 						}
 						
 						protected void onPostExecute(Boolean result) {
-							favouriteImageView.setImageResource(result ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off);
+							favouriteImage.setImageResource(result ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off);
 							service.updateFavourites();
 						};
 						
@@ -501,34 +536,67 @@ public class ChannelListFragment extends SherlockFragment implements
 				}
 			});
 			
+			View channelTitle = v.findViewById(R.id.channel_row_title);
+			
 			// Pad the view depending on channel's nested level.
 			DisplayMetrics metrics = getResources().getDisplayMetrics();
 			float margin = getNestedLevel(channel)
 					* TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
 							25, metrics);
-			v.setPadding((int) margin, v.getPaddingTop(), v.getPaddingRight(),
-					v.getPaddingBottom());
+			channelTitle.setPadding((int) margin, channelTitle.getPaddingTop(), channelTitle.getPaddingRight(),
+					channelTitle.getPaddingBottom());
 			
-			// Override the expand/collapse paradigm and join channels by pressing them.
+			// Override the expand/collapse paradigm and show the pane
 			v.setOnClickListener(new OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
-					if(!service.getCurrentUser().getChannel().equals(channel)) {
-						new AsyncTask<Void, Void, Void>() {
-							
-							@Override
-							protected Void doInBackground(Void... params) {
-								service.joinChannel(channel.id);
-								return null;
-							}
-							
-						}.execute();
-					}
+					boolean expanding = !selectedChannels.contains(channel);
+					if(expanding)
+						selectedChannels.add(channel);
+					else
+						selectedChannels.remove(channel);
+					expandPane(expanding, pane, true);
 				}
 			});
 
 			return v;
+		}
+		
+		/**
+		 * Expands or contracts the given pane by using its margin attribute.
+		 * Animation only works on API v11+.
+		 * @param expand
+		 * @param pane
+		 * @param animated
+		 */
+		@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+		private void expandPane(Boolean expand, final View pane, boolean animated) {
+			ValueAnimator valueAnimator;
+			
+			int contractedMargin = -pane.getLayoutParams().height;
+			
+			if(animated && VERSION.SDK_INT >= 11) {
+				if(expand)
+					valueAnimator = ValueAnimator.ofInt(contractedMargin, 0);
+				else
+					valueAnimator = ValueAnimator.ofInt(0, contractedMargin);
+				valueAnimator.setDuration(250);
+				valueAnimator.addUpdateListener(new AnimatorUpdateListener() {
+					
+					@Override
+					public void onAnimationUpdate(ValueAnimator animation) {
+						Integer value = (Integer) animation.getAnimatedValue();
+						LinearLayout.LayoutParams layoutParams = (LayoutParams) pane.getLayoutParams();
+						layoutParams.bottomMargin = value.intValue();
+						pane.requestLayout();
+					}
+				});
+				valueAnimator.start();
+			} else {
+				LinearLayout.LayoutParams layoutParams = (LayoutParams) pane.getLayoutParams();
+				layoutParams.bottomMargin = expand ? 0 : contractedMargin;
+			}
 		}
 
 		@Override

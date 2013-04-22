@@ -2,37 +2,147 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal" 
-    android:padding="8dp"
-    android:gravity="left|center_horizontal"
-    android:background="@drawable/selectable_background">
-    
-    <TextView 
-        android:id="@+id/channel_row_count"
-        android:layout_width="50dp"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:textColor="@color/holo_blue_light"
-        android:text="(10)"/>
-    
-    <TextView 
-        android:id="@+id/channel_row_name"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:gravity="center_vertical|left"
-		android:textSize="16sp"
-        android:text="Channel name"
-        />
-    
-    <ImageView 
-        android:id="@+id/channel_row_favourite"
-        android:layout_width="39dp"
-        android:layout_height="39dp"
-        android:scaleType="center"
-        android:layout_marginLeft="8dp"
-        android:src="@drawable/ic_action_favourite_off"
-        style="@style/Plumble.BorderlessButton"/>
+    android:background="@drawable/selectable_background"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/channel_row_title"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:padding="4dp" >
+
+        <TextView
+            android:id="@+id/channel_row_count"
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="(10)"
+            android:textColor="@color/holo_blue_light" />
+
+        <TextView
+            android:id="@+id/channel_row_name"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical|left"
+            android:text="Channel name"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/channel_row_pane"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginBottom="-51dp"
+        android:background="@color/push_to_talk_background"
+        android:orientation="horizontal" >
+
+        <LinearLayout
+            android:id="@+id/channel_row_chat"
+            style="@style/Plumble.BorderlessButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="2dp" >
+
+            <ImageView
+                android:id="@+id/channel_row_chat_image"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:scaleType="center"
+                android:src="@drawable/ic_action_chat_dark" />
+
+            <TextView
+                android:id="@+id/channel_row_chat_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/channel_user_row_chat"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/channel_row_join"
+            style="@style/Plumble.BorderlessButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="2dp" >
+
+            <ImageView
+                android:id="@+id/channel_row_join_image"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:scaleType="center"
+                android:src="@drawable/ic_action_info_dark" />
+
+            <TextView
+                android:id="@+id/channel_row_join_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/channel_row_join"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/channel_row_comment"
+            style="@style/Plumble.BorderlessButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="2dp" >
+
+            <ImageView
+                android:id="@+id/channel_row_comment_image"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:scaleType="center"
+                android:src="@drawable/ic_action_comment" />
+
+            <TextView
+                android:id="@+id/channel_row_comment_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/channel_user_row_comment"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:id="@+id/channel_row_favourite"
+            style="@style/Plumble.BorderlessButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="2dp" >
+
+            <ImageView
+                android:id="@+id/channel_row_favourite_image"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:scaleType="center"
+                android:src="@drawable/ic_action_favourite_off" />
+
+            <TextView
+                android:id="@+id/channel_row_favourite_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/channel_row_favourite"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp" />
+        </LinearLayout>
+    </LinearLayout>
+
 </LinearLayout>
