@@ -690,7 +690,7 @@ public class ChannelListFragment extends SherlockFragment implements
 					comment = channel.description;
 					commentHash = channel.descriptionHash;
 					
-					commentsSeen.put(user, true);
+					commentsSeen.put(channel, true);
 				}
 				
 				commentView.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_action_comment, 0, 0);
