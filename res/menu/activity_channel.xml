@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/menu_mute_button" android:title="@string/mute" android:showAsAction="ifRoom" android:icon="@drawable/ic_action_microphone"></item>
-    <item android:id="@+id/menu_deafen_button" android:title="@string/deafen" android:showAsAction="ifRoom" android:icon="@drawable/ic_action_headphones"></item><item android:id="@+id/menu_fullscreen" android:title="@string/fullscreen" android:icon="@drawable/ic_action_fullscreen" android:showAsAction="ifRoom">
+    <item android:id="@+id/menu_deafen_button" android:title="@string/deafen" android:showAsAction="ifRoom" android:icon="@drawable/ic_action_audio_on"></item><item android:id="@+id/menu_fullscreen" android:title="@string/fullscreen" android:icon="@drawable/ic_action_fullscreen" android:showAsAction="ifRoom">
         <menu>
             <item android:id="@+id/menu_fullscreen_chat" android:title="@string/fullscreen_chat"/>
             <item android:id="@+id/menu_fullscreen_channel" android:title="@string/fullscreen_channel"/>

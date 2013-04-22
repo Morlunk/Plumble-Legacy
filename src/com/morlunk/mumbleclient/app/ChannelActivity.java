@@ -468,8 +468,8 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
     	if(mutedButton == null || deafenedButton == null)
     		return;
 
-    	mutedButton.setIcon(!muted ? R.drawable.ic_action_microphone : R.drawable.ic_action_microphone_muted);
-    	deafenedButton.setIcon(!deafened ? R.drawable.ic_action_headphones : R.drawable.ic_action_headphones_deafened);
+    	mutedButton.setIcon(!muted ? R.drawable.ic_action_microphone : R.drawable.ic_microphone_muted_strike);
+    	deafenedButton.setIcon(!deafened ? R.drawable.ic_action_audio_on : R.drawable.ic_action_audio_muted);
     }
     
     /**
