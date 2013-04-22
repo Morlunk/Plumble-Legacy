@@ -8,8 +8,7 @@
         android:id="@+id/channel_row_title"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:orientation="horizontal"
-        android:padding="4dp" >
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/channel_row_count"
@@ -28,7 +27,16 @@
             android:layout_weight="1"
             android:gravity="center_vertical|left"
             android:text="Channel name"
+        	android:padding="4dp" 
             android:textSize="16sp" />
+
+        <ImageView
+            android:id="@+id/channel_row_up"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:src="@drawable/ic_action_info_light"
+            style="@style/Plumble.BorderlessButton" />
     </LinearLayout>
 
     <LinearLayout
@@ -37,7 +45,8 @@
         android:layout_height="50dp"
         android:background="@color/push_to_talk_background"
         android:baselineAligned="false"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+        android:visibility="gone" >
 
             <TextView
                 android:id="@+id/channel_row_chat"

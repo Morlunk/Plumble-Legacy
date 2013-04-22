@@ -20,7 +20,6 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
@@ -44,7 +43,7 @@ import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.User;
 
-public class ChannelListFragment extends SherlockFragment {
+public class ChannelListFragment extends SherlockFragment implements OnChildClickListener {
 
 	/**
 	 * The parent activity MUST implement ChannelProvider. An exception will be
@@ -135,6 +134,7 @@ public class ChannelListFragment extends SherlockFragment {
 		// Get the UI views
 		channelUsersList = (ExpandableListView) view
 				.findViewById(R.id.channelUsers);
+		channelUsersList.setOnChildClickListener(this);
 		
 		return view;
 	}
@@ -199,6 +199,20 @@ public class ChannelListFragment extends SherlockFragment {
 				usersAdapter.refreshUser(oldTarget);
 			usersAdapter.refreshUser(chatTarget);
 		}
+	}
+
+	@Override
+	public boolean onChildClick(ExpandableListView parent, View v,
+			int groupPosition, int childPosition, long id) {
+		View flagsView = v.findViewById(R.id.userFlags);
+		User user = (User) usersAdapter.getChild(groupPosition, childPosition);
+		boolean expand = !usersAdapter.selectedUsers.contains(user);
+		if (expand)
+			usersAdapter.selectedUsers.add(user);
+		else
+			usersAdapter.selectedUsers.remove(user);
+		usersAdapter.expandPane(expand, flagsView, true);
+		return true;
 	}
 
 	class UserListAdapter extends BaseExpandableListAdapter {
@@ -378,16 +392,6 @@ public class ChannelListFragment extends SherlockFragment {
 							25, metrics);
 			titleView.setPadding((int) margin, titleView.getPaddingTop(),
 					titleView.getPaddingRight(), titleView.getPaddingBottom());
-			
-			view.setOnLongClickListener(new OnLongClickListener() {
-				
-				@Override
-				public boolean onLongClick(View v) {
-					usersAdapter.selectedUsers.add(user);
-					usersAdapter.expandPane(true, flagsView, true);
-					return true;
-				}
-			});
 		}
 
 		private void refreshTalkingState(final View view, final User user) {
@@ -505,6 +509,7 @@ public class ChannelListFragment extends SherlockFragment {
 			final TextView chatView = (TextView) v.findViewById(R.id.channel_row_chat);
 			final TextView commentView = (TextView) v.findViewById(R.id.channel_row_comment);
 			final TextView closeView = (TextView) v.findViewById(R.id.channel_row_close);
+			final View upView = v.findViewById(R.id.channel_row_up);
 			
 			int chatImage = chatTarget != null && chatTarget.equals(channel) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark;
 			chatView.setCompoundDrawablesWithIntrinsicBounds(0, chatImage, 0, 0);
@@ -589,17 +594,17 @@ public class ChannelListFragment extends SherlockFragment {
 			channelTitle.setPadding((int) margin, channelTitle.getPaddingTop(), channelTitle.getPaddingRight(),
 					channelTitle.getPaddingBottom());
 			
-			// Show pane on long press
-			v.setOnLongClickListener(new OnLongClickListener() {
+			// Show pane on up arrow press
+			upView.setOnClickListener(new OnClickListener() {
+				
 				@Override
-				public boolean onLongClick(View v) {
+				public void onClick(View v) {
 					boolean expanding = !selectedChannels.contains(channel);
 					if(expanding)
 						selectedChannels.add(channel);
 					else
 						selectedChannels.remove(channel);
 					expandPane(expanding, pane, true);
-					return true;
 				}
 			});
 			

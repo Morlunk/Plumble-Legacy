@@ -2,8 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/channel_user_row_layout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/selectable_background">
+    android:layout_height="wrap_content">
 
     <LinearLayout
         android:id="@+id/channel_user_row_title"
@@ -37,7 +36,8 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:background="@color/push_to_talk_background"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+        android:visibility="gone" >
 
             <TextView
                 android:id="@+id/channel_user_row_chat"
