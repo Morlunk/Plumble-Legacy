@@ -653,7 +653,7 @@ public class ChannelListFragment extends SherlockFragment implements
 				if (channelProvider.getService() != null
 						&& !channelProvider.getService()
 								.isConnectedServerPublic()) {
-					commentView.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_comment_seen, 0, 0);
+					commentView.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_action_comment, 0, 0);
 					dbAdapter.setCommentSeen(
 							user.name,
 							user.commentHash != null ? user.commentHash
