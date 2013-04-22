@@ -84,10 +84,11 @@ public class ChannelListFragment extends SherlockFragment implements
 	}
 	
 	public void updateChannel(Channel channel) {
-		usersAdapter.commentsSeen.put(channel, usersAdapter.dbAdapter.isCommentSeen(
+		if(channel.description != null || channel.descriptionHash != null) {
+			usersAdapter.commentsSeen.put(channel, usersAdapter.dbAdapter.isCommentSeen(
 				channel.name,
-				channel.descriptionHash != null ? channel.descriptionHash
-						.toStringUtf8() : channel.description));
+				channel.descriptionHash != null ? channel.descriptionHash.toStringUtf8() : channel.description));
+		}
 		updateChannelList();
 	}
 
