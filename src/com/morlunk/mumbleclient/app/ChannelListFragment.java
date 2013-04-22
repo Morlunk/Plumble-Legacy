@@ -6,16 +6,12 @@ import java.util.List;
 import java.util.Map;
 
 import net.sf.mumble.MumbleProto.RequestBlob;
-import android.animation.ValueAnimator;
-import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -24,17 +20,16 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.TranslateAnimation;
-import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
@@ -49,8 +44,7 @@ import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.User;
 
-public class ChannelListFragment extends SherlockFragment implements
-		OnChildClickListener {
+public class ChannelListFragment extends SherlockFragment {
 
 	/**
 	 * The parent activity MUST implement ChannelProvider. An exception will be
@@ -141,7 +135,6 @@ public class ChannelListFragment extends SherlockFragment implements
 		// Get the UI views
 		channelUsersList = (ExpandableListView) view
 				.findViewById(R.id.channelUsers);
-		channelUsersList.setOnChildClickListener(this);
 		
 		return view;
 	}
@@ -206,20 +199,6 @@ public class ChannelListFragment extends SherlockFragment implements
 				usersAdapter.refreshUser(oldTarget);
 			usersAdapter.refreshUser(chatTarget);
 		}
-	}
-
-	@Override
-	public boolean onChildClick(ExpandableListView parent, View v,
-			int groupPosition, int childPosition, long id) {
-		View flagsView = v.findViewById(R.id.userFlags);
-		User user = (User) usersAdapter.getChild(groupPosition, childPosition);
-		boolean expand = !usersAdapter.selectedUsers.contains(user);
-		if(expand)
-			usersAdapter.selectedUsers.add(user);
-		else
-			usersAdapter.selectedUsers.remove(user);
-		usersAdapter.expandPane(expand, flagsView, true);
-		return true;
 	}
 
 	class UserListAdapter extends BaseExpandableListAdapter {
@@ -312,6 +291,8 @@ public class ChannelListFragment extends SherlockFragment implements
 			final TextView localMute = (TextView) view.findViewById(R.id.channel_user_row_mute);
 			final TextView chat = (TextView) view.findViewById(R.id.channel_user_row_chat);
 			final TextView registered = (TextView) view.findViewById(R.id.channel_user_row_registered);
+			final TextView closeView = (TextView) view.findViewById(R.id.channel_user_row_close);
+			final View flagsView = view.findViewById(R.id.userFlags);
 			//final ImageView info = (ImageView) view.findViewById(R.id.channel_user_row_info);
 			
 			name.setText(user.name);
@@ -377,6 +358,15 @@ public class ChannelListFragment extends SherlockFragment implements
 			});
 			*/
 			
+			closeView.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					selectedUsers.remove(user);
+					expandPane(false, flagsView, true);
+				}
+			});
+			
 			registered.setVisibility(user.isRegistered ? View.VISIBLE : View.GONE);
 
 			Channel channel = user.getChannel();
@@ -388,6 +378,16 @@ public class ChannelListFragment extends SherlockFragment implements
 							25, metrics);
 			titleView.setPadding((int) margin, titleView.getPaddingTop(),
 					titleView.getPaddingRight(), titleView.getPaddingBottom());
+			
+			view.setOnLongClickListener(new OnLongClickListener() {
+				
+				@Override
+				public boolean onLongClick(View v) {
+					usersAdapter.selectedUsers.add(user);
+					usersAdapter.expandPane(true, flagsView, true);
+					return true;
+				}
+			});
 		}
 
 		private void refreshTalkingState(final View view, final User user) {
@@ -501,10 +501,10 @@ public class ChannelListFragment extends SherlockFragment implements
 			
 			Favourite favourite = service.getFavouriteForChannel(channel);
 
-			final TextView joinView = (TextView) v.findViewById(R.id.channel_row_join);
 			final TextView favouriteView = (TextView) v.findViewById(R.id.channel_row_favourite);
 			final TextView chatView = (TextView) v.findViewById(R.id.channel_row_chat);
 			final TextView commentView = (TextView) v.findViewById(R.id.channel_row_comment);
+			final TextView closeView = (TextView) v.findViewById(R.id.channel_row_close);
 			
 			int chatImage = chatTarget != null && chatTarget.equals(channel) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark;
 			chatView.setCompoundDrawablesWithIntrinsicBounds(0, chatImage, 0, 0);
@@ -521,22 +521,6 @@ public class ChannelListFragment extends SherlockFragment implements
 					if(oldUser != null)
 						refreshUser(oldUser); // Update chat icon of old user when changing targets
 					*/
-				}
-			});
-			
-			joinView.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					selectedChannels.remove(channel);
-					expandPane(false, pane, true);
-					new AsyncTask<Void, Void, Void>() {
-						@Override
-						protected Void doInBackground(Void... params) {
-							service.joinChannel(channel.id);
-							return null;
-						}
-					}.execute();
 				}
 			});
 
@@ -586,6 +570,15 @@ public class ChannelListFragment extends SherlockFragment implements
 				commentView.setOnClickListener(new OnCommentClickListener(channel));
 			}
 			
+			closeView.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					selectedChannels.remove(channel);
+					expandPane(false, pane, true);
+				}
+			});
+			
 			View channelTitle = v.findViewById(R.id.channel_row_title);
 			
 			// Pad the view depending on channel's nested level.
@@ -596,31 +589,38 @@ public class ChannelListFragment extends SherlockFragment implements
 			channelTitle.setPadding((int) margin, channelTitle.getPaddingTop(), channelTitle.getPaddingRight(),
 					channelTitle.getPaddingBottom());
 			
-			// Override the expand/collapse paradigm and show the pane
-			v.setOnClickListener(new OnClickListener() {
-				
+			// Show pane on long press
+			v.setOnLongClickListener(new OnLongClickListener() {
 				@Override
-				public void onClick(View v) {
+				public boolean onLongClick(View v) {
 					boolean expanding = !selectedChannels.contains(channel);
 					if(expanding)
 						selectedChannels.add(channel);
 					else
 						selectedChannels.remove(channel);
 					expandPane(expanding, pane, true);
+					return true;
+				}
+			});
+			
+			// Join channel on single press
+			v.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					new AsyncTask<Void, Void, Void>() {
+						@Override
+						protected Void doInBackground(Void... params) {
+							service.joinChannel(channel.id);
+							return null;
+						}
+					}.execute();
 				}
 			});
 
 			return v;
 		}
 		
-		/**
-		 * Expands or contracts the given pane by using its margin attribute.
-		 * Animation only works on API v11+.
-		 * @param expand
-		 * @param pane
-		 * @param animated
-		 */
-		@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 		private void expandPane(final Boolean expand, final View pane, boolean animated) {
 			if(animated) {
 				int from = expand ? pane.getLayoutParams().height : 0;
