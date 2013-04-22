@@ -12,12 +12,13 @@
 
         <TextView
             android:id="@+id/channel_row_count"
-            android:layout_width="50dp"
+            android:layout_width="40dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            android:text="(10)"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:text="10"
+            android:textStyle="bold"
             android:textColor="@color/holo_blue_light" />
 
         <TextView
@@ -28,7 +29,8 @@
             android:gravity="center_vertical|left"
             android:text="Channel name"
         	android:padding="4dp" 
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-light" />
 
         <ImageView
             android:id="@+id/channel_row_up"

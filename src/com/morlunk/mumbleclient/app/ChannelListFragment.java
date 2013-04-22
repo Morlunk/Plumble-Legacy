@@ -501,7 +501,8 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 					.findViewById(R.id.channel_row_count);
 
 			nameView.setText(channel.name);
-			countView.setText(String.format("(%d)", channel.userCount));
+			countView.setText(String.format("%d", channel.userCount));
+			countView.setTextColor(getResources().getColor(channel.userCount > 0 ? R.color.holo_blue_light : android.R.color.darker_gray));
 			
 			Favourite favourite = service.getFavouriteForChannel(channel);
 
