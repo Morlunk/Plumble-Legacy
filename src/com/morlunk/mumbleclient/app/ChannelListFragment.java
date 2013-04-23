@@ -25,9 +25,7 @@ import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.TranslateAnimation;
 import android.webkit.WebView;
-import android.widget.BaseExpandableListAdapter;
-import android.widget.ExpandableListView;
-import android.widget.ExpandableListView.OnChildClickListener;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -42,8 +40,12 @@ import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.audio.AudioOutputHost;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.User;
+import com.morlunk.mumbleclient.view.PlumbleNestedAdapter;
+import com.morlunk.mumbleclient.view.PlumbleNestedListView;
+import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedChildClickListener;
+import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedGroupClickListener;
 
-public class ChannelListFragment extends SherlockFragment implements OnChildClickListener {
+public class ChannelListFragment extends SherlockFragment implements OnNestedChildClickListener, OnNestedGroupClickListener {
 
 	/**
 	 * The parent activity MUST implement ChannelProvider. An exception will be
@@ -51,7 +53,7 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 	 */
 	private ChannelProvider channelProvider;
 
-	private ExpandableListView channelUsersList;
+	private PlumbleNestedListView channelUsersList;
 	private UserListAdapter usersAdapter;
 
 	private User chatTarget;
@@ -59,15 +61,6 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 	public void updateChannelList() {
 		usersAdapter.updateChannelList();
 		usersAdapter.notifyDataSetChanged();
-		
-		// Always make sure channels are expanded
-		for(int i=0;i<usersAdapter.getGroupCount();i++) {
-			channelUsersList.expandGroup(i);
-		}
-	}
-	
-	public void expandChannel(Channel channel) {
-		channelUsersList.expandGroup(usersAdapter.channels.indexOf(channel));
 	}
 
 	/**
@@ -110,13 +103,13 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 		Channel userChannel = user.getChannel();
 		int channelPosition = usersAdapter.channels.indexOf(userChannel);
 		int userPosition = channelProvider.getService().getChannelMap().get(userChannel.id).indexOf(user);
-		int flatPosition = channelUsersList.getFlatListPosition(ExpandableListView.getPackedPositionForChild(channelPosition, userPosition));
+		int flatPosition = channelUsersList.getFlatChildPosition(channelPosition, userPosition);
 		if(VERSION.SDK_INT >= 11) {
 			DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
 			int offset = (int) (displayMetrics.density*55); // 55dp offset
 			channelUsersList.smoothScrollToPositionFromTop(flatPosition, offset, 250);
-		} else
-			channelUsersList.setSelectedChild(channelPosition, userPosition, false);
+		}// else
+		//	channelUsersList.setSelectedChild(channelPosition, userPosition, false);
 	}
 
 	/*
@@ -132,8 +125,9 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 		View view = inflater.inflate(R.layout.channel_list, container, false);
 
 		// Get the UI views
-		channelUsersList = (ExpandableListView) view
+		channelUsersList = (PlumbleNestedListView) view
 				.findViewById(R.id.channelUsers);
+		channelUsersList.setOnGroupClickListener(this);
 		channelUsersList.setOnChildClickListener(this);
 		
 		return view;
@@ -200,11 +194,11 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 			usersAdapter.refreshUser(chatTarget);
 		}
 	}
-
+	
 	@Override
-	public boolean onChildClick(ExpandableListView parent, View v,
+	public void onNestedChildClick(AdapterView<?> parent, View view,
 			int groupPosition, int childPosition, long id) {
-		View flagsView = v.findViewById(R.id.userFlags);
+		View flagsView = view.findViewById(R.id.userFlags);
 		User user = (User) usersAdapter.getChild(groupPosition, childPosition);
 		boolean expand = !usersAdapter.selectedUsers.contains(user);
 		if (expand)
@@ -212,11 +206,23 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 		else
 			usersAdapter.selectedUsers.remove(user);
 		usersAdapter.expandPane(expand, flagsView, true);
-		return true;
+		
+	}
+	
+	@Override
+	public void onNestedGroupClick(AdapterView<?> parent, View view,
+			int groupPosition, long id) {
+		final Channel channel = (Channel) usersAdapter.getGroup(groupPosition);
+		new AsyncTask<Void, Void, Void>() {
+			@Override
+			protected Void doInBackground(Void... params) {
+				channelProvider.getService().joinChannel(channel.id);
+				return null;
+			}
+		}.execute();
 	}
 
-	class UserListAdapter extends BaseExpandableListAdapter {
-		private final Context context;
+	class UserListAdapter extends PlumbleNestedAdapter {
 		private final MumbleService service;
 		private final DbAdapter dbAdapter;
 		private List<Channel> channels = new ArrayList<Channel>();
@@ -235,7 +241,7 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 
 		public UserListAdapter(final Context context,
 				final MumbleService service) {
-			this.context = context;
+			super(context);
 			this.service = service;
 			this.dbAdapter = this.service.getDatabaseAdapter();
 		}
@@ -253,12 +259,12 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 				return;
 			
 			int channelPosition = channels.indexOf(user.getChannel());
+			/*
 			if (!channelUsersList.isGroupExpanded(channelPosition))
 				return;
+			*/
 			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
-			long packedPosition = ExpandableListView.getPackedPositionForChild(
-					channelPosition, userPosition);
-			int position = channelUsersList.getFlatListPosition(packedPosition);
+			int position = channelUsersList.getFlatChildPosition(channelPosition, userPosition);
 			
 			View userView = channelUsersList.getChildAt(position
 					- channelUsersList.getFirstVisiblePosition());
@@ -282,12 +288,12 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 				return;
 			
 			int channelPosition = channels.indexOf(user.getChannel());
+			/*
 			if (!channelUsersList.isGroupExpanded(channelPosition))
 				return;
+			*/
 			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
-			long packedPosition = ExpandableListView.getPackedPositionForChild(
-					channelPosition, userPosition);
-			int position = channelUsersList.getFlatListPosition(packedPosition);
+			int position = channelUsersList.getFlatChildPosition(channelPosition, userPosition);
 			View userView = channelUsersList.getChildAt(position
 					- channelUsersList.getFirstVisiblePosition());
 
@@ -434,18 +440,12 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 			List<User> channelUsers = channelMap.get(channel.id);
 			return channelUsers.get(childPosition);
 		}
-
-		@Override
-		public long getChildId(int arg0, int arg1) {
-			return 0;
-		}
-
-		@SuppressLint("InlinedApi")
+		
 		@Override
 		public View getChildView(int groupPosition, int childPosition,
-				boolean isLastChild, View v, ViewGroup arg4) {
+				int depth, View v, ViewGroup arg4) {
 			if (v == null) {
-				final LayoutInflater inflater = (LayoutInflater) this.context
+				final LayoutInflater inflater = (LayoutInflater) getContext()
 						.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				v = inflater.inflate(R.layout.channel_user_row, null);
 			}
@@ -462,7 +462,7 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 		}
 
 		@Override
-		public int getChildrenCount(int arg0) {
+		public int getChildCount(int arg0) {
 			return channels.get(arg0).userCount;
 		}
 
@@ -475,18 +475,39 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 		public int getGroupCount() {
 			return channels.size();
 		}
-
-		@Override
-		public long getGroupId(int arg0) {
-			return 0;
+		
+		private void expandPane(final Boolean expand, final View pane, boolean animated) {
+			if(animated) {
+				int from = expand ? pane.getLayoutParams().height : 0;
+				int to = expand ? 0 : pane.getLayoutParams().height;
+				TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, from, to);
+				translateAnimation.setDuration(200);
+				translateAnimation.setAnimationListener(new AnimationListener() {
+					@Override
+					public void onAnimationStart(Animation animation) {
+						pane.setVisibility(View.VISIBLE);
+					}
+					
+					@Override
+					public void onAnimationRepeat(Animation animation) { }
+					
+					@Override
+					public void onAnimationEnd(Animation animation) {
+						pane.setVisibility(expand ? View.VISIBLE : View.GONE);
+					}
+				});
+				pane.startAnimation(translateAnimation);
+			} else {
+				pane.setVisibility(expand ? View.VISIBLE : View.GONE);
+			}
 		}
 
 		@Override
-		public View getGroupView(int groupPosition, boolean isExpanded,
+		public View getGroupView(int groupPosition, int depth,
 				View convertView, ViewGroup parent) {
 			View v = convertView;
 			if (v == null) {
-				final LayoutInflater inflater = (LayoutInflater) this.context
+				final LayoutInflater inflater = (LayoutInflater) getContext()
 						.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				v = inflater.inflate(R.layout.channel_row, null);
 			}
@@ -608,87 +629,14 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 					expandPane(expanding, pane, true);
 				}
 			});
-			
-			// Join channel on single press
-			v.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					new AsyncTask<Void, Void, Void>() {
-						@Override
-						protected Void doInBackground(Void... params) {
-							service.joinChannel(channel.id);
-							return null;
-						}
-					}.execute();
-				}
-			});
 
 			return v;
 		}
-		
-		private void expandPane(final Boolean expand, final View pane, boolean animated) {
-			if(animated) {
-				int from = expand ? pane.getLayoutParams().height : 0;
-				int to = expand ? 0 : pane.getLayoutParams().height;
-				TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, from, to);
-				translateAnimation.setDuration(200);
-				translateAnimation.setAnimationListener(new AnimationListener() {
-					@Override
-					public void onAnimationStart(Animation animation) {
-						pane.setVisibility(View.VISIBLE);
-					}
-					
-					@Override
-					public void onAnimationRepeat(Animation animation) { }
-					
-					@Override
-					public void onAnimationEnd(Animation animation) {
-						pane.setVisibility(expand ? View.VISIBLE : View.GONE);
-					}
-				});
-				pane.startAnimation(translateAnimation);
-			} else {
-				pane.setVisibility(expand ? View.VISIBLE : View.GONE);
-			}
-			/*
-			int contractedMargin = -pane.getLayoutParams().height;
-			
-			if(animated && VERSION.SDK_INT >= 11) {
-				ValueAnimator valueAnimator;
-				if(expand)
-					valueAnimator = ValueAnimator.ofInt(contractedMargin, 0);
-				else
-					valueAnimator = ValueAnimator.ofInt(0, contractedMargin);
-				valueAnimator.setDuration(250);
-				valueAnimator.addUpdateListener(new AnimatorUpdateListener() {
-					
-					@Override
-					public void onAnimationUpdate(ValueAnimator animation) {
-						Integer value = (Integer) animation.getAnimatedValue();
-						LinearLayout.LayoutParams layoutParams = (LayoutParams) pane.getLayoutParams();
-						layoutParams.bottomMargin = value.intValue();
-						if(!pane.isLayoutRequested()) // Prevent requestLayout from clogging
-							pane.requestLayout();
-					}
-				});
-				valueAnimator.start();
-			} else {
-				LinearLayout.LayoutParams layoutParams = (LayoutParams) pane.getLayoutParams();
-				layoutParams.bottomMargin = expand ? 0 : contractedMargin;
-				pane.requestLayout();
-			}
-			*/
-		}
 
 		@Override
-		public boolean hasStableIds() {
-			return false;
-		}
-
-		@Override
-		public boolean isChildSelectable(int arg0, int arg1) {
-			return true;
+		public int getGroupDepth(int groupPosition) {
+			Channel channel = (Channel) getGroup(groupPosition);
+			return getNestedLevel(channel);
 		}
 
 		private class OnCommentClickListener implements OnClickListener {
@@ -737,10 +685,10 @@ public class ChannelListFragment extends SherlockFragment implements OnChildClic
 									.toStringUtf8() : comment);
 				}
 
-				AlertDialog.Builder builder = new AlertDialog.Builder(context);
+				AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
 				builder.setTitle(R.string.comment);
 				builder.setPositiveButton(R.string.close, null);
-				final WebView webView = new WebView(context);
+				final WebView webView = new WebView(getContext());
 				final StringBuilder sb = new StringBuilder();
 				sb.append("<center>");
 				sb.append(getResources().getString(R.string.retrieving));

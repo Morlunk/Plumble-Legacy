@@ -2,15 +2,14 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/channel_user_row_layout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-	android:background="#e5e5e5">
+    android:layout_height="wrap_content">
 
     <LinearLayout
         android:id="@+id/channel_user_row_title"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:orientation="horizontal"
-        android:padding="4dp" >
+        android:padding="4dp">
 
         <ImageView
             android:id="@+id/userRowState"
