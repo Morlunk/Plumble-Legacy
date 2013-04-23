@@ -20,19 +20,19 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	protected class NestPositionMetadata {
 		NestMetadataType type;
 		int groupPosition;
+		int groupParent;
 		int childPosition;
 		int depth;
-		/*
 		boolean isExpanded;
-		NestPositionMetadata parent;
-		*/
 	}
 	
 	private Context mContext;
 	protected List<NestPositionMetadata> flatMeta = new ArrayList<NestPositionMetadata>();
+	protected List<NestPositionMetadata> visibleMeta = new ArrayList<NestPositionMetadata>();
 	
 	public abstract View getGroupView(int groupPosition, int depth, View convertView, ViewGroup parent);
 	public abstract View getChildView(int groupPosition, int childPosition, int depth, View convertView, ViewGroup parent);
+	//public abstract int getGroupParent(int groupPosition);
 	public abstract int getGroupCount();
 	public abstract int getGroupDepth(int groupPosition);
 	public abstract int getChildCount(int groupPosition);
@@ -42,7 +42,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	
 	DataSetObserver dataSetObserver = new DataSetObserver() {
 		public void onChanged() {
-			buildNestMetadata();
+			buildFlatMetadata();
 		};
 	};
 	
@@ -51,7 +51,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		registerDataSetObserver(dataSetObserver);
 	}
 	
-	private final void buildNestMetadata() {
+	private final void buildFlatMetadata() {
 		flatMeta = new ArrayList<NestPositionMetadata>();
 		for(int x=0;x<getGroupCount();x++) {
 			NestPositionMetadata groupPositionMetadata = new NestPositionMetadata();
@@ -101,7 +101,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 
 	@Override
 	public final View getView(int position, View convertView, ViewGroup parent) {
-		NestPositionMetadata metadata = flatMeta.get(position);
+		NestPositionMetadata metadata = flatMeta.get(position);		
 		NestMetadataType mType = NestMetadataType.values()[getItemViewType(position)];
 		if(mType == NestMetadataType.META_TYPE_GROUP)
 			return getGroupView(metadata.groupPosition, metadata.depth, convertView, parent);

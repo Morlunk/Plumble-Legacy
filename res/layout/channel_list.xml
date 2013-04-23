@@ -2,7 +2,6 @@
 
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:custom="http://schemas.android.com/apk/res/com.morlunk.mumbleclient"
 	android:id="@+id/connectionViewRoot"
 	android:orientation="vertical"
 	android:layout_width="match_parent"
@@ -12,9 +11,6 @@
 	    android:id="@+id/channelUsers"
 	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
-	    android:transcriptMode="disabled"
-	    android:fastScrollEnabled="true"
-	    custom:defaultExpand="true"
-	    android:groupIndicator="@null" />
+	    android:fastScrollEnabled="true"/>
 
 </LinearLayout>

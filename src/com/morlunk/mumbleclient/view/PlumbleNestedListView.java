@@ -2,14 +2,12 @@ package com.morlunk.mumbleclient.view;
 
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ListView;
 
-import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.view.PlumbleNestedAdapter.NestMetadataType;
 import com.morlunk.mumbleclient.view.PlumbleNestedAdapter.NestPositionMetadata;
 
@@ -26,8 +24,6 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 	private OnNestedChildClickListener mChildClickListener;
 	private OnNestedGroupClickListener mGroupClickListener;
 	
-	private boolean mDefaultExpand;
-	
 	public PlumbleNestedListView(Context context) {
 		this(context, null);
 	}
@@ -37,12 +33,14 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 		
 		setOnItemClickListener(this);
 		
+		/*
 		TypedArray array = context.getTheme().obtainStyledAttributes(attrs, R.styleable.PlumbleNestedListView, 0, 0);
 		try {
 			setDefaultExpand(array.getBoolean(R.styleable.PlumbleNestedListView_defaultExpand, false));
 		} finally {
 			array.recycle();
 		}
+		*/
 	}
 	
 	public void setAdapter(PlumbleNestedAdapter adapter) {
@@ -69,17 +67,7 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 				return x;
 		}
 		return -1;
-	}
-
-	public boolean isDefaultExpand() {
-		return mDefaultExpand;
-	}
-
-	public void setDefaultExpand(boolean mDefaultExpand) {
-		this.mDefaultExpand = mDefaultExpand;
-	}
-	
-	
+	}	
 
 	public OnNestedChildClickListener getOnChildClickListener() {
 		return mChildClickListener;

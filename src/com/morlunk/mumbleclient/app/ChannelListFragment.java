@@ -639,6 +639,19 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 			return getNestedLevel(channel);
 		}
 
+		/*
+		@Override
+		public int getGroupParent(int groupPosition) {
+			Channel channel = channels.get(groupPosition);
+			for(int x=0;x<channels.size();x++) {
+				Channel c = channels.get(x);
+				if(c.id == channel.parent)
+					return x;
+			}
+			return -1;
+		}
+		*/
+
 		private class OnCommentClickListener implements OnClickListener {
 
 			private User user;
