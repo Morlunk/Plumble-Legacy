@@ -15,6 +15,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +31,7 @@ import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.google.protobuf.ByteString;
+import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
@@ -69,11 +71,16 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 		}
 	}
 	
+	/**
+	 * Gets the number of users in the passed channel, as well as the number of users in all subchannels.
+	 * @param channel The channel to obtain the total user count for.
+	 * @return The total users in that portion of the channel tree.
+	 */
 	public int getNestedUserCount(Channel channel) {
 		int userCount = channel.userCount;
 		for(Channel c : usersAdapter.channels) {
 			if(c.parent == channel.id)
-				return userCount+c.userCount+getNestedUserCount(c);
+				userCount += getNestedUserCount(c);
 		}
 		return userCount;
 	}
@@ -545,7 +552,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 					.findViewById(R.id.channel_row_count);
 
 			nameView.setText(channel.name);
-			countView.setText(String.format("%d", channel.userCount));
+			countView.setText(String.format("%d", getNestedUserCount(channel)));
 			countView.setTextColor(getResources().getColor(channel.userCount > 0 ? R.color.holo_blue_light : android.R.color.darker_gray));
 			
 			Favourite favourite = service.getFavouriteForChannel(channel);
