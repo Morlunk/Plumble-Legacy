@@ -23,16 +23,16 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		int groupParent;
 		int childPosition;
 		int depth;
-		boolean isExpanded;
 	}
 	
 	private Context mContext;
 	protected List<NestPositionMetadata> flatMeta = new ArrayList<NestPositionMetadata>();
 	protected List<NestPositionMetadata> visibleMeta = new ArrayList<NestPositionMetadata>();
+	protected List<Integer> expandedGroups = new ArrayList<Integer>();
 	
 	public abstract View getGroupView(int groupPosition, int depth, View convertView, ViewGroup parent);
 	public abstract View getChildView(int groupPosition, int childPosition, int depth, View convertView, ViewGroup parent);
-	//public abstract int getGroupParent(int groupPosition);
+	public abstract int getGroupParentPosition(int groupPosition);
 	public abstract int getGroupCount();
 	public abstract int getGroupDepth(int groupPosition);
 	public abstract int getChildCount(int groupPosition);
@@ -43,6 +43,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	DataSetObserver dataSetObserver = new DataSetObserver() {
 		public void onChanged() {
 			buildFlatMetadata();
+			buildVisibleMetadata();
 		};
 	};
 	
@@ -57,6 +58,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 			NestPositionMetadata groupPositionMetadata = new NestPositionMetadata();
 			groupPositionMetadata.type = NestMetadataType.META_TYPE_GROUP;
 			groupPositionMetadata.groupPosition = x;
+			groupPositionMetadata.groupParent = getGroupParentPosition(x);
 			flatMeta.add(groupPositionMetadata);
 			for(int y=0;y<getChildCount(x);y++) {
 				NestPositionMetadata childPositionMetadata = new NestPositionMetadata();
@@ -68,9 +70,96 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		}
 	}
 	
+	/**
+	 * TODO move this over to PlumbleNestedListView
+	 */
+	protected final void buildVisibleMetadata() {
+		visibleMeta = new ArrayList<NestPositionMetadata>();
+		for(NestPositionMetadata metadata : flatMeta) {
+			if(metadata.type == NestMetadataType.META_TYPE_GROUP) {
+				int groupParent = getGroupParentPosition(metadata.groupPosition);
+				if(groupParent != -1) { // If the parent group is collapsed, do not show the child group.
+					if(expandedGroups.contains(groupParent) && isParentExpanded(groupParent))
+						visibleMeta.add(metadata);
+				} else // If the view has no parent, never collapse.
+					visibleMeta.add(metadata);
+			} else if(metadata.type == NestMetadataType.META_TYPE_ITEM) {
+				int groupParent = getFlatGroupPosition(metadata.groupPosition);
+				NestPositionMetadata parentMetadata = flatMeta.get(groupParent);
+				if(expandedGroups.contains(metadata.groupPosition) && isParentExpanded(parentMetadata.groupPosition)) // Don't insert a child group with no parent.
+					visibleMeta.add(metadata);
+			}
+		}
+	}
+	
+	/**
+	 * Iterates up the group hierarchy and returns whether or not any of the group's parents are not expanded.
+	 * @param groupPosition
+	 */
+	private boolean isParentExpanded(int groupPosition) {
+		
+		for(NestPositionMetadata metadata : flatMeta) {
+			// Collapse the specified position and its children
+			if(metadata.groupPosition == groupPosition) {
+				if(metadata.groupParent == -1)
+					return true; // Return true for top of tree.
+				NestPositionMetadata parent = flatMeta.get(getFlatGroupPosition(metadata.groupParent));
+				if(!expandedGroups.contains((Integer)parent.groupPosition))
+					return false;
+				else
+					return isParentExpanded(parent.groupParent);
+			}
+		}
+		return true;
+	}
+	
+	protected void collapseGroup(int groupPosition) {
+		for(NestPositionMetadata metadata : flatMeta) {
+			// Collapse the specified position and its children
+			if(metadata.groupPosition == groupPosition) {
+				expandedGroups.remove((Integer)groupPosition);
+			}
+		}
+	}
+	
+	protected void expandGroup(int groupPosition) {
+		expandedGroups.add((Integer)groupPosition);
+	}
+	
+	/**
+	 * Retrieves the flat index of the passed position in the 
+	 * @param position
+	 * @return
+	 */
+	private final int translateVisiblePositionToFlat(int position) {
+		NestPositionMetadata sourceMetadata = visibleMeta.get(position);
+		return flatMeta.indexOf(sourceMetadata);
+	}
+
+	public int getFlatChildPosition(int groupPosition, int childPosition) {
+		for(int x=0;x<flatMeta.size();x++) {
+			NestPositionMetadata metadata = flatMeta.get(x);
+			if(metadata.type == NestMetadataType.META_TYPE_ITEM &&
+					metadata.groupPosition == groupPosition &&
+					metadata.childPosition == childPosition)
+				return x;
+		}
+		return -1;
+	}
+
+	public int getFlatGroupPosition(int groupPosition) {
+		for(int x=0;x<flatMeta.size();x++) {
+			NestPositionMetadata metadata = flatMeta.get(x);
+			if(metadata.type == NestMetadataType.META_TYPE_GROUP &&
+					metadata.groupPosition == groupPosition)
+				return x;
+		}
+		return -1;
+	}
+	
 	@Override
 	public final int getCount() {
-		return flatMeta.size();
+		return visibleMeta.size();
 	}
 	
 	@Override
@@ -80,13 +169,13 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	
 	@Override
 	public int getItemViewType(int position) {
-		NestPositionMetadata metadata = flatMeta.get(position);
+		NestPositionMetadata metadata = visibleMeta.get(position);
 		return metadata.type.ordinal();
 	}
 
 	@Override
 	public final Object getItem(int position) {
-		NestPositionMetadata metadata = flatMeta.get(position);
+		NestPositionMetadata metadata = visibleMeta.get(position);
 		if(metadata.type == NestMetadataType.META_TYPE_GROUP)
 			return getGroup(metadata.groupPosition);
 		else if(metadata.type == NestMetadataType.META_TYPE_ITEM)
@@ -101,7 +190,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 
 	@Override
 	public final View getView(int position, View convertView, ViewGroup parent) {
-		NestPositionMetadata metadata = flatMeta.get(position);		
+		NestPositionMetadata metadata = visibleMeta.get(position);
 		NestMetadataType mType = NestMetadataType.values()[getItemViewType(position)];
 		if(mType == NestMetadataType.META_TYPE_GROUP)
 			return getGroupView(metadata.groupPosition, metadata.depth, convertView, parent);

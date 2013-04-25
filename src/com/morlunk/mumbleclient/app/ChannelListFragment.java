@@ -12,7 +12,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
-import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.DisplayMetrics;
@@ -95,21 +94,23 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 	}
 	
 	/**
-	 * Scrolls to the passed user, if they are not visible.
-	 * @param user
+	 * Scrolls to the passed channel.
 	 */
-	@SuppressLint("NewApi")
+	public void scrollToChannel(Channel channel) {
+		int channelPosition = usersAdapter.channels.indexOf(channel);
+		int flatPosition = usersAdapter.getFlatGroupPosition(channelPosition);
+		if(flatPosition-channelUsersList.getFirstVisiblePosition() > channelUsersList.getChildCount())
+			channelUsersList.setSelection(flatPosition);
+	}
+	/**
+	 * Scrolls to the passed user.
+	 */
 	public void scrollToUser(User user) {
-		Channel userChannel = user.getChannel();
-		int channelPosition = usersAdapter.channels.indexOf(userChannel);
-		int userPosition = channelProvider.getService().getChannelMap().get(userChannel.id).indexOf(user);
-		int flatPosition = channelUsersList.getFlatChildPosition(channelPosition, userPosition);
-		if(VERSION.SDK_INT >= 11) {
-			DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-			int offset = (int) (displayMetrics.density*55); // 55dp offset
-			channelUsersList.smoothScrollToPositionFromTop(flatPosition, offset, 250);
-		}// else
-		//	channelUsersList.setSelectedChild(channelPosition, userPosition, false);
+		int userPosition = usersAdapter.channelMap.get(user.getChannel().id).indexOf(user);
+		int channelPosition = usersAdapter.channels.indexOf(user.getChannel());
+		int flatPosition = usersAdapter.getFlatChildPosition(channelPosition, userPosition);
+		if(flatPosition-channelUsersList.getFirstVisiblePosition() > channelUsersList.getChildCount())
+			channelUsersList.setSelection(flatPosition);
 	}
 
 	/*
@@ -182,7 +183,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 				channelProvider.getService());
 		channelUsersList.setAdapter(usersAdapter);
         updateChannelList();
-        scrollToUser(channelProvider.getService().getCurrentUser());
+        scrollToChannel(channelProvider.getService().getCurrentChannel());
 	}
 
 	public void setChatTarget(User chatTarget) {
@@ -264,7 +265,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 				return;
 			*/
 			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
-			int position = channelUsersList.getFlatChildPosition(channelPosition, userPosition);
+			int position = usersAdapter.getFlatChildPosition(channelPosition, userPosition);
 			
 			View userView = channelUsersList.getChildAt(position
 					- channelUsersList.getFirstVisiblePosition());
@@ -293,7 +294,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 				return;
 			*/
 			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
-			int position = channelUsersList.getFlatChildPosition(channelPosition, userPosition);
+			int position = usersAdapter.getFlatChildPosition(channelPosition, userPosition);
 			View userView = channelUsersList.getChildAt(position
 					- channelUsersList.getFirstVisiblePosition());
 
@@ -638,10 +639,9 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 			Channel channel = (Channel) getGroup(groupPosition);
 			return getNestedLevel(channel);
 		}
-
-		/*
+		
 		@Override
-		public int getGroupParent(int groupPosition) {
+		public int getGroupParentPosition(int groupPosition) {
 			Channel channel = channels.get(groupPosition);
 			for(int x=0;x<channels.size();x++) {
 				Channel c = channels.get(x);
@@ -650,8 +650,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 			}
 			return -1;
 		}
-		*/
-
+		
 		private class OnCommentClickListener implements OnClickListener {
 
 			private User user;

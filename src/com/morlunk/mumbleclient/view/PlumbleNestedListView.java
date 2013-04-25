@@ -2,12 +2,14 @@ package com.morlunk.mumbleclient.view;
 
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
+import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.view.PlumbleNestedAdapter.NestMetadataType;
 import com.morlunk.mumbleclient.view.PlumbleNestedAdapter.NestPositionMetadata;
 
@@ -23,6 +25,8 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 	private PlumbleNestedAdapter mNestedAdapter;
 	private OnNestedChildClickListener mChildClickListener;
 	private OnNestedGroupClickListener mGroupClickListener;
+
+	private boolean mMaintainPosition;
 	
 	public PlumbleNestedListView(Context context) {
 		this(context, null);
@@ -33,41 +37,18 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 		
 		setOnItemClickListener(this);
 		
-		/*
 		TypedArray array = context.getTheme().obtainStyledAttributes(attrs, R.styleable.PlumbleNestedListView, 0, 0);
 		try {
-			setDefaultExpand(array.getBoolean(R.styleable.PlumbleNestedListView_defaultExpand, false));
+			mMaintainPosition = array.getBoolean(R.styleable.PlumbleNestedListView_maintainPosition, false);
 		} finally {
 			array.recycle();
 		}
-		*/
 	}
 	
 	public void setAdapter(PlumbleNestedAdapter adapter) {
 		super.setAdapter(adapter);
 		mNestedAdapter = adapter;
 	}
-
-	public int getFlatGroupPosition(int groupPosition) {
-		for(int x=0;x<mNestedAdapter.flatMeta.size();x++) {
-			NestPositionMetadata metadata = mNestedAdapter.flatMeta.get(x);
-			if(metadata.type == NestMetadataType.META_TYPE_GROUP &&
-					metadata.groupPosition == groupPosition)
-				return x;
-		}
-		return -1;
-	}
-	
-	public int getFlatChildPosition(int groupPosition, int childPosition) {
-		for(int x=0;x<mNestedAdapter.flatMeta.size();x++) {
-			NestPositionMetadata metadata = mNestedAdapter.flatMeta.get(x);
-			if(metadata.type == NestMetadataType.META_TYPE_ITEM &&
-					metadata.groupPosition == groupPosition &&
-					metadata.childPosition == childPosition)
-				return x;
-		}
-		return -1;
-	}	
 
 	public OnNestedChildClickListener getOnChildClickListener() {
 		return mChildClickListener;
@@ -98,10 +79,16 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
-		NestPositionMetadata metadata = mNestedAdapter.flatMeta.get(position);
-		if(metadata.type == NestMetadataType.META_TYPE_GROUP && mGroupClickListener != null)
-			mGroupClickListener.onNestedGroupClick(parent, view, metadata.groupPosition, id);
-		else if(metadata.type == NestMetadataType.META_TYPE_ITEM && mChildClickListener != null)
+		NestPositionMetadata metadata = mNestedAdapter.visibleMeta.get(position);
+		if(metadata.type == NestMetadataType.META_TYPE_GROUP) {
+			if(mNestedAdapter.expandedGroups.contains(metadata.groupPosition))
+				mNestedAdapter.collapseGroup(metadata.groupPosition);
+			else
+				mNestedAdapter.expandGroup(metadata.groupPosition);
+			mNestedAdapter.notifyDataSetChanged();
+			//if(mGroupClickListener != null)
+			//	mGroupClickListener.onNestedGroupClick(parent, view, metadata.groupPosition, id);
+		} else if(metadata.type == NestMetadataType.META_TYPE_ITEM && mChildClickListener != null)
 			mChildClickListener.onNestedChildClick(parent, view, metadata.groupPosition, metadata.childPosition, id);
 	}
 }

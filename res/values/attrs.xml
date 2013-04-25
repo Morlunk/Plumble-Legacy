@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PlumbleNestedListView">
+        <!-- Maintain the scrolling position across list updates. -->
+        <attr name="maintainPosition" format="boolean"/>
+    </declare-styleable>
+</resources>
