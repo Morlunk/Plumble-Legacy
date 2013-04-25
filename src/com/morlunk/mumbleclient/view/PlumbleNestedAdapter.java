@@ -111,13 +111,15 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		for(NestPositionMetadata metadata : flatMeta) {
 			// Collapse the specified position and its children
 			if(metadata.groupPosition == groupPosition) {
-				expandedGroups.remove((Integer)groupPosition);
+				if(expandedGroups.contains(groupPosition))
+					expandedGroups.remove((Integer)groupPosition);
 			}
 		}
 	}
 	
 	protected void expandGroup(int groupPosition) {
-		expandedGroups.add((Integer)groupPosition);
+		if(!expandedGroups.contains(groupPosition))
+			expandedGroups.add((Integer)groupPosition);
 	}
 
 	public int getFlatChildPosition(int groupPosition, int childPosition) {

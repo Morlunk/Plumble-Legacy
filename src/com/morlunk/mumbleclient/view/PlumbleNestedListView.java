@@ -49,6 +49,14 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 		super.setAdapter(adapter);
 		mNestedAdapter = adapter;
 	}
+	
+	public void expandGroup(int groupPosition) {
+		mNestedAdapter.expandGroup(groupPosition);
+	}
+	
+	public void collapseGroup(int groupPosition) {
+		mNestedAdapter.collapseGroup(groupPosition);
+	}
 
 	public OnNestedChildClickListener getOnChildClickListener() {
 		return mChildClickListener;

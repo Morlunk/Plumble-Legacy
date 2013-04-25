@@ -56,10 +56,32 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 	private UserListAdapter usersAdapter;
 
 	private User chatTarget;
+	
+	/**
+	 * Expands channels with users in them, and hides channels without users in them.
+	 */
+	public void updateExpandLogic() {
+		for(Channel channel : usersAdapter.channels) {
+			if(getNestedUserCount(channel) > 0)
+				channelUsersList.expandGroup(usersAdapter.channels.indexOf(channel));
+			else
+				channelUsersList.collapseGroup(usersAdapter.channels.indexOf(channel));
+		}
+	}
+	
+	public int getNestedUserCount(Channel channel) {
+		int userCount = channel.userCount;
+		for(Channel c : usersAdapter.channels) {
+			if(c.parent == channel.id)
+				return userCount+c.userCount+getNestedUserCount(c);
+		}
+		return userCount;
+	}
 
 	public void updateChannelList() {
 		usersAdapter.updateChannelList();
 		usersAdapter.notifyDataSetChanged();
+		updateExpandLogic();
 	}
 
 	/**
