@@ -541,6 +541,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 					new AsyncTask<Void, Void, Void>() {
 						
 						protected void onPreExecute() {
+							selectedChannels.remove(channel);
 							expandPane(false, pane, true);
 						};
 						
