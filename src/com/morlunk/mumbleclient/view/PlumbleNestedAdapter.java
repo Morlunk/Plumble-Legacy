@@ -50,6 +50,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	public PlumbleNestedAdapter(Context context) {
 		mContext = context;
 		registerDataSetObserver(dataSetObserver);
+		expandedGroups.add(0); // Always expand root
 	}
 	
 	private final void buildFlatMetadata() {
@@ -77,16 +78,10 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		visibleMeta = new ArrayList<NestPositionMetadata>();
 		for(NestPositionMetadata metadata : flatMeta) {
 			if(metadata.type == NestMetadataType.META_TYPE_GROUP) {
-				int groupParent = getGroupParentPosition(metadata.groupPosition);
-				if(groupParent != -1) { // If the parent group is collapsed, do not show the child group.
-					if(expandedGroups.contains(groupParent) && isParentExpanded(groupParent))
+				if(isParentExpanded(metadata.groupPosition))
 						visibleMeta.add(metadata);
-				} else // If the view has no parent, never collapse.
-					visibleMeta.add(metadata);
 			} else if(metadata.type == NestMetadataType.META_TYPE_ITEM) {
-				int groupParent = getFlatGroupPosition(metadata.groupPosition);
-				NestPositionMetadata parentMetadata = flatMeta.get(groupParent);
-				if(expandedGroups.contains(metadata.groupPosition) && isParentExpanded(parentMetadata.groupPosition)) // Don't insert a child group with no parent.
+				if(expandedGroups.contains(metadata.groupPosition) && isParentExpanded(metadata.groupPosition)) // Don't insert a child group with no parent.
 					visibleMeta.add(metadata);
 			}
 		}
@@ -103,11 +98,10 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 			if(metadata.groupPosition == groupPosition) {
 				if(metadata.groupParent == -1)
 					return true; // Return true for top of tree.
-				NestPositionMetadata parent = flatMeta.get(getFlatGroupPosition(metadata.groupParent));
-				if(!expandedGroups.contains((Integer)parent.groupPosition))
+				if(!expandedGroups.contains(metadata.groupParent))
 					return false;
 				else
-					return isParentExpanded(parent.groupParent);
+					return isParentExpanded(metadata.groupParent);
 			}
 		}
 		return true;
@@ -124,16 +118,6 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	
 	protected void expandGroup(int groupPosition) {
 		expandedGroups.add((Integer)groupPosition);
-	}
-	
-	/**
-	 * Retrieves the flat index of the passed position in the 
-	 * @param position
-	 * @return
-	 */
-	private final int translateVisiblePositionToFlat(int position) {
-		NestPositionMetadata sourceMetadata = visibleMeta.get(position);
-		return flatMeta.indexOf(sourceMetadata);
 	}
 
 	public int getFlatChildPosition(int groupPosition, int childPosition) {
