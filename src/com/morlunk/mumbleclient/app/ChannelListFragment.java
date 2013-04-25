@@ -529,18 +529,38 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 			Favourite favourite = service.getFavouriteForChannel(channel);
 
 			final TextView favouriteView = (TextView) v.findViewById(R.id.channel_row_favourite);
-			final TextView chatView = (TextView) v.findViewById(R.id.channel_row_chat);
+			final TextView joinView = (TextView) v.findViewById(R.id.channel_row_join);
 			final TextView commentView = (TextView) v.findViewById(R.id.channel_row_comment);
 			final TextView closeView = (TextView) v.findViewById(R.id.channel_row_close);
 			final View upView = v.findViewById(R.id.channel_row_up);
 			
+			joinView.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					new AsyncTask<Void, Void, Void>() {
+						
+						protected void onPreExecute() {
+							expandPane(false, pane, true);
+						};
+						
+						@Override
+						protected Void doInBackground(Void... params) {
+							service.joinChannel(channel.id);
+							return null;
+						}
+						
+					}.execute();
+				}
+			});
+			
+			/*
 			int chatImage = chatTarget != null && chatTarget.equals(channel) ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark;
 			chatView.setCompoundDrawablesWithIntrinsicBounds(0, chatImage, 0, 0);
 			chatView.setOnClickListener(new OnClickListener() {
 				
 				@Override
 				public void onClick(View v) {
-					/*
 					User oldUser = selectedUser;
 					boolean activated = selectedUser == null || !selectedUser.equals(user);
 					selectedUser = activated ? user : null;
@@ -548,9 +568,9 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 					chatImage.setImageResource(activated ? R.drawable.ic_action_chat_active : R.drawable.ic_action_chat_dark);
 					if(oldUser != null)
 						refreshUser(oldUser); // Update chat icon of old user when changing targets
-					*/
 				}
 			});
+			*/
 
 			int favouriteImage = favourite != null ? R.drawable.ic_action_favourite_on : R.drawable.ic_action_favourite_off;
 			favouriteView.setCompoundDrawablesWithIntrinsicBounds(0, favouriteImage, 0, 0);

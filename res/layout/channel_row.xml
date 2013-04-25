@@ -50,14 +50,14 @@
         android:visibility="gone" >
 
             <TextView
-                android:id="@+id/channel_row_chat"
+                android:id="@+id/channel_row_join"
             	style="@style/Plumble.BorderlessButton"
            	 	android:padding="2dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
-                android:text="@string/channel_user_row_chat"
-                android:drawableTop="@drawable/ic_action_chat_dark"
+                android:text="@string/channel_row_join"
+                android:drawableTop="@drawable/ic_action_fullscreen"
                 android:textColor="#FFFFFF"
                 android:layout_weight="1"
                 android:textSize="10sp" />
