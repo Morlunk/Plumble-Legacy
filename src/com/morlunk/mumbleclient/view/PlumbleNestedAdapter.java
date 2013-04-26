@@ -2,10 +2,12 @@ package com.morlunk.mumbleclient.view;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import android.content.Context;
 import android.util.Log;
 import android.util.SparseArray;
+import android.util.SparseBooleanArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -33,7 +35,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	protected List<NestPositionMetadata> visibleMeta = new ArrayList<NestPositionMetadata>();
 	protected SparseArray<NestPositionMetadata> groupMap = new SparseArray<NestPositionMetadata>();
 	//protected SparseArray<NestPositionMetadata> childMap = new SparseArray<NestPositionMetadata>();
-	protected List<Integer> expandedGroups = new ArrayList<Integer>();
+	protected SparseBooleanArray expandedGroups = new SparseBooleanArray();
 	
 	public abstract View getGroupView(int groupPosition, int depth, View convertView, ViewGroup parent);
 	public abstract View getChildView(int groupPosition, int childPosition, int depth, View convertView, ViewGroup parent);
@@ -44,10 +46,11 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 
 	public Object getChild(int groupPosition, int childPosition) { return null; };
 	public Object getGroup(int groupPosition) { return null; };
+	public boolean isGroupExpandedByDefault(int groupPosition) { return false; };
 	
 	public PlumbleNestedAdapter(Context context) {
 		mContext = context;
-		expandedGroups.add(0); // Always expand root
+		expandedGroups.put(0, true); // Always expand root
 	}
 	
 	private final void buildFlatMetadata() {
@@ -59,6 +62,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 			groupPositionMetadata.type = NestMetadataType.META_TYPE_GROUP;
 			groupPositionMetadata.groupPosition = x;
 			groupPositionMetadata.groupParent = getGroupParentPosition(x);
+			expandedGroups.put(x, isGroupExpandedByDefault(x));
 			flatMeta.add(groupPositionMetadata);
 			groupMap.put(x, groupPositionMetadata);
 			for(int y=0;y<getChildCount(x);y++) {
@@ -85,7 +89,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 			} else if(metadata.type == NestMetadataType.META_TYPE_ITEM) {
 				int parent = getFlatGroupPosition(metadata.groupPosition);
 				NestPositionMetadata parentMeta = flatMeta.get(parent);
-				if(visibleMeta.contains(parentMeta) && expandedGroups.contains(parentMeta.groupPosition)) // Don't insert a child group with no parent.
+				if(visibleMeta.contains(parentMeta) && expandedGroups.get(parentMeta.groupPosition)) // Don't insert a child group with no parent.
 					visibleMeta.add(metadata);
 			}
 		}
@@ -100,24 +104,22 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		NestPositionMetadata metadata = groupMap.get(groupPosition);
 		if(metadata.groupParent == -1)
 			return true; // Return true for top of tree.
-		if(!expandedGroups.contains(metadata.groupParent))
+		if(!expandedGroups.get(metadata.groupParent))
 			return false;
 		else
 			return isParentExpanded(metadata.groupParent);
 	}
 	
 	protected void collapseGroup(int groupPosition) {
-		if(expandedGroups.contains(groupPosition))
-			expandedGroups.remove((Integer)groupPosition);
+		expandedGroups.put(groupPosition, false);
 	}
 	
 	protected void expandGroup(int groupPosition) {
-		if(!expandedGroups.contains(groupPosition))
-			expandedGroups.add((Integer)groupPosition);
+		expandedGroups.put(groupPosition, true);
 	}
 	
 	public boolean isGroupExpanded(int groupPosition) {
-		return expandedGroups.contains(groupPosition);
+		return expandedGroups.get(groupPosition);
 	}
 
 	public int getFlatChildPosition(int groupPosition, int childPosition) {

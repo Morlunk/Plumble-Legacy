@@ -57,21 +57,8 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 
 	private User chatTarget;
 	
-	/**
-	 * Expands channels with users in them, and hides channels without users in them.
-	 */
-	public void updateExpandLogic() {
-		for(Channel channel : usersAdapter.channels) {
-			if(channel.userCount > 0)
-				channelUsersList.expandGroup(usersAdapter.channels.indexOf(channel));
-			else
-				channelUsersList.collapseGroup(usersAdapter.channels.indexOf(channel));
-		}
-	}
-	
 	public void updateChannelList() {
 		usersAdapter.updateChannelList();
-		updateExpandLogic();
 		usersAdapter.notifyDataSetChanged();
 	}
 
@@ -683,6 +670,12 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 					return x;
 			}
 			return -1;
+		}
+		
+		@Override
+		public boolean isGroupExpandedByDefault(int groupPosition) {
+			Channel channel = channels.get(groupPosition);
+			return channel.userCount > 0;
 		}
 		
 		private class OnCommentClickListener implements OnClickListener {
