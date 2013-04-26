@@ -128,6 +128,19 @@ public class MumbleProtocol {
 		authenticate.addAllTokens(tokens);
 		conn.sendTcpMessage(MessageType.Authenticate, authenticate);
 	}
+	
+	/**
+	 * Goes up the channel tree from the specified channel and increments the user count.
+	 * @param channel
+	 * @param userCountChange
+	 */
+	private void modifyChannelUserCountChain(Channel channel, int userCountChange) {
+		channel.userCount += userCountChange;
+		for(Channel c : channels.values()) {
+			if(channel.parent == c.id)
+				modifyChannelUserCountChain(c, userCountChange);
+		}
+	}
 
 	public void processTcp(final short type, final byte[] buffer)
 		throws IOException {
@@ -334,10 +347,12 @@ public class MumbleProtocol {
 				
 				if(user.getChannel() != null) {
 					// Remove from old channel
+					modifyChannelUserCountChain(user.getChannel(), -1);
 					List<User> channelUsers = channelMap.get(user.getChannel().id);
 					channelUsers.remove(user);
 				}
 				
+				modifyChannelUserCountChain(userChannel, 1);
 				user.setChannel(userChannel);
 				// Add to new channel
 				List<User> channelUsers = channelMap.get(userChannel.id);
@@ -399,7 +414,7 @@ public class MumbleProtocol {
 				users.remove(user.session);
 				
 				// Remove the user from the channel as well.
-				user.getChannel().userCount--;
+				modifyChannelUserCountChain(user.getChannel(), -1);
 				List<User> channelUsers = channelMap.get(user.getChannel().id);
 				channelUsers.remove(user);
 

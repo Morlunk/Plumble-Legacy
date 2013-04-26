@@ -62,31 +62,17 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 	 */
 	public void updateExpandLogic() {
 		for(Channel channel : usersAdapter.channels) {
-			if(getNestedUserCount(channel) > 0)
+			if(channel.userCount > 0)
 				channelUsersList.expandGroup(usersAdapter.channels.indexOf(channel));
 			else
 				channelUsersList.collapseGroup(usersAdapter.channels.indexOf(channel));
 		}
 	}
 	
-	/**
-	 * Gets the number of users in the passed channel, as well as the number of users in all subchannels.
-	 * @param channel The channel to obtain the total user count for.
-	 * @return The total users in that portion of the channel tree.
-	 */
-	public int getNestedUserCount(Channel channel) {
-		int userCount = channel.userCount;
-		for(Channel c : usersAdapter.channels) {
-			if(c.parent == channel.id)
-				userCount += getNestedUserCount(c);
-		}
-		return userCount;
-	}
-
 	public void updateChannelList() {
 		usersAdapter.updateChannelList();
-		usersAdapter.notifyDataSetChanged();
 		updateExpandLogic();
+		usersAdapter.notifyDataSetChanged();
 	}
 
 	/**
@@ -397,7 +383,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 			
 			/*
 			info.setOnClickListener(new OnClickListener() {
-				
+				key
 				@Override
 				public void onClick(View v) {
 					// TODO Auto-generated method stub
@@ -491,7 +477,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 
 		@Override
 		public int getChildCount(int arg0) {
-			return channels.get(arg0).userCount;
+			return channelMap.get(channels.get(arg0).id).size();
 		}
 
 		@Override
@@ -560,13 +546,13 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 
 			TextView nameView = (TextView) v
 					.findViewById(R.id.channel_row_name);
-			//TextView countView = (TextView) v.findViewById(R.id.channel_row_count);
+			TextView countView = (TextView) v.findViewById(R.id.channel_row_count);
 			
 			// FIXME add back channel count
 
 			nameView.setText(channel.name);
-			//countView.setText(String.format("%d", getNestedUserCount(channel)));
-			//countView.setTextColor(getResources().getColor(channel.userCount > 0 ? R.color.holo_blue_light : android.R.color.darker_gray));
+			countView.setText(String.format("%d", channel.userCount));
+			countView.setTextColor(getResources().getColor(channel.userCount > 0 ? R.color.holo_blue_light : android.R.color.darker_gray));
 			
 			Favourite favourite = service.getFavouriteForChannel(channel);
 

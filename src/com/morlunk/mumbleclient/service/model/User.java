@@ -73,17 +73,10 @@ public class User implements Parcelable {
 	}
 
 	public void setChannel(final Channel newChannel) {
-		// Moving user to another channel?
-		// If so, remove the user from the original first.
-		if (this.channel != null) {
-			this.channel.userCount--;
-		}
-
 		// User should never leave channel without joining a new one?
 		Assert.assertNotNull(newChannel);
 
 		this.channel = newChannel;
-		this.channel.userCount++;
 	}
 
 	@Override
