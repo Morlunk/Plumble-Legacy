@@ -15,7 +15,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,7 +30,6 @@ import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.google.protobuf.ByteString;
-import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
@@ -44,9 +42,8 @@ import com.morlunk.mumbleclient.service.model.User;
 import com.morlunk.mumbleclient.view.PlumbleNestedAdapter;
 import com.morlunk.mumbleclient.view.PlumbleNestedListView;
 import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedChildClickListener;
-import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedGroupClickListener;
 
-public class ChannelListFragment extends SherlockFragment implements OnNestedChildClickListener, OnNestedGroupClickListener {
+public class ChannelListFragment extends SherlockFragment implements OnNestedChildClickListener {
 
 	/**
 	 * The parent activity MUST implement ChannelProvider. An exception will be
@@ -157,7 +154,6 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 		// Get the UI views
 		channelUsersList = (PlumbleNestedListView) view
 				.findViewById(R.id.channelUsers);
-		channelUsersList.setOnGroupClickListener(this);
 		channelUsersList.setOnChildClickListener(this);
 		
 		return view;
@@ -239,19 +235,6 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 		
 	}
 	
-	@Override
-	public void onNestedGroupClick(AdapterView<?> parent, View view,
-			int groupPosition, long id) {
-		final Channel channel = (Channel) usersAdapter.getGroup(groupPosition);
-		new AsyncTask<Void, Void, Void>() {
-			@Override
-			protected Void doInBackground(Void... params) {
-				channelProvider.getService().joinChannel(channel.id);
-				return null;
-			}
-		}.execute();
-	}
-
 	class UserListAdapter extends PlumbleNestedAdapter {
 		private final MumbleService service;
 		private final DbAdapter dbAdapter;
@@ -548,12 +531,13 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 
 			TextView nameView = (TextView) v
 					.findViewById(R.id.channel_row_name);
-			TextView countView = (TextView) v
-					.findViewById(R.id.channel_row_count);
+			//TextView countView = (TextView) v.findViewById(R.id.channel_row_count);
+			
+			// FIXME add back channel count
 
 			nameView.setText(channel.name);
-			countView.setText(String.format("%d", getNestedUserCount(channel)));
-			countView.setTextColor(getResources().getColor(channel.userCount > 0 ? R.color.holo_blue_light : android.R.color.darker_gray));
+			//countView.setText(String.format("%d", getNestedUserCount(channel)));
+			//countView.setTextColor(getResources().getColor(channel.userCount > 0 ? R.color.holo_blue_light : android.R.color.darker_gray));
 			
 			Favourite favourite = service.getFavouriteForChannel(channel);
 

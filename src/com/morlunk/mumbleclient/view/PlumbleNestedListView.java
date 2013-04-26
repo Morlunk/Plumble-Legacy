@@ -18,13 +18,9 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 	public interface OnNestedChildClickListener {
 		public void onNestedChildClick(AdapterView<?> parent, View view, int groupPosition, int childPosition, long id);
 	}
-	public interface OnNestedGroupClickListener {
-		public void onNestedGroupClick(AdapterView<?> parent, View view, int groupPosition, long id);
-	}
 	
 	private PlumbleNestedAdapter mNestedAdapter;
 	private OnNestedChildClickListener mChildClickListener;
-	private OnNestedGroupClickListener mGroupClickListener;
 
 	private boolean mMaintainPosition;
 	
@@ -66,15 +62,6 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 			OnNestedChildClickListener mChildClickListener) {
 		this.mChildClickListener = mChildClickListener;
 	}
-
-	public OnNestedGroupClickListener getOnGroupClickListener() {
-		return mGroupClickListener;
-	}
-
-	public void setOnGroupClickListener(
-			OnNestedGroupClickListener mGroupClickListener) {
-		this.mGroupClickListener = mGroupClickListener;
-	}
 	
 	@Override
 	public void setOnItemClickListener(OnItemClickListener listener) {
@@ -93,9 +80,7 @@ public class PlumbleNestedListView extends ListView implements OnItemClickListen
 				mNestedAdapter.collapseGroup(metadata.groupPosition);
 			else
 				mNestedAdapter.expandGroup(metadata.groupPosition);
-			mNestedAdapter.notifyDataSetChanged();
-			//if(mGroupClickListener != null)
-			//	mGroupClickListener.onNestedGroupClick(parent, view, metadata.groupPosition, id);
+			mNestedAdapter.notifyVisibleSetChanged();
 		} else if(metadata.type == NestMetadataType.META_TYPE_ITEM && mChildClickListener != null)
 			mChildClickListener.onNestedChildClick(parent, view, metadata.groupPosition, metadata.childPosition, id);
 	}
