@@ -115,6 +115,10 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		if(!expandedGroups.contains(groupPosition))
 			expandedGroups.add((Integer)groupPosition);
 	}
+	
+	public boolean isGroupExpanded(int groupPosition) {
+		return expandedGroups.contains(groupPosition);
+	}
 
 	public int getFlatChildPosition(int groupPosition, int childPosition) {
 		for(int x=0;x<flatMeta.size();x++) {

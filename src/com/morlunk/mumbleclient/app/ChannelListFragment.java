@@ -42,8 +42,9 @@ import com.morlunk.mumbleclient.service.model.User;
 import com.morlunk.mumbleclient.view.PlumbleNestedAdapter;
 import com.morlunk.mumbleclient.view.PlumbleNestedListView;
 import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedChildClickListener;
+import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedGroupClickListener;
 
-public class ChannelListFragment extends SherlockFragment implements OnNestedChildClickListener {
+public class ChannelListFragment extends SherlockFragment implements OnNestedChildClickListener, OnNestedGroupClickListener {
 
 	/**
 	 * The parent activity MUST implement ChannelProvider. An exception will be
@@ -155,6 +156,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 		channelUsersList = (PlumbleNestedListView) view
 				.findViewById(R.id.channelUsers);
 		channelUsersList.setOnChildClickListener(this);
+		channelUsersList.setOnGroupClickListener(this);
 		
 		return view;
 	}
@@ -233,6 +235,19 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 			usersAdapter.selectedUsers.remove(user);
 		usersAdapter.expandPane(expand, flagsView, true);
 		
+	}
+	
+	@Override
+	public void onNestedGroupClick(AdapterView<?> parent, View view,
+			int groupPosition, long id) {
+		View pane = view.findViewById(R.id.channel_row_pane);
+		Channel channel = (Channel) usersAdapter.getGroup(groupPosition);
+		boolean expand = !usersAdapter.selectedChannels.contains(channel);
+		if(expand)
+			usersAdapter.selectedChannels.add(channel);
+		else
+			usersAdapter.selectedChannels.remove(channel);
+		usersAdapter.expandPane(expand, pane, true);
 	}
 	
 	class UserListAdapter extends PlumbleNestedAdapter {
@@ -516,7 +531,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 		}
 
 		@Override
-		public View getGroupView(int groupPosition, int depth,
+		public View getGroupView(final int groupPosition, int depth,
 				View convertView, ViewGroup parent) {
 			View v = convertView;
 			if (v == null) {
@@ -528,6 +543,20 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 			
 			final View pane = v.findViewById(R.id.channel_row_pane);
 			expandPane(selectedChannels.contains(channel), pane, false);
+			
+			ImageView expandView = (ImageView) v.findViewById(R.id.channel_row_expand);
+			expandView.setImageResource(isGroupExpanded(groupPosition) ? R.drawable.ic_action_minus_light : R.drawable.ic_action_add_light);
+			expandView.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					if(isGroupExpanded(groupPosition))
+						collapseGroup(groupPosition);
+					else
+						expandGroup(groupPosition);
+					notifyVisibleSetChanged();
+				}
+			});
 
 			TextView nameView = (TextView) v
 					.findViewById(R.id.channel_row_name);
@@ -545,7 +574,6 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 			final TextView joinView = (TextView) v.findViewById(R.id.channel_row_join);
 			final TextView commentView = (TextView) v.findViewById(R.id.channel_row_comment);
 			final TextView closeView = (TextView) v.findViewById(R.id.channel_row_close);
-			final View upView = v.findViewById(R.id.channel_row_up);
 			
 			joinView.setOnClickListener(new OnClickListener() {
 				
@@ -650,20 +678,6 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 							25, metrics);
 			channelTitle.setPadding((int) margin, channelTitle.getPaddingTop(), channelTitle.getPaddingRight(),
 					channelTitle.getPaddingBottom());
-			
-			// Show pane on up arrow press
-			upView.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					boolean expanding = !selectedChannels.contains(channel);
-					if(expanding)
-						selectedChannels.add(channel);
-					else
-						selectedChannels.remove(channel);
-					expandPane(expanding, pane, true);
-				}
-			});
 
 			return v;
 		}
