@@ -1,8 +1,11 @@
 package com.morlunk.mumbleclient.view;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Log;
 import android.util.SparseArray;
@@ -34,7 +37,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	protected List<NestPositionMetadata> visibleMeta = new ArrayList<NestPositionMetadata>();
 	protected SparseArray<NestPositionMetadata> groupMap = new SparseArray<NestPositionMetadata>();
 	protected SparseBooleanArray expandedGroups = new SparseBooleanArray();
-	protected List<Integer> manuallyCollapsedGroups = new ArrayList<Integer>();
+	@SuppressLint("UseSparseArrays") protected Map<Integer, Boolean> manualExpansions = new HashMap<Integer, Boolean>(); // We use hashmap instead of sparsearray because we need to use contains().
 	
 	public abstract View getGroupView(int groupPosition, int depth, View convertView, ViewGroup parent);
 	public abstract View getChildView(int groupPosition, int childPosition, int depth, View convertView, ViewGroup parent);
@@ -62,10 +65,10 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 			groupPositionMetadata.groupPosition = x;
 			groupPositionMetadata.groupParent = getGroupParentPosition(x);
 			// FIXME switch to using unique IDs for channels so when they shift it retains expansion
-			if(manuallyCollapsedGroups.contains(x) && !isGroupExpandedByDefault(x))
-				manuallyCollapsedGroups.remove((Integer)x); // If a view was collapsed and now has no users in it, remove its collapsed memory.
-			if(!manuallyCollapsedGroups.contains(x))
-				expandedGroups.put(x, isGroupExpandedByDefault(x)); // Expand automagically, except if the channel was manually collapsed.
+			if(manualExpansions.containsKey(x) && manualExpansions.get(x) == isGroupExpandedByDefault(x))
+				manualExpansions.remove((Integer)x); // If a view was manually collapsed/expanded and now has the same value as default, remove memory of it.
+			if(!manualExpansions.containsKey(x))
+				expandedGroups.put(x, isGroupExpandedByDefault(x)); // Expand automagically, except if the channel was manually collapsed/expanded.
 			
 			flatMeta.add(groupPositionMetadata);
 			groupMap.put(x, groupPositionMetadata);
@@ -115,14 +118,14 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	}
 	
 	protected void collapseGroup(int groupPosition) {
-		if(!manuallyCollapsedGroups.contains(groupPosition))
-			manuallyCollapsedGroups.add(groupPosition);
+		if(isGroupExpandedByDefault(groupPosition))
+			manualExpansions.put(groupPosition, false);
 		expandedGroups.put(groupPosition, false);
 	}
 	
 	protected void expandGroup(int groupPosition) {
-		if(manuallyCollapsedGroups.contains(groupPosition))
-			manuallyCollapsedGroups.remove((Integer)groupPosition);
+		if(!isGroupExpandedByDefault(groupPosition))
+			manualExpansions.put((Integer)groupPosition, true);
 		expandedGroups.put(groupPosition, true);
 	}
 	
