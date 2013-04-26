@@ -2,7 +2,6 @@ package com.morlunk.mumbleclient.view;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import android.content.Context;
 import android.util.Log;
@@ -34,8 +33,8 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	protected List<NestPositionMetadata> flatMeta = new ArrayList<NestPositionMetadata>();
 	protected List<NestPositionMetadata> visibleMeta = new ArrayList<NestPositionMetadata>();
 	protected SparseArray<NestPositionMetadata> groupMap = new SparseArray<NestPositionMetadata>();
-	//protected SparseArray<NestPositionMetadata> childMap = new SparseArray<NestPositionMetadata>();
 	protected SparseBooleanArray expandedGroups = new SparseBooleanArray();
+	protected List<Integer> manuallyCollapsedGroups = new ArrayList<Integer>();
 	
 	public abstract View getGroupView(int groupPosition, int depth, View convertView, ViewGroup parent);
 	public abstract View getChildView(int groupPosition, int childPosition, int depth, View convertView, ViewGroup parent);
@@ -62,7 +61,12 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 			groupPositionMetadata.type = NestMetadataType.META_TYPE_GROUP;
 			groupPositionMetadata.groupPosition = x;
 			groupPositionMetadata.groupParent = getGroupParentPosition(x);
-			expandedGroups.put(x, isGroupExpandedByDefault(x));
+			// FIXME switch to using unique IDs for channels so when they shift it retains expansion
+			if(manuallyCollapsedGroups.contains(x) && !isGroupExpandedByDefault(x))
+				manuallyCollapsedGroups.remove((Integer)x); // If a view was collapsed and now has no users in it, remove its collapsed memory.
+			if(!manuallyCollapsedGroups.contains(x))
+				expandedGroups.put(x, isGroupExpandedByDefault(x)); // Expand automagically, except if the channel was manually collapsed.
+			
 			flatMeta.add(groupPositionMetadata);
 			groupMap.put(x, groupPositionMetadata);
 			for(int y=0;y<getChildCount(x);y++) {
@@ -89,7 +93,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 			} else if(metadata.type == NestMetadataType.META_TYPE_ITEM) {
 				int parent = getFlatGroupPosition(metadata.groupPosition);
 				NestPositionMetadata parentMeta = flatMeta.get(parent);
-				if(visibleMeta.contains(parentMeta) && expandedGroups.get(parentMeta.groupPosition)) // Don't insert a child group with no parent.
+				if(visibleMeta.contains(parentMeta) && expandedGroups.get(parentMeta.groupPosition, true)) // Don't insert a child group with no parent.
 					visibleMeta.add(metadata);
 			}
 		}
@@ -111,10 +115,14 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	}
 	
 	protected void collapseGroup(int groupPosition) {
+		if(!manuallyCollapsedGroups.contains(groupPosition))
+			manuallyCollapsedGroups.add(groupPosition);
 		expandedGroups.put(groupPosition, false);
 	}
 	
 	protected void expandGroup(int groupPosition) {
+		if(manuallyCollapsedGroups.contains(groupPosition))
+			manuallyCollapsedGroups.remove((Integer)groupPosition);
 		expandedGroups.put(groupPosition, true);
 	}
 	
