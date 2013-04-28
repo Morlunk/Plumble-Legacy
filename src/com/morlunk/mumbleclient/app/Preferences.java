@@ -1,40 +1,23 @@
 package com.morlunk.mumbleclient.app;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.List;
 
-import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
-import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
+import com.morlunk.mumbleclient.service.PlumbleCertificateGenerateTask;
 import com.morlunk.mumbleclient.service.PlumbleCertificateManager;
 
-/**
- * Hackish interface so we can reuse code between PreferenceActivity and PreferenceFragment.
- * All we need is findPreference.
- * @author morlunk
- */
-interface PreferenceProvider {
-	public Preference findPreference(CharSequence key);
-}
-
-public class Preferences extends SherlockPreferenceActivity implements PreferenceProvider {
+@SuppressWarnings("deprecation")
+public class Preferences extends SherlockPreferenceActivity {
 
 	public static final String EXTRA_CONNECTED = "connected";
 	
@@ -51,23 +34,16 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 	
 	private static final String CERTIFICATE_GENERATE_KEY = "certificateGenerate";
 	private static final String CERTIFICATE_PATH_KEY = "certificatePath";
-	private static final String CERTIFICATE_FOLDER = "Plumble";
-	private static final String CERTIFICATE_EXTENSION = "p12";
 	
 	private static final String AUDIO_INPUT_KEY = "audioInputMethod";
 	private static final String PTT_SETTINGS_KEY = "pttSettings";
 	private static final String VOICE_SETTINGS_KEY = "voiceActivitySettings";
-
-	private static Context context;
 	
 	private boolean connected = false;
 	
-	@SuppressLint("NewApi")
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Preferences.context = this;
 		
 		Bundle bundle = getIntent().getExtras();
 		if(bundle != null)
@@ -77,7 +53,7 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 		//	getFragmentManager().beginTransaction().replace(android.R.id.content, new PreferencesFragment()).commit();
 		//} else {
 			addPreferencesFromResource(R.xml.preferences);
-			configurePreferences(this);
+			configurePreferences();
 		//}
 	}
 	
@@ -91,20 +67,19 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 	
 	/**
 	 * Sets up all necessary programmatic preference modifications.
-	 * @param preferenceProvider
 	 */
-	private void configurePreferences(final PreferenceProvider preferenceProvider) {
+	private void configurePreferences() {
 		// Disable options that are immutable when connected
 		if(connected) {
 			for(String key : IMMUTABLE_WHEN_CONNECTED) {
-				Preference preference = preferenceProvider.findPreference(key);
+				Preference preference = findPreference(key);
 				preference.setEnabled(false);
 				preference.setSummary(R.string.preferences_immutable);
 			}
 		}
 		
-		final Preference certificateGeneratePreference = preferenceProvider.findPreference(CERTIFICATE_GENERATE_KEY);
-		final ListPreference certificatePathPreference = (ListPreference) preferenceProvider.findPreference(CERTIFICATE_PATH_KEY);
+		final Preference certificateGeneratePreference = findPreference(CERTIFICATE_GENERATE_KEY);
+		final ListPreference certificatePathPreference = (ListPreference) findPreference(CERTIFICATE_PATH_KEY);
 		
 		certificateGeneratePreference.setOnPreferenceClickListener(new OnPreferenceClickListener() {
 			@Override
@@ -114,13 +89,13 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 			}
 		});
 
-		final ListPreference inputPreference = (ListPreference) preferenceProvider.findPreference(AUDIO_INPUT_KEY);
-		updateAudioInput(preferenceProvider, inputPreference.getValue());
+		final ListPreference inputPreference = (ListPreference) findPreference(AUDIO_INPUT_KEY);
+		updateAudioInput(inputPreference.getValue());
 		inputPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			
 			@Override
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
-				updateAudioInput(preferenceProvider, (String) newValue);
+				updateAudioInput((String) newValue);
 				return true;
 			}
 		});
@@ -139,9 +114,9 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 		}
 	}
 	
-	private void updateAudioInput(PreferenceProvider preferenceProvider, String newValue) {		
-		Preference pttSettingsPreference = preferenceProvider.findPreference(PTT_SETTINGS_KEY);
-		Preference voiceSettingsPreference = preferenceProvider.findPreference(VOICE_SETTINGS_KEY);
+	private void updateAudioInput(String newValue) {		
+		Preference pttSettingsPreference = findPreference(PTT_SETTINGS_KEY);
+		Preference voiceSettingsPreference = findPreference(VOICE_SETTINGS_KEY);
 
 		boolean pushToTalk = newValue.equals(Settings.ARRAY_METHOD_PTT);
 		pttSettingsPreference.setEnabled(pushToTalk);
@@ -153,19 +128,7 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 	 * @param preference The ListPreference to update.
 	 */
 	private void updateCertificatePath(ListPreference preference) throws NullPointerException {
-		File externalStorageDirectory = Environment.getExternalStorageDirectory();
-		File plumbleFolder = new File(externalStorageDirectory, CERTIFICATE_FOLDER);
-		
-		if(!plumbleFolder.exists()) {
-			plumbleFolder.mkdir();
-		}
-		
-		List<File> certificateFiles = Arrays.asList(plumbleFolder.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File pathname) {
-				return pathname.getName().endsWith(CERTIFICATE_EXTENSION);
-			}
-		}));
+		List<File> certificateFiles = PlumbleCertificateManager.getAvailableCertificates();
 		
 		// Get arrays of certificate paths and names.
 		String[] certificatePaths = new String[certificateFiles.size()+1]; // Extra space for 'None' option
@@ -189,68 +152,18 @@ public class Preferences extends SherlockPreferenceActivity implements Preferenc
 	 * @param certificateList If passed, will update the list of certificates available. Messy.
 	 */
 	private void generateCertificate(final ListPreference certificateList) {
-		AsyncTask<File, Void, X509Certificate> task = new AsyncTask<File, Void, X509Certificate>() {
-			
-			private ProgressDialog loadingDialog;
-			private File certificatePath;
-			
+		PlumbleCertificateGenerateTask generateTask = new PlumbleCertificateGenerateTask(this) {
 			@Override
-			protected void onPreExecute() {
-				super.onPreExecute();
-				
-				loadingDialog = new ProgressDialog(Preferences.this);
-				loadingDialog.setIndeterminate(true);
-				loadingDialog.setMessage(getResources().getString(R.string.generateCertProgress));
-				loadingDialog.setOnCancelListener(new OnCancelListener() {
-					
-					@Override
-					public void onCancel(DialogInterface arg0) {
-						cancel(true);
-						
-					}
-				});
-				loadingDialog.show();
-			}
-			@Override
-			protected X509Certificate doInBackground(File... params) {
-				certificatePath = params[0];
-				try {
-					X509Certificate certificate = PlumbleCertificateManager.createCertificate(certificatePath);
-					
-					Settings settings = Settings.getInstance(Preferences.this);
-					settings.setCertificatePath(certificatePath.getAbsolutePath());
-					return certificate;
-				} catch (Exception e) {
-					e.printStackTrace();
-					return null;
-				}
-			}
-			
-			@Override
-			protected void onPostExecute(X509Certificate result) {
+			protected void onPostExecute(File result) {
 				super.onPostExecute(result);
-				if(result != null) {
-					if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-						updateCertificatePath(certificateList); // Update cert path after
-						certificateList.setValue(certificatePath.getAbsolutePath());
-					}
-					
-					Toast.makeText(Preferences.this, context.getString(R.string.generateCertSuccess, certificatePath.getName()), Toast.LENGTH_SHORT).show();
-				} else {
-					Toast.makeText(Preferences.this, R.string.generateCertFailure, Toast.LENGTH_SHORT).show();
-				}
 				
-				loadingDialog.dismiss();
+				if(result != null) {
+					updateCertificatePath(certificateList); // Update cert path after
+					certificateList.setValue(result.getAbsolutePath());
+				}
 			}
-			
 		};
-		File externalStorageDirectory = Environment.getExternalStorageDirectory();
-		File plumbleFolder = new File(externalStorageDirectory, CERTIFICATE_FOLDER);
-		if(!plumbleFolder.exists()) {
-			plumbleFolder.mkdir();
-		}
-		File certificatePath = new File(plumbleFolder, String.format("plumble-%d.p12", (int) (System.currentTimeMillis() / 1000L)));
-		task.execute(certificatePath);
+		generateTask.execute();
 	}
 	
 	/*
