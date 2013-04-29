@@ -143,4 +143,9 @@
     <string name="channel_row_favourite">FAVOURITE</string>
     <string name="channel_row_close">CLOSE</string>
     <string name="search_channel_users">%d users</string>
+    
+    <string name="hint_ptt">Push to Talk</string>
+    <string name="hint_ptt_summary">Simply press this button down to talk. Double-tap to toggle it.</string>
+    <string name="hint_server_add">Welcome to Plumble</string>
+    <string name="hint_server_add_summary">To begin, add a favourite server by pressing the add button on the action bar.</string>
 </resources>

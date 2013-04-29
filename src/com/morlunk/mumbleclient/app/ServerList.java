@@ -165,7 +165,6 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 	public final boolean onCreateOptionsMenu(final Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		getSupportMenuInflater().inflate(R.menu.activity_server_list, menu);
-		
 		return true;
 	}
 	

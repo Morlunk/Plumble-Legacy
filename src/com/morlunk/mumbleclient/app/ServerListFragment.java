@@ -30,6 +30,8 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.github.espiandev.showcaseview.ShowcaseView;
+import com.github.espiandev.showcaseview.ShowcaseView.ConfigOptions;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
@@ -45,6 +47,9 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 	private GridView serverGrid;
 	private ServerAdapter serverAdapter;
 	private Map<Server, ServerInfoResponse> infoResponses = new HashMap<Server, ServerInfoResponse>();
+	
+	// Showcases
+	private ShowcaseView serverAddShowcaseView;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -76,7 +81,6 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 		View view = inflater.inflate(R.layout.fragment_server_list, container, false);
 		serverGrid = (GridView) view.findViewById(R.id.serverGrid);
 		serverGrid.setOnItemClickListener(this);
-		serverGrid.setEmptyView(view.findViewById(R.id.empty_server_grid));
 		registerForContextMenu(serverGrid);
 		return view;
 	}
@@ -85,12 +89,20 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		super.onCreateOptionsMenu(menu, inflater);
 		inflater.inflate(R.menu.fragment_server_list, menu);
+		
+		// Hint to add server
+		ConfigOptions serverAddConfig = new ConfigOptions();
+		serverAddConfig.shotType = ShowcaseView.TYPE_NO_LIMIT;
+		serverAddConfig.hideOnClickOutside = true;
+		serverAddShowcaseView = ShowcaseView.insertShowcaseViewWithType(ShowcaseView.ITEM_ACTION_ITEM, R.id.menu_add_server_item, getActivity(), R.string.hint_server_add, R.string.hint_server_add_summary, serverAddConfig);
 	}
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if(item.getItemId() == R.id.menu_add_server_item) {
 			addServer();
+			if(serverAddShowcaseView != null)
+				serverAddShowcaseView.hide(); // Hide showcase when pressed.
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -159,7 +171,7 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 	}
 	
 	private class ServerAdapter extends ArrayAdapter<Server> {
-
+		
 		public ServerAdapter(Context context, List<Server> servers) {
 			super(context, android.R.id.text1, servers);
 		}

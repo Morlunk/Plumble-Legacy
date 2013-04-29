@@ -56,6 +56,8 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.widget.SearchView;
+import com.github.espiandev.showcaseview.ShowcaseView;
+import com.github.espiandev.showcaseview.ShowcaseView.ConfigOptions;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
@@ -789,6 +791,12 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 			listFragment.setChatTarget(chatTarget);
 			chatFragment.setChatTarget(chatTarget);
 		}
+		
+		// Showcase hints
+		ConfigOptions pttHintConfig = new ConfigOptions();
+		pttHintConfig.shotType = ShowcaseView.TYPE_NO_LIMIT;
+		if(settings.isPushToTalk() && settings.isPushToTalkButtonShown())
+			ShowcaseView.insertShowcaseView(pttView, this, R.string.hint_ptt, R.string.hint_ptt_summary, pttHintConfig);
 	}
 
 	/**

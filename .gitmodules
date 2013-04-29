@@ -10,3 +10,9 @@
 [submodule "jni/opus"]
 	path = jni/opus
 	url = https://git.xiph.org/opus.git/
+[submodule "libs/ShowcaseView"]
+	path = libs/ShowcaseView
+	url = git://github.com/Espiandev/ShowcaseView.git
+[submodule "libs/NineOldAndroids"]
+	path = libs/NineOldAndroids
+	url = git://github.com/JakeWharton/NineOldAndroids.git
