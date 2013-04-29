@@ -438,15 +438,8 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 			
 			if(resultType.equals(ChannelSearchProvider.INTENT_DATA_CHANNEL)) {
 				int channelId = Integer.parseInt(data.getLastPathSegment());
-				
-				new AsyncTask<Integer, Void, Void>() {
-					@Override
-					protected Void doInBackground(Integer... params) {
-						mService.joinChannel(params[0]);
-						return null;
-					}
-				}.execute(channelId);
-				
+				Channel channel = mService.getChannel(channelId);
+				listFragment.scrollToChannel(channel);
 			} else if(resultType.equals(ChannelSearchProvider.INTENT_DATA_USER)) {
 				int session = Integer.parseInt(data.getLastPathSegment());
 				User user = mService.getUser(session);

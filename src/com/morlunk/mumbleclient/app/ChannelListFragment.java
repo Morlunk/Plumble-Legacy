@@ -7,14 +7,17 @@ import java.util.Map;
 
 import net.sf.mumble.MumbleProto.RequestBlob;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +33,7 @@ import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.google.protobuf.ByteString;
+import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
@@ -96,21 +100,23 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 	/**
 	 * Scrolls to the passed channel.
 	 */
+	@TargetApi(Build.VERSION_CODES.FROYO)
 	public void scrollToChannel(Channel channel) {
 		int channelPosition = usersAdapter.channels.indexOf(channel);
-		int flatPosition = usersAdapter.getFlatGroupPosition(channelPosition);
-		if(flatPosition-channelUsersList.getFirstVisiblePosition() > channelUsersList.getChildCount())
-			channelUsersList.setSelection(flatPosition);
+		int flatPosition = usersAdapter.getVisibleFlatGroupPosition(channelPosition);
+		Log.i(Globals.LOG_TAG, "SCROLLING TO: "+flatPosition);
+		channelUsersList.smoothScrollToPosition(flatPosition);
 	}
 	/**
 	 * Scrolls to the passed user.
 	 */
+	@TargetApi(Build.VERSION_CODES.FROYO)
 	public void scrollToUser(User user) {
 		int userPosition = usersAdapter.channelMap.get(user.getChannel().id).indexOf(user);
 		int channelPosition = usersAdapter.channels.indexOf(user.getChannel());
-		int flatPosition = usersAdapter.getFlatChildPosition(channelPosition, userPosition);
-		if(flatPosition-channelUsersList.getFirstVisiblePosition() > channelUsersList.getChildCount())
-			channelUsersList.setSelection(flatPosition);
+		int flatPosition = usersAdapter.getVisibleFlatChildPosition(channelPosition, userPosition);
+		Log.i(Globals.LOG_TAG, "SCROLLING TO: "+flatPosition);
+		channelUsersList.smoothScrollToPosition(flatPosition);
 	}
 
 	/*

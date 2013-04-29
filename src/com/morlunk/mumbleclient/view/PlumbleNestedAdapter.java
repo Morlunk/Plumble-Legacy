@@ -143,11 +143,32 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		}
 		return -1;
 	}
+	
+	public int getVisibleFlatChildPosition(int groupPosition, int childPosition) {
+		for(int x=0;x<visibleMeta.size();x++) {
+			NestPositionMetadata metadata = visibleMeta.get(x);
+			if(metadata.type == NestMetadataType.META_TYPE_ITEM &&
+					metadata.groupPosition == groupPosition &&
+					metadata.childPosition == childPosition)
+				return x;
+		}
+		return -1;
+	}
 
 	public int getFlatGroupPosition(int groupPosition) {
 		for(int x=0;x<flatMeta.size();x++) {
 			NestPositionMetadata metadata = flatMeta.get(x);
 			if(metadata.type == NestMetadataType.META_TYPE_GROUP &&
+					metadata.groupPosition == groupPosition)
+				return x;
+		}
+		return -1;
+	}
+	
+	public int getVisibleFlatGroupPosition(int groupPosition) {
+		for(int x=0;x<visibleMeta.size();x++) {
+			NestPositionMetadata metadata = visibleMeta.get(x);
+			if(metadata.type == NestMetadataType.META_TYPE_ITEM &&
 					metadata.groupPosition == groupPosition)
 				return x;
 		}
