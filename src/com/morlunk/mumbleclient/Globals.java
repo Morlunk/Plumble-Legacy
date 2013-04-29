@@ -11,4 +11,9 @@ public class Globals {
 											   (4 & 0xFF);
 	public static final String PROTOCOL_VERSION_STRING = "1.2.4";
 	public static final int CELT_VERSION = 0x8000000b;
+	
+	public static final int SHOWCASE_SERVER_ADD = 0;
+	public static final int SHOWCASE_PUSH_TO_TALK = 1;
+	public static final int SHOWCASE_SWITCHER = 2;
+	
 }

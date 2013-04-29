@@ -32,6 +32,7 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.github.espiandev.showcaseview.ShowcaseView;
 import com.github.espiandev.showcaseview.ShowcaseView.ConfigOptions;
+import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
@@ -92,8 +93,8 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 		
 		// Hint to add server
 		ConfigOptions serverAddConfig = new ConfigOptions();
-		serverAddConfig.shotType = ShowcaseView.TYPE_NO_LIMIT;
-		serverAddConfig.hideOnClickOutside = true;
+		serverAddConfig.shotType = ShowcaseView.TYPE_ONE_SHOT;
+		serverAddConfig.showcaseId = Globals.SHOWCASE_SERVER_ADD;
 		serverAddShowcaseView = ShowcaseView.insertShowcaseViewWithType(ShowcaseView.ITEM_ACTION_ITEM, R.id.menu_add_server_item, getActivity(), R.string.hint_server_add, R.string.hint_server_add_summary, serverAddConfig);
 	}
 	

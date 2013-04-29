@@ -793,10 +793,23 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		}
 		
 		// Showcase hints
-		ConfigOptions pttHintConfig = new ConfigOptions();
-		pttHintConfig.shotType = ShowcaseView.TYPE_NO_LIMIT;
-		if(settings.isPushToTalk() && settings.isPushToTalkButtonShown())
-			ShowcaseView.insertShowcaseView(pttView, this, R.string.hint_ptt, R.string.hint_ptt_summary, pttHintConfig);
+		List<ShowcaseView> showcaseViews = new ArrayList<ShowcaseView>();
+		if(settings.isPushToTalk() && settings.isPushToTalkButtonShown()) {
+			ConfigOptions pttConfig = new ConfigOptions();
+			pttConfig.shotType = ShowcaseView.TYPE_ONE_SHOT;
+			pttConfig.showcaseId = Globals.SHOWCASE_PUSH_TO_TALK;
+			showcaseViews.add(ShowcaseView.insertShowcaseView(pttView, this, R.string.hint_ptt, R.string.hint_ptt_summary, pttConfig));
+		}
+		
+		if(mViewPager != null) {
+			ConfigOptions switcherConfig = new ConfigOptions();
+			switcherConfig.shotType = ShowcaseView.TYPE_ONE_SHOT;
+			switcherConfig.showcaseId = Globals.SHOWCASE_SWITCHER;
+			showcaseViews.add(ShowcaseView.insertShowcaseView(ShowcaseView.ITEM_ACTION_HOME, 0, this, R.string.hint_switching, R.string.hint_switching_summary, switcherConfig));
+		}
+		
+		ShowcaseViewQueue queue = new ShowcaseViewQueue(showcaseViews);
+		queue.queueNext();
 	}
 
 	/**

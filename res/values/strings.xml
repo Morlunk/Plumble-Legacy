@@ -148,4 +148,6 @@
     <string name="hint_ptt_summary">Simply press this button down to talk. Double-tap to toggle it.</string>
     <string name="hint_server_add">Welcome to Plumble</string>
     <string name="hint_server_add_summary">To begin, add a favourite server by pressing the add button on the action bar.</string>
+    <string name="hint_switching">Switching Between Views</string>
+    <string name="hint_switching_summary">Switch between the chat and channel views by using the buttons in the top left, or swiping.</string>
 </resources>
