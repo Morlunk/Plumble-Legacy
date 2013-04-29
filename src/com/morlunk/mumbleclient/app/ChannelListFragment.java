@@ -271,7 +271,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 				return;
 			*/
 			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
-			int position = usersAdapter.getFlatChildPosition(channelPosition, userPosition);
+			int position = usersAdapter.getVisibleFlatChildPosition(channelPosition, userPosition);
 			
 			View userView = channelUsersList.getChildAt(position
 					- channelUsersList.getFirstVisiblePosition());
@@ -300,7 +300,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 				return;
 			*/
 			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
-			int position = usersAdapter.getFlatChildPosition(channelPosition, userPosition);
+			int position = usersAdapter.getVisibleFlatChildPosition(channelPosition, userPosition);
 			View userView = channelUsersList.getChildAt(position
 					- channelUsersList.getFirstVisiblePosition());
 
