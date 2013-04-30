@@ -185,6 +185,8 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
     private View channelsIndicator;
     private View chatIndicator;
     
+    private MenuItem fullscreenButton;
+    
     // Favourites
     private MenuItem searchItem;
     private MenuItem mutedButton;
@@ -406,6 +408,9 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
         
         searchItem = menu.findItem(R.id.menu_search);
         
+        if(mViewPager == null)
+        	fullscreenButton = menu.findItem(R.id.menu_fullscreen);
+        
         if(VERSION.SDK_INT >= 8) { // SearchManager supported by Froyo+.
             SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
             SearchView searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
@@ -508,10 +513,19 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		case R.id.menu_fullscreen_chat:
 			rightSplit.setVisibility(rightSplit.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
 			leftSplit.setVisibility(View.VISIBLE);
+			fullscreenButton.setIcon(R.drawable.ic_action_unfullscreen);
 			return true;
 		case R.id.menu_fullscreen_channel:
 			leftSplit.setVisibility(leftSplit.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
 			rightSplit.setVisibility(View.VISIBLE);
+			fullscreenButton.setIcon(R.drawable.ic_action_unfullscreen);
+			return true;
+		case R.id.menu_fullscreen:
+			if(leftSplit.getVisibility() == View.GONE || rightSplit.getVisibility() == View.GONE) {
+				leftSplit.setVisibility(View.VISIBLE);
+				rightSplit.setVisibility(View.VISIBLE);
+				fullscreenButton.setIcon(R.drawable.ic_action_fullscreen);
+			}
 			return true;
 		case R.id.menu_view_favorites_button:
 			showFavouritesDialog();

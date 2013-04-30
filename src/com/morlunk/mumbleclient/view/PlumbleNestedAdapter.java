@@ -7,9 +7,11 @@ import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
+import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -33,18 +35,32 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	}
 	
 	private Context mContext;
+	
+	/**
+	 * Metadata representations
+	 */
 	protected List<NestPositionMetadata> flatMeta = new ArrayList<NestPositionMetadata>();
 	protected List<NestPositionMetadata> visibleMeta = new ArrayList<NestPositionMetadata>();
-	protected SparseArray<NestPositionMetadata> groupMap = new SparseArray<NestPositionMetadata>();
+	
+	/**
+	 * Group position-meta mappings
+	 * TODO cleanup, uses too much memory!
+	 */
+	protected SparseArray<NestPositionMetadata> groupMap = new SparseArray<NestPositionMetadata>(); // Map of group IDs to meta
+	protected SparseIntArray groupToPositionMap = new SparseIntArray(); // Map group IDs to their position
 	protected SparseBooleanArray expandedGroups = new SparseBooleanArray();
 	@SuppressLint("UseSparseArrays") protected Map<Integer, Boolean> manualExpansions = new HashMap<Integer, Boolean>(); // We use hashmap instead of sparsearray because we need to use contains().
 	
 	public abstract View getGroupView(int groupPosition, int depth, View convertView, ViewGroup parent);
 	public abstract View getChildView(int groupPosition, int childPosition, int depth, View convertView, ViewGroup parent);
-	public abstract int getGroupParentPosition(int groupPosition);
-	public abstract int getGroupCount();
+	
 	public abstract int getGroupDepth(int groupPosition);
+	public abstract int getGroupCount();
 	public abstract int getChildCount(int groupPosition);
+	
+	public abstract int getParentId(int groupPosition);
+	public abstract int getGroupId(int groupPosition);
+	public abstract int getChildId(int groupPosition, int childPosition);
 
 	public Object getChild(int groupPosition, int childPosition) { return null; };
 	public Object getGroup(int groupPosition) { return null; };
@@ -58,12 +74,14 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	private final void buildFlatMetadata() {
 		long startTime = System.currentTimeMillis();
 		flatMeta.clear();
+		groupToPositionMap.clear();
 		groupMap.clear();
 		for(int x=0;x<getGroupCount();x++) {
 			NestPositionMetadata groupPositionMetadata = new NestPositionMetadata();
 			groupPositionMetadata.type = NestMetadataType.META_TYPE_GROUP;
 			groupPositionMetadata.groupPosition = x;
-			groupPositionMetadata.groupParent = getGroupParentPosition(x);
+			// A bit hackish. Really boosts performance though, compared to getting index of parent channel ID. FIXME
+			groupPositionMetadata.groupParent = groupToPositionMap.get(getParentId(x), -1);
 			// FIXME switch to using unique IDs for channels so when they shift it retains expansion
 			if(manualExpansions.containsKey(x) && manualExpansions.get(x) == isGroupExpandedByDefault(x))
 				manualExpansions.remove((Integer)x); // If a view was manually collapsed/expanded and now has the same value as default, remove memory of it.
@@ -72,6 +90,7 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 			
 			flatMeta.add(groupPositionMetadata);
 			groupMap.put(x, groupPositionMetadata);
+			groupToPositionMap.put(getGroupId(x), x);
 			for(int y=0;y<getChildCount(x);y++) {
 				NestPositionMetadata childPositionMetadata = new NestPositionMetadata();
 				childPositionMetadata.type = NestMetadataType.META_TYPE_ITEM;
@@ -175,11 +194,34 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		return -1;
 	}
 	
+	/**
+	 * State variable to make sure we don't try to rebuild the metadata twice.
+	 * Hackish. We only do this because we get a channelstate update twice- going to and from channels, causing huge interface lag.
+	 */
+	private boolean isBuildingMetadata = false;
+	
 	@Override
 	public void notifyDataSetChanged() {
-		buildFlatMetadata();
-		buildVisibleMetadata();
-		super.notifyDataSetChanged();
+		if(!isBuildingMetadata) {
+			isBuildingMetadata = true;
+			new AsyncTask<Void, Void, Void>() {
+
+				@Override
+				protected Void doInBackground(Void... params) {
+					buildFlatMetadata();
+					buildVisibleMetadata();
+					return null;
+				}
+				
+				@Override
+				protected void onPostExecute(Void result) {
+					super.onPostExecute(result);
+					isBuildingMetadata = false;
+					PlumbleNestedAdapter.super.notifyDataSetChanged();
+				}
+			}.execute();
+		} else
+			Log.d(Globals.LOG_TAG, "Tried to update nested data set while an update was running.");
 	}
 	
 	/**
@@ -205,6 +247,11 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		NestPositionMetadata metadata = visibleMeta.get(position);
 		return metadata.type.ordinal();
 	}
+	
+	@Override
+	public long getItemId(int position) {
+		return 0;
+	}
 
 	@Override
 	public final Object getItem(int position) {
@@ -214,11 +261,6 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		else if(metadata.type == NestMetadataType.META_TYPE_ITEM)
 			return getChild(metadata.groupPosition, metadata.childPosition);
 		return null;
-	}
-
-	@Override
-	public final long getItemId(int position) {
-		return 0;
 	}
 
 	@Override

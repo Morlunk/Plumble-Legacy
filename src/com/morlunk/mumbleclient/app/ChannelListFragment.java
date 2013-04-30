@@ -668,18 +668,26 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 		}
 		
 		@Override
-		public int getGroupParentPosition(int groupPosition) {
+		public int getParentId(int groupPosition) {
 			Channel channel = channels.get(groupPosition);
-			for(int x=0;x<channels.size();x++) {
-				Channel c = channels.get(x);
-				if(c.id == channel.parent)
-					return x;
-			}
-			return -1;
+			return channel.parent;
+		}
+
+		@Override
+		public int getGroupId(int groupPosition) {
+			Channel channel = channels.get(groupPosition);
+			return channel.id;
+		}
+
+		@Override
+		public int getChildId(int groupPosition, int childPosition) {
+			return channelMap.get(channels.get(groupPosition)).get(childPosition).session;
 		}
 		
 		@Override
 		public boolean isGroupExpandedByDefault(int groupPosition) {
+			if(groupPosition == -1)
+				return true;
 			Channel channel = channels.get(groupPosition);
 			return channel.userCount > 0;
 		}

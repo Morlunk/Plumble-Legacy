@@ -92,10 +92,12 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 		inflater.inflate(R.menu.fragment_server_list, menu);
 		
 		// Hint to add server
-		ConfigOptions serverAddConfig = new ConfigOptions();
-		serverAddConfig.shotType = ShowcaseView.TYPE_ONE_SHOT;
-		serverAddConfig.showcaseId = Globals.SHOWCASE_SERVER_ADD;
-		serverAddShowcaseView = ShowcaseView.insertShowcaseViewWithType(ShowcaseView.ITEM_ACTION_ITEM, R.id.menu_add_server_item, getActivity(), R.string.hint_server_add, R.string.hint_server_add_summary, serverAddConfig);
+		if(serverAddShowcaseView == null) {
+			ConfigOptions serverAddConfig = new ConfigOptions();
+			serverAddConfig.shotType = ShowcaseView.TYPE_ONE_SHOT;
+			serverAddConfig.showcaseId = Globals.SHOWCASE_SERVER_ADD;
+			serverAddShowcaseView = ShowcaseView.insertShowcaseViewWithType(ShowcaseView.ITEM_ACTION_ITEM, R.id.menu_add_server_item, getActivity(), R.string.hint_server_add, R.string.hint_server_add_summary, serverAddConfig);
+		}
 	}
 	
 	@Override

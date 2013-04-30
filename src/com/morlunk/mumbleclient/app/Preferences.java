@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.ListPreference;
 import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
@@ -34,10 +33,6 @@ public class Preferences extends SherlockPreferenceActivity {
 	
 	private static final String CERTIFICATE_GENERATE_KEY = "certificateGenerate";
 	private static final String CERTIFICATE_PATH_KEY = "certificatePath";
-	
-	private static final String AUDIO_INPUT_KEY = "audioInputMethod";
-	private static final String PTT_SETTINGS_KEY = "pttSettings";
-	private static final String VOICE_SETTINGS_KEY = "voiceActivitySettings";
 	
 	private boolean connected = false;
 	
@@ -88,17 +83,6 @@ public class Preferences extends SherlockPreferenceActivity {
 				return true;
 			}
 		});
-
-		final ListPreference inputPreference = (ListPreference) findPreference(AUDIO_INPUT_KEY);
-		updateAudioInput(inputPreference.getValue());
-		inputPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-			
-			@Override
-			public boolean onPreferenceChange(Preference preference, Object newValue) {
-				updateAudioInput((String) newValue);
-				return true;
-			}
-		});
 		
 		// Make sure media is mounted, otherwise do not allow certificate loading.
 		if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -112,15 +96,6 @@ public class Preferences extends SherlockPreferenceActivity {
 			certificatePathPreference.setEnabled(false);
 			certificatePathPreference.setSummary(R.string.externalStorageUnavailable);
 		}
-	}
-	
-	private void updateAudioInput(String newValue) {		
-		Preference pttSettingsPreference = findPreference(PTT_SETTINGS_KEY);
-		Preference voiceSettingsPreference = findPreference(VOICE_SETTINGS_KEY);
-
-		boolean pushToTalk = newValue.equals(Settings.ARRAY_METHOD_PTT);
-		pttSettingsPreference.setEnabled(pushToTalk);
-		voiceSettingsPreference.setEnabled(!pushToTalk);
 	}
 	
 	/**

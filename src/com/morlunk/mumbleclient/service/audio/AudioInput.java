@@ -8,8 +8,6 @@ import android.annotation.SuppressLint;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
-import android.media.audiofx.AcousticEchoCanceler;
-import android.os.Build.VERSION;
 import android.util.Log;
 
 import com.morlunk.mumbleclient.Globals;
