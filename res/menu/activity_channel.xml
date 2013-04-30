@@ -2,8 +2,8 @@
     <item android:id="@+id/menu_mute_button" android:title="@string/mute" android:showAsAction="ifRoom" android:icon="@drawable/ic_action_microphone"></item>
     <item android:id="@+id/menu_deafen_button" android:title="@string/deafen" android:showAsAction="ifRoom" android:icon="@drawable/ic_action_audio_on"></item><item android:id="@+id/menu_fullscreen" android:title="@string/fullscreen" android:icon="@drawable/ic_action_fullscreen" android:showAsAction="ifRoom">
         <menu>
-            <item android:id="@+id/menu_fullscreen_chat" android:title="@string/fullscreen_chat" android:icon="@drawable/ic_action_channels"/>
-            <item android:id="@+id/menu_fullscreen_channel" android:title="@string/fullscreen_channel" android:icon="@drawable/ic_action_chat_dark"/>
+            <item android:id="@+id/menu_fullscreen_chat" android:title="@string/fullscreen_chat" android:icon="@drawable/ic_action_chat_dark"/>
+            <item android:id="@+id/menu_fullscreen_channel" android:title="@string/fullscreen_channel" android:icon="@drawable/ic_action_channels"/>
         </menu>
     </item><item android:id="@+id/menu_search" android:title="@string/search" android:actionViewClass="com.actionbarsherlock.widget.SearchView" android:showAsAction="ifRoom|collapseActionView" android:icon="@drawable/ic_action_search"></item><item android:id="@+id/menu_user" android:title="@string/userControl" android:showAsAction="ifRoom" android:icon="@drawable/ic_action_user_dark">
         <menu>
