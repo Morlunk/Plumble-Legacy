@@ -986,8 +986,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		} else if (deafened && muted) {
 			status = getString(R.string.status_notify_muted_and_deafened);
 		}
-
-		mStatusNotificationBuilder.setTicker(status);
+		
 		mStatusNotificationBuilder.setContentInfo(status);
 		mStatusNotificationBuilder.setSmallIcon(R.drawable.ic_stat_notify);
 
