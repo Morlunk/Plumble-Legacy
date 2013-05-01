@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.sf.mumble.MumbleProto.RequestBlob;
+import net.sf.mumble.MumbleProto.UserRemove;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -50,6 +51,55 @@ import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedGroupClickLis
 
 public class ChannelListFragment extends SherlockFragment implements OnNestedChildClickListener, OnNestedGroupClickListener {
 
+	private BaseServiceObserver serviceObserver = new BaseServiceObserver() {
+		@Override
+		public void onCurrentChannelChanged() throws RemoteException {
+			if(channelProvider.getService().isConnected()) {
+				updateChannelList();
+				scrollToChannel(channelProvider.getCurrentUser().getChannel());
+			}
+		}
+		
+		@Override
+		public void onChannelAdded(Channel channel) throws RemoteException {
+			if(channelProvider.getService().isConnected())
+				updateChannelList();
+		}
+		
+		@Override
+		public void onChannelRemoved(Channel channel) throws RemoteException {
+			if(channelProvider.getService().isConnected())
+				updateChannelList();
+		}
+		
+		@Override
+		public void onChannelUpdated(Channel channel) throws RemoteException {
+			if(channelProvider.getService().isConnected())
+				updateChannel(channel);
+		}
+
+		@Override
+		public void onUserAdded(final User user) throws RemoteException {
+			if(channelProvider.getService().isConnected())
+				updateChannelList();
+		}
+
+		@Override
+		public void onUserRemoved(final User user, UserRemove remove) throws RemoteException {
+			removeUser(user);
+		}
+		
+		@Override
+		public void onUserUpdated(User user) throws RemoteException {
+			updateUser(user);
+		}
+		
+		@Override
+		public void onUserTalkingUpdated(User user) {
+			updateUserTalking(user);
+		}
+	};
+	
 	/**
 	 * The parent activity MUST implement ChannelProvider. An exception will be
 	 * thrown otherwise.
@@ -156,6 +206,14 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 					+ " must implement ChannelProvider!");
 		}
 	}
+	
+	@Override
+	public void onDetach() {
+		if(channelProvider.getService() != null)
+			channelProvider.getService().unregisterObserver(serviceObserver);
+		
+		super.onDetach();
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -165,31 +223,20 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		
-		// If service is bound, update. Otherwise, we should receive a request to do so once bound from activity.
-		if(channelProvider.getService() != null)
-			onServiceBound();
+
+		if(channelProvider.getService() != null &&
+				channelProvider.getService().isConnected())
+			onServiceAvailable();
 		
 		registerForContextMenu(channelUsersList);
 	}
 	
-	@Override
-	public void onResume() {
-		super.onResume();
-		
-		// Update channel list when resuming.
-		if(usersAdapter != null && 
-				channelProvider.getService() != null && 
-				channelProvider.getService().isConnected())
-	        updateChannelList();
-	}
-	
-	public void onServiceBound() {
+	public void onServiceAvailable() {
 		usersAdapter = new UserListAdapter(getActivity(),
 				channelProvider.getService());
 		channelUsersList.setAdapter(usersAdapter);
-        updateChannelList();
-        scrollToChannel(channelProvider.getService().getCurrentChannel());
+		updateChannelList();
+		channelProvider.getService().registerObserver(serviceObserver);
 	}
 
 	public void setChatTarget(User chatTarget) {

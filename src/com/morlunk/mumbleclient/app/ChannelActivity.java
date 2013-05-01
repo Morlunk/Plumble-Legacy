@@ -3,7 +3,6 @@ package com.morlunk.mumbleclient.app;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -11,7 +10,6 @@ import junit.framework.Assert;
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.UserRemove;
-import net.sf.mumble.MumbleProto.UserState;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -35,8 +33,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.Log;
@@ -44,14 +41,12 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
-import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -69,7 +64,6 @@ import com.morlunk.mumbleclient.service.MumbleProtocol.DisconnectReason;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.MumbleService.LocalBinder;
 import com.morlunk.mumbleclient.service.model.Channel;
-import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
 
 
@@ -90,6 +84,12 @@ interface ChannelProvider {
 
 public class ChannelActivity extends SherlockFragmentActivity implements ChannelProvider, TokenDialogFragmentProvider, Observer {
 
+	/**
+	 * Fragment tags
+	 */
+	public static final String LIST_FRAGMENT_TAG = "listFragment";
+	public static final String CHAT_FRAGMENT_TAG = "chatFragment";
+	
 	/*
 	 * Disconnect extras sent in result intent.
 	 */
@@ -126,15 +126,13 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 			LocalBinder localBinder = (LocalBinder)service;
 			mObserver = new ChannelServiceObserver();
 			mService = localBinder.getService();
+			// Update with initial state.
+			try {
+				mObserver.onConnectionStateChanged(mService.getConnectionState());
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
 			mService.registerObserver(mObserver);
-	        
-			// If we're not going to receive the onConnected call to setup fragments, set them up here.
-	        if(mService.isConnected() && (listFragment == null || chatFragment == null))
-	        	setupFragments();
-	        
-	        // We never receive the connecting message. Show dialog.
-	        if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_CONNECTING)
-    			onConnecting();
 		}
 
 		/**
@@ -174,7 +172,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
      * keep every loaded fragment in memory. If this becomes too memory intensive, it may be best
      * to switch to a {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
-    SectionsPagerAdapter mSectionsPagerAdapter;
+    PlumbleSectionsPagerAdapter mSectionsPagerAdapter;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -202,12 +200,10 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 	private ProgressDialog mProgressDialog;
 	private Button mTalkButton;
 	private View pttView;
-	
-	// Fragments
+
+	// Fragment references (split view exclusive)
 	private ChannelListFragment listFragment;
 	private ChannelChatFragment chatFragment;
-	
-	// Fragments (split view exclusive)
 	private View leftSplit;
 	private View rightSplit;
 	
@@ -293,6 +289,86 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
         updatePTTConfiguration();
         
         mViewPager = (ViewPager) findViewById(R.id.pager);
+		FragmentManager fragmentManager = getSupportFragmentManager();
+		
+		listFragment = (ChannelListFragment) fragmentManager.findFragmentByTag(LIST_FRAGMENT_TAG);
+		chatFragment = (ChannelChatFragment) fragmentManager.findFragmentByTag(CHAT_FRAGMENT_TAG);
+		
+		FragmentTransaction remove = fragmentManager.beginTransaction();
+		if(listFragment == null)
+			listFragment = new ChannelListFragment();
+		else
+			remove.remove(listFragment);
+		
+		if(chatFragment == null)
+			chatFragment = new ChannelChatFragment();
+		else
+			remove.remove(chatFragment);
+		
+		if(!remove.isEmpty()) {
+			remove.commit();
+			fragmentManager.executePendingTransactions();
+		}
+		
+		if(mViewPager != null) {
+			// Set up the ViewPager with the sections adapter.
+            mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
+				
+				@Override
+				public void onPageSelected(int arg0) {
+					// Hide keyboard if moving to channel list.
+					if(arg0 == 0) {
+						InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			            imm.hideSoftInputFromWindow(mViewPager.getApplicationWindowToken(), 0);
+					}
+					// Update indicator
+					channelsIndicator.setVisibility(arg0 == 0 ? View.VISIBLE : View.INVISIBLE);
+					chatIndicator.setVisibility(arg0 == 1 ? View.VISIBLE : View.INVISIBLE);
+				}
+				
+				@Override
+				public void onPageScrolled(int arg0, float arg1, int arg2) { }
+				
+				@Override
+				public void onPageScrollStateChanged(int arg0) { }
+			});
+            
+            // Set up tabs
+            getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+            
+            View channelTabView = getLayoutInflater().inflate(R.layout.channel_tab_view, null);
+            channelsIndicator = channelTabView.findViewById(R.id.tab_channels_indicator);
+            chatIndicator = channelTabView.findViewById(R.id.tab_chat_indicator);
+            
+            ImageButton channelsButton = (ImageButton) channelTabView.findViewById(R.id.tab_channels);
+            ImageButton chatButton = (ImageButton) channelTabView.findViewById(R.id.tab_chat);
+            channelsButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mViewPager.setCurrentItem(0, true);
+				}
+			});
+            chatButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					mViewPager.setCurrentItem(1, true);
+				}
+			});
+            
+            getSupportActionBar().setCustomView(channelTabView);
+            // Setup a pager that will return a fragment for each of the two primary sections of the app.
+            mSectionsPagerAdapter = new PlumbleSectionsPagerAdapter(mService, getSupportFragmentManager(), listFragment, chatFragment);
+            mViewPager.setAdapter(mSectionsPagerAdapter);
+            
+        } else {
+        	// Create tablet UI
+	        leftSplit = findViewById(R.id.left_split);
+	        rightSplit = findViewById(R.id.right_split);
+	        fragmentManager.beginTransaction()
+	        	.add(R.id.chat_fragment, chatFragment, CHAT_FRAGMENT_TAG)
+	        	.add(R.id.list_fragment, listFragment, LIST_FRAGMENT_TAG)
+	        	.commit();
+        }
         
         if(savedInstanceState != null) {
 			chatTarget = (User) savedInstanceState.getParcelable(SAVED_STATE_CHAT_TARGET);
@@ -321,9 +397,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
     		pttView.setBackgroundResource(talking ? R.color.holo_blue_light : pushToTalkBackground);
     }
     
-    /* (non-Javadoc)
-     * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
-     */
     @Override
     protected void onSaveInstanceState(Bundle outState) {
     	super.onSaveInstanceState(outState);
@@ -332,9 +405,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 			outState.putParcelable(SAVED_STATE_CHAT_TARGET, chatTarget);
     }
     
-    /* (non-Javadoc)
-     * @see com.morlunk.mumbleclient.app.ConnectedActivity#onResume()
-     */
     @Override
     protected void onResume() {
     	super.onResume();
@@ -671,80 +741,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 	public void deleteToken(String string) {
 		mService.getDatabaseAdapter().deleteToken(mService.getConnectedServer().getId(), string);
 	};
-	
-	/**
-	 * Sets up the channel and chat fragments.
-	 */
-	private void setupFragments() {
-        if(listFragment == null)
-        	listFragment = new ChannelListFragment();
-	    if(chatFragment == null)
-	    	chatFragment = new ChannelChatFragment();
-	    
-		if(mViewPager != null) {
-            // Create the adapter that will return a fragment for each of the three primary sections
-            // of the app.
-            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-            // Set up the ViewPager with the sections adapter.
-            mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
-				
-				@Override
-				public void onPageSelected(int arg0) {
-					// Hide keyboard if moving to channel list.
-					if(arg0 == 0) {
-						InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-			            imm.hideSoftInputFromWindow(mViewPager.getApplicationWindowToken(), 0);
-					}
-					// Update indicator
-					channelsIndicator.setVisibility(arg0 == 0 ? View.VISIBLE : View.INVISIBLE);
-					chatIndicator.setVisibility(arg0 == 1 ? View.VISIBLE : View.INVISIBLE);
-				}
-				
-				@Override
-				public void onPageScrolled(int arg0, float arg1, int arg2) { }
-				
-				@Override
-				public void onPageScrollStateChanged(int arg0) { }
-			});
-           
-            mViewPager.setAdapter(mSectionsPagerAdapter);
-            
-            // Set up tabs
-            getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-            
-            View channelTabView = getLayoutInflater().inflate(R.layout.channel_tab_view, null);
-            channelsIndicator = channelTabView.findViewById(R.id.tab_channels_indicator);
-            chatIndicator = channelTabView.findViewById(R.id.tab_chat_indicator);
-            
-            ImageButton channelsButton = (ImageButton) channelTabView.findViewById(R.id.tab_channels);
-            ImageButton chatButton = (ImageButton) channelTabView.findViewById(R.id.tab_chat);
-            channelsButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					mViewPager.setCurrentItem(0, true);
-				}
-			});
-            chatButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					mViewPager.setCurrentItem(1, true);
-				}
-			});
-            
-            getSupportActionBar().setCustomView(channelTabView);
-            
-        } else {
-        	// Otherwise, create tablet UI.
-        	listFragment = (ChannelListFragment) getSupportFragmentManager().findFragmentById(R.id.list_fragment);
-        	chatFragment = (ChannelChatFragment) getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
-        	
-        	listFragment.onServiceBound();
-        	chatFragment.onServiceBound();
-        	
-	        leftSplit = findViewById(R.id.left_split);
-	        rightSplit = findViewById(R.id.right_split);
-        }
-	}
     
     /**
 	 * Handles activity initialization when the Service has connected.
@@ -765,13 +761,13 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 	protected void onConnected() {
 		// We are now connected! \o/
 		
-		// If view pager is present, configure phone UI.
-        setupFragments();
-		
 		if (mProgressDialog != null) {
 			mProgressDialog.dismiss();
 			mProgressDialog = null;
 		}
+		
+		chatFragment.onServiceAvailable();
+		listFragment.onServiceAvailable();
 		
 		// Tell the service that we are now visible.
         mService.setActivityVisible(true);
@@ -953,16 +949,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		return null;
 	}
 	
-	/**
-	 * Updates the chat with latest messages from the service.
-	 */
-	public void updateChat() {
-		for(String message : mService.getUnreadChatMessages()) {
-			chatFragment.addChatMessage(message);
-		}
-		mService.clearUnreadChatMessages();
-	}
-	
 	/* (non-Javadoc)
 	 * @see com.morlunk.mumbleclient.app.ChannelProvider#sendChannelMessage(java.lang.String)
 	 */
@@ -993,47 +979,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 	private void permissionDenied(String reason, DenyType denyType) {
 		Toast.makeText(getApplicationContext(), R.string.permDenied, Toast.LENGTH_SHORT).show();
 	}
-	
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to one of the primary
-     * sections of the app.
-     */
-    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
-    	
-        public SectionsPagerAdapter(FragmentManager fragmentManager) {
-            super(fragmentManager);
-        }
-
-        @Override
-        public SherlockFragment getItem(int i) {
-        	switch (i) {
-			case 0:
-				return listFragment;
-			case 1:
-				return chatFragment;
-			default:
-				return null;
-			}
-        }
-
-        @Override
-        public int getCount() {
-            return 2;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            switch (position) {
-                case 0: return getString(R.string.title_section1).toUpperCase(Locale.getDefault());
-                case 1: return getString(R.string.title_section2).toUpperCase(Locale.getDefault());
-            }
-            return null;
-        }
-        
-        @Override
-        public void destroyItem(ViewGroup container, int position, Object object) {
-        }
-    }
 
     class ChannelServiceObserver extends BaseServiceObserver {
     	
@@ -1067,74 +1012,11 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
     			Assert.fail("Unknown connection state");
     		}
     	}
-    	
-		@Override
-		public void onMessageReceived(final Message msg) throws RemoteException {
-			updateChat();
-		}
-
-		@Override
-		public void onMessageSent(final Message msg) throws RemoteException {
-			updateChat();
-		}
-		
-		@Override
-		public void onCurrentChannelChanged() throws RemoteException {
-			if(mService.isConnected()) {
-				listFragment.updateChannelList();
-				listFragment.scrollToChannel(getCurrentUser().getChannel());
-			}
-		}
-		
-		@Override
-		public void onChannelAdded(Channel channel) throws RemoteException {
-			if(mService.isConnected())
-				listFragment.updateChannelList();
-		}
-		
-		@Override
-		public void onChannelRemoved(Channel channel) throws RemoteException {
-			if(mService.isConnected())
-				listFragment.updateChannelList();
-		}
-		
-		@Override
-		public void onChannelUpdated(Channel channel) throws RemoteException {
-			if(mService.isConnected())
-				listFragment.updateChannel(channel);
-		}
 		
 		@Override
 		public void onCurrentUserUpdated() throws RemoteException {
 			updateMuteDeafenMenuItems(mService.getCurrentUser().selfMuted, mService.getCurrentUser().selfDeafened);
 	        updateUserControlMenuItems();
-		}
-
-		@Override
-		public void onUserAdded(final User user) throws RemoteException {
-			if(mService.isConnected())
-				listFragment.updateChannelList();
-		}
-
-		@Override
-		public void onUserRemoved(final User user, UserRemove remove) throws RemoteException {
-			listFragment.removeUser(user);
-			updateChat();
-		}
-
-		@Override
-		public void onUserStateUpdated(final User user, final UserState state) throws RemoteException {
-			updateChat();
-		}
-		
-		@Override
-		public void onUserUpdated(User user) throws RemoteException {
-			listFragment.updateUser(user);
-		}
-		
-		@Override
-		public void onUserTalkingUpdated(User user) {
-			listFragment.updateUserTalking(user);
 		}
 		
 		/* (non-Javadoc)
