@@ -266,7 +266,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			});
 		}
 
-		@Override
+		@Override  
 		public void channelRemoved(final int channelId) {
 			handler.post(new ServiceProtocolMessage() {
 				Channel channel;
@@ -279,6 +279,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 							break;
 						}
 					}
+					sortCurrentChannels();
 				}
 
 				@Override
@@ -287,6 +288,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 					observer.onChannelRemoved(channel);
 				}
 			});
+		}
+
+		@Override
+		public void channelMoved(Channel channel) {
+			sortCurrentChannels(); // Sort when moved. We already send a channel update broadcast with channelUdpated.
 		}
 
 		@Override
@@ -587,6 +593,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	final List<Message> messages = new LinkedList<Message>();
 	final List<Message> unreadMessages = new LinkedList<Message>();
 	final List<Channel> channels = new ArrayList<Channel>();
+	final List<Channel> sortedChannels = new ArrayList<Channel>();
 	final List<User> users = new ArrayList<User>();
 	
 	private List<Favourite> favourites;
@@ -644,24 +651,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	}
 
 	/**
-	 * Gets a list of channels sorted by hierarchy.
-	 * 
-	 * @return
+	 * Gets a list of channels sorted alphabetically, by position, and hierarchy.
+	 * @return A list of Channel objects in use on the server, sorted.
 	 */
 	public List<Channel> getSortedChannelList() {
-		List<Channel> unsortedChannels = new ArrayList<Channel>(getChannelList());
-		List<Channel> sortedChannels = new ArrayList<Channel>();
-		
-		sortChannelList(unsortedChannels);
-		
-		for (Channel channel : unsortedChannels) {
-			if (channel.parent == -1) {
-				sortedChannels.add(channel);
-				sortedChannels.addAll(getNestedChannels(channel, unsortedChannels));
-			}
-		}
-
-		return sortedChannels;
+		return Collections.unmodifiableList(sortedChannels);
 	}
 
 	private List<Channel> getNestedChannels(Channel channel, List<Channel> channels) {
@@ -675,6 +669,26 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 		
 		return nestedChannels;
+	}
+	
+	/**
+	 * Sorts and organizes the channel list into a hierarchy.
+	 */
+	public void sortCurrentChannels() {
+		List<Channel> unsortedChannels = new ArrayList<Channel>(getChannelList());
+		List<Channel> sortedChannels = new ArrayList<Channel>();
+		
+		sortChannelList(unsortedChannels);
+		
+		for (Channel channel : unsortedChannels) {
+			if (channel.parent == -1) {
+				sortedChannels.add(channel);
+				sortedChannels.addAll(getNestedChannels(channel, unsortedChannels));
+			}
+		}
+
+		this.sortedChannels.clear();
+		this.sortedChannels.addAll(sortedChannels);
 	}
 	
 	/**
@@ -1334,6 +1348,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 					mAudioInput.startRecording(); // Immediately begin record if using voice activity
 				
 				showNotification();
+				sortCurrentChannels();
 			}
 			break;
 		case MumbleConnectionHost.STATE_DISCONNECTED:

@@ -516,6 +516,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 						.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				v = inflater.inflate(R.layout.channel_row, null);
 			}
+			
 			final Channel channel = channels.get(groupPosition);
 			
 			final View pane = v.findViewById(R.id.channel_row_pane);
@@ -538,8 +539,6 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 			TextView nameView = (TextView) v
 					.findViewById(R.id.channel_row_name);
 			TextView countView = (TextView) v.findViewById(R.id.channel_row_count);
-			
-			// FIXME add back channel count
 
 			nameView.setText(channel.name);
 			countView.setText(String.format("%d", channel.userCount));

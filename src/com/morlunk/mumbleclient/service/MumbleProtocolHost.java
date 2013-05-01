@@ -21,6 +21,8 @@ public interface MumbleProtocolHost {
 
 	public void channelUpdated(Channel channel);
 
+	public void channelMoved(Channel channel);
+
 	public void currentChannelChanged();
 
 	public void currentUserUpdated();

@@ -149,7 +149,7 @@ public class MumbleProtocol {
 		}
 
 		final MessageType t = MessageType.values()[type];
-
+		
 		Channel channel = null;
 		User user = null;
 
@@ -277,8 +277,11 @@ public class MumbleProtocol {
 				channels.put(channel.id, channel);
 				channelMap.put(channel.id, new ArrayList<User>());
 				host.channelAdded(channel);
-			} else
+			} else {
+				if(cs.hasPosition())
+					host.channelMoved(channel);
 				host.channelUpdated(channel);
+			}
 			break;
 		case ChannelRemove:
 			final ChannelRemove cr = ChannelRemove.parseFrom(buffer);
