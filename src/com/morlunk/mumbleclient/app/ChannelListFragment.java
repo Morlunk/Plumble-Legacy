@@ -266,10 +266,9 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 				return;
 			
 			int channelPosition = channels.indexOf(user.getChannel());
-			/*
-			if (!channelUsersList.isGroupExpanded(channelPosition))
-				return;
-			*/
+			if(!usersAdapter.isGroupExpanded(channelPosition))
+				return; // Don't refresh
+			
 			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
 			int position = usersAdapter.getVisibleFlatChildPosition(channelPosition, userPosition);
 			
@@ -295,10 +294,9 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 				return;
 			
 			int channelPosition = channels.indexOf(user.getChannel());
-			/*
-			if (!channelUsersList.isGroupExpanded(channelPosition))
-				return;
-			*/
+			if(!usersAdapter.isGroupExpanded(channelPosition))
+				return; // Don't refresh
+			
 			int userPosition = channelMap.get(user.getChannel().id).indexOf(user);
 			int position = usersAdapter.getVisibleFlatChildPosition(channelPosition, userPosition);
 			View userView = channelUsersList.getChildAt(position

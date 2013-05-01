@@ -7,7 +7,6 @@ import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
@@ -196,9 +195,11 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	
 	@Override
 	public void notifyDataSetChanged() {
+		long startTime = System.currentTimeMillis();
 		buildFlatMetadata();
 		buildVisibleMetadata();
 		super.notifyDataSetChanged();
+		Log.d(Globals.LOG_TAG, "OPT: reloaded data set, took "+(System.currentTimeMillis()-startTime)+"ms");
 	}
 	
 	/**
@@ -244,11 +245,12 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 	public final View getView(int position, View convertView, ViewGroup parent) {
 		NestPositionMetadata metadata = visibleMeta.get(position);
 		NestMetadataType mType = NestMetadataType.values()[getItemViewType(position)];
+		View view = null;
 		if(mType == NestMetadataType.META_TYPE_GROUP)
-			return getGroupView(metadata.groupPosition, metadata.depth, convertView, parent);
+			view = getGroupView(metadata.groupPosition, metadata.depth, convertView, parent);
 		else if(mType == NestMetadataType.META_TYPE_ITEM)
-			return getChildView(metadata.groupPosition, metadata.childPosition, metadata.depth, convertView, parent);
-		return null;
+			view = getChildView(metadata.groupPosition, metadata.childPosition, metadata.depth, convertView, parent);
+		return view;
 	}
 	
 	public Context getContext() {
