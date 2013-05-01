@@ -194,34 +194,11 @@ public abstract class PlumbleNestedAdapter extends BaseAdapter implements ListAd
 		return -1;
 	}
 	
-	/**
-	 * State variable to make sure we don't try to rebuild the metadata twice.
-	 * Hackish. We only do this because we get a channelstate update twice- going to and from channels, causing huge interface lag.
-	 */
-	private boolean isBuildingMetadata = false;
-	
 	@Override
 	public void notifyDataSetChanged() {
-		if(!isBuildingMetadata) {
-			isBuildingMetadata = true;
-			new AsyncTask<Void, Void, Void>() {
-
-				@Override
-				protected Void doInBackground(Void... params) {
-					buildFlatMetadata();
-					buildVisibleMetadata();
-					return null;
-				}
-				
-				@Override
-				protected void onPostExecute(Void result) {
-					super.onPostExecute(result);
-					isBuildingMetadata = false;
-					PlumbleNestedAdapter.super.notifyDataSetChanged();
-				}
-			}.execute();
-		} else
-			Log.d(Globals.LOG_TAG, "Tried to update nested data set while an update was running.");
+		buildFlatMetadata();
+		buildVisibleMetadata();
+		super.notifyDataSetChanged();
 	}
 	
 	/**
