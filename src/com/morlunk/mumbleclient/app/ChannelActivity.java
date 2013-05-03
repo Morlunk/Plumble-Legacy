@@ -122,15 +122,13 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			LocalBinder localBinder = (LocalBinder)service;
 			mObserver = new ChannelServiceObserver();
 			mService = localBinder.getService();
-			// Update with initial state.
-			try {
-				mObserver.onConnectionStateChanged(mService.getConnectionState());
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
 			mService.registerObserver(mObserver);
 			listFragment.notifyServiceBound();
 			chatFragment.notifyServiceBound();
+			if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_CONNECTED)
+				onConnected();
+			else if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_CONNECTING)
+				onConnecting();
 		}
 
 		/**
@@ -443,6 +441,8 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
         	// Unbind to service
     		mService.unregisterObserver(mObserver);
     		unbindService(conn);
+    		listFragment.notifyServiceUnbound();
+    		chatFragment.notifyServiceUnbound();
     	}
     }
     

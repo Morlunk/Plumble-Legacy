@@ -118,13 +118,6 @@ public class ChannelChatFragment extends PlumbleServiceFragment {
 	}
 	
 	@Override
-	public void onDestroy() {
-		if(hasBound())
-			getService().unregisterObserver(serviceObserver);
-		super.onDestroy();
-	}
-	
-	@Override
 	public void onServiceBound() {
 		clear();
 		for(String message : getService().getChatMessages()) {
@@ -132,6 +125,11 @@ public class ChannelChatFragment extends PlumbleServiceFragment {
 				addChatMessage(message);
 		}
 		getService().registerObserver(serviceObserver);
+	}
+	
+	@Override
+	public void onServiceUnbound() {
+		getService().unregisterObserver(serviceObserver);
 	}
 	
 	/**

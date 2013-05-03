@@ -51,6 +51,12 @@ import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedGroupClickLis
 public class ChannelListFragment extends PlumbleServiceFragment implements OnNestedChildClickListener, OnNestedGroupClickListener {
 
 	private BaseServiceObserver serviceObserver = new BaseServiceObserver() {
+		
+		public void onConnectionStateChanged(int state) throws RemoteException {
+			if(state == MumbleService.CONNECTION_STATE_CONNECTED)
+				setupChannelList();
+		};
+		
 		@Override
 		public void onCurrentChannelChanged() throws RemoteException {
 			if(getService().isConnected()) {
@@ -109,8 +115,19 @@ public class ChannelListFragment extends PlumbleServiceFragment implements OnNes
 
 	private User chatTarget;
 	
+	private void setupChannelList() {
+		usersAdapter = new UserListAdapter(getActivity(), getService());
+		channelUsersList.setAdapter(usersAdapter);
+		updateChannelList();
+	}
+	
 	public void updateChannelList() {
 		usersAdapter.updateChannelList();
+
+		/**
+		 * Registers the passed observer and calls the most recent connection state callback immediately.
+		 * @param observer
+		 */
 		usersAdapter.notifyDataSetChanged();
 	}
 
@@ -204,13 +221,6 @@ public class ChannelListFragment extends PlumbleServiceFragment implements OnNes
 					+ " must implement ChannelProvider!");
 		}
 	}
-	
-	@Override
-	public void onDestroy() {
-		if(hasBound())
-			getService().unregisterObserver(serviceObserver);
-		super.onDestroy();
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -225,10 +235,14 @@ public class ChannelListFragment extends PlumbleServiceFragment implements OnNes
 	
 	@Override
 	public void onServiceBound() {
-		usersAdapter = new UserListAdapter(getActivity(), getService());
-		channelUsersList.setAdapter(usersAdapter);
-		updateChannelList();
 		getService().registerObserver(serviceObserver);
+		if(getService().isConnected())
+			setupChannelList();
+	}
+	
+	@Override
+	public void onServiceUnbound() {
+		getService().unregisterObserver(serviceObserver);
 	}
 
 	public void setChatTarget(User chatTarget) {

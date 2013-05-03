@@ -902,7 +902,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 		return handleCommand(intent);
 	}
-
+	
 	public void registerObserver(final BaseServiceObserver observer) {
 		observers.put(observer, observer);
 	}
@@ -1334,18 +1334,19 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			settings.addObserver(this);
 			serviceState = synced ? CONNECTION_STATE_CONNECTED
 					: CONNECTION_STATE_SYNCHRONIZING;
-			if (settings.isDeafened()) {
-				setDeafened(true);
-			} else if (settings.isMuted()) {
-				setMuted(true);
-			}
-			updateFavourites();
 			if(synced) {
 				// Initialize audio input
 				mAudioInput = new AudioInput(this, mProtocol.codec);
 				if(settings.isVoiceActivity())
 					mAudioInput.startRecording(); // Immediately begin record if using voice activity
+
+				if (settings.isDeafened()) {
+					setDeafened(true);
+				} else if (settings.isMuted()) {
+					setMuted(true);
+				}
 				
+				updateFavourites();
 				showNotification();
 				sortCurrentChannels();
 			}

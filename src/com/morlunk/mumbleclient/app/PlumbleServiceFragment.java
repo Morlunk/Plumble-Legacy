@@ -70,6 +70,17 @@ public class PlumbleServiceFragment extends SherlockFragment {
 	}
 	
 	/**
+	 * Notified the fragment that a service has been unbound to the activity.
+	 * Nothing will occur if the service is bound.
+	 */
+	public void notifyServiceUnbound() {
+		if(serviceBound) {
+			onServiceUnbound();
+			serviceBound = false;
+		}
+	}
+	
+	/**
 	 * Convenience method to return the MumbleService from the ServiceProvider.
 	 * @return The MumbleService if bound, null otherwise.
 	 */
@@ -78,6 +89,10 @@ public class PlumbleServiceFragment extends SherlockFragment {
 	}
 	
 	protected void onServiceBound() {
+		// Placeholder
+	}
+	
+	protected void onServiceUnbound() {
 		// Placeholder
 	}
 	
