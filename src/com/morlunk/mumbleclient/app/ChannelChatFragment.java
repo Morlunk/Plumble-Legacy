@@ -2,7 +2,6 @@ package com.morlunk.mumbleclient.app;
 
 import net.sf.mumble.MumbleProto.UserRemove;
 import net.sf.mumble.MumbleProto.UserState;
-import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -20,13 +19,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-import com.actionbarsherlock.app.SherlockFragment;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
 
-public class ChannelChatFragment extends SherlockFragment {
+public class ChannelChatFragment extends PlumbleServiceFragment {
 	
 	private BaseServiceObserver serviceObserver = new BaseServiceObserver() {
 		@Override
@@ -50,45 +48,12 @@ public class ChannelChatFragment extends SherlockFragment {
 		}
 	};
 	
-	private ChannelProvider channelProvider;
 	private ScrollView chatScroll;
 	private TextView chatText;
 	private EditText chatTextEdit;
 	private ImageButton sendButton;
 
 	private User chatTarget;
-	
-	/* (non-Javadoc)
-	 * @see android.support.v4.app.Fragment#onAttach(android.app.Activity)
-	 */
-	@Override
-	public void onAttach(Activity activity) {
-		super.onAttach(activity);
-		
-		try {
-			channelProvider = (ChannelProvider)activity;
-		} catch (ClassCastException e) {
-			throw new ClassCastException(activity.toString()+" must implement ChannelProvider!");
-		}
-	}
-	
-	@Override
-	public void onDetach() {
-		if(channelProvider.getService() != null)
-			channelProvider.getService().unregisterObserver(serviceObserver);
-		
-		super.onDetach();
-	}
-	
-	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
-		super.onActivityCreated(savedInstanceState);
-		
-		// If service is bound, update. Otherwise, we should receive a request to do so once bound from activity.
-		if(channelProvider.getService() != null &&
-				channelProvider.getService().isConnected())
-			onServiceAvailable();
-	}
 	
 	/* (non-Javadoc)
 	 * @see android.support.v4.app.Fragment#onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle)
@@ -152,23 +117,31 @@ public class ChannelChatFragment extends SherlockFragment {
 		});
 	}
 	
-	public void onServiceAvailable() {
+	@Override
+	public void onDestroy() {
+		if(hasBound())
+			getService().unregisterObserver(serviceObserver);
+		super.onDestroy();
+	}
+	
+	@Override
+	public void onServiceBound() {
 		clear();
-		for(String message : channelProvider.getService().getChatMessages()) {
+		for(String message : getService().getChatMessages()) {
 			if(message != null)
 				addChatMessage(message);
 		}
-		channelProvider.getService().registerObserver(serviceObserver);
+		getService().registerObserver(serviceObserver);
 	}
 	
 	/**
 	 * Updates the chat with latest messages from the service.
 	 */
 	public void updateChat() {
-		for(String message : channelProvider.getService().getUnreadChatMessages()) {
+		for(String message : getService().getUnreadChatMessages()) {
 			addChatMessage(message);
 		}
-		channelProvider.getService().clearUnreadChatMessages();
+		getService().clearUnreadChatMessages();
 	}
 
 	void sendMessage(final TextView v) {
@@ -198,9 +171,9 @@ public class ChannelChatFragment extends SherlockFragment {
 			@Override
 			protected Void doInBackground(String... params) {
 				if(chatTarget == null) {
-					channelProvider.sendChannelMessage(params[0]);
+					getService().sendChannelTextMessage(params[0], getService().getCurrentChannel());
 				} else {
-					channelProvider.sendUserMessage(params[0], chatTarget);
+					getService().sendUserTextMessage(params[0], chatTarget);
 				}
 				return null;
 			}

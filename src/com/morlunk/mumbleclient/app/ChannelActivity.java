@@ -56,6 +56,7 @@ import com.github.espiandev.showcaseview.ShowcaseView.ConfigOptions;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
+import com.morlunk.mumbleclient.app.PlumbleServiceFragment.PlumbleServiceProvider;
 import com.morlunk.mumbleclient.app.TokenDialogFragment.TokenDialogFragmentProvider;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
@@ -73,16 +74,11 @@ import com.morlunk.mumbleclient.service.model.User;
  *
  */
 interface ChannelProvider {
-	public User getCurrentUser();
-	public User getUserWithIdentifier(int id);
 	public void setChatTarget(User chatTarget);
-	public void sendChannelMessage(String message);
-	public void sendUserMessage(String string, User chatTarget);
-	public MumbleService getService();
 }
 
 
-public class ChannelActivity extends SherlockFragmentActivity implements ChannelProvider, TokenDialogFragmentProvider, Observer {
+public class ChannelActivity extends SherlockFragmentActivity implements PlumbleServiceProvider, ChannelProvider, TokenDialogFragmentProvider, Observer {
 
 	/**
 	 * Fragment tags
@@ -133,6 +129,8 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 				e.printStackTrace();
 			}
 			mService.registerObserver(mObserver);
+			listFragment.notifyServiceBound();
+			chatFragment.notifyServiceBound();
 		}
 
 		/**
@@ -547,13 +545,13 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
      */
     private void updateUserControlMenuItems() {
     	if(mService == null || 
-    			getCurrentUser() == null || 
+    			mService.getCurrentUser() == null || 
     			userRegisterItem == null || 
     			userCommentItem == null || 
     			userInformationItem == null)
     		return;
     	
-		boolean userRegistered = getCurrentUser().isRegistered;
+		boolean userRegistered = mService.getCurrentUser().isRegistered;
 		userRegisterItem.setEnabled(!userRegistered);
 		userCommentItem.setEnabled(userRegistered);
 		userInformationItem.setEnabled(userRegistered);
@@ -766,9 +764,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 			mProgressDialog = null;
 		}
 		
-		chatFragment.onServiceAvailable();
-		listFragment.onServiceAvailable();
-		
 		// Tell the service that we are now visible.
         mService.setActivityVisible(true);
         
@@ -934,35 +929,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Channel
 		return null;
 	}
 	
-	@Override
-	public User getCurrentUser() {
-		return mService.getCurrentUser();
-	}
-	
-	@Override
-	public User getUserWithIdentifier(int id) {
-		for(User user : mService.getUserList()) {
-			if(user.session == id) {
-				return user;
-			}
-		}
-		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see com.morlunk.mumbleclient.app.ChannelProvider#sendChannelMessage(java.lang.String)
-	 */
-	@Override
-	public void sendChannelMessage(String message) {
-		mService.sendChannelTextMessage(
-				message, getCurrentUser().getChannel());
-	}
-	
-	@Override
-	public void sendUserMessage(String string, User chatTarget) {
-		mService.sendUserTextMessage(string, chatTarget);
-	}
-
 	@Override
 	public void setChatTarget(User chatTarget) {
 		this.chatTarget = chatTarget;

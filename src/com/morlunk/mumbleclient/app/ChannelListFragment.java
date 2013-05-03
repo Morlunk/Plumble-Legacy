@@ -32,7 +32,6 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.actionbarsherlock.app.SherlockFragment;
 import com.google.protobuf.ByteString;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
@@ -49,38 +48,38 @@ import com.morlunk.mumbleclient.view.PlumbleNestedListView;
 import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedChildClickListener;
 import com.morlunk.mumbleclient.view.PlumbleNestedListView.OnNestedGroupClickListener;
 
-public class ChannelListFragment extends SherlockFragment implements OnNestedChildClickListener, OnNestedGroupClickListener {
+public class ChannelListFragment extends PlumbleServiceFragment implements OnNestedChildClickListener, OnNestedGroupClickListener {
 
 	private BaseServiceObserver serviceObserver = new BaseServiceObserver() {
 		@Override
 		public void onCurrentChannelChanged() throws RemoteException {
-			if(channelProvider.getService().isConnected()) {
+			if(getService().isConnected()) {
 				updateChannelList();
-				scrollToChannel(channelProvider.getCurrentUser().getChannel());
+				scrollToChannel(getService().getCurrentUser().getChannel());
 			}
 		}
 		
 		@Override
 		public void onChannelAdded(Channel channel) throws RemoteException {
-			if(channelProvider.getService().isConnected())
+			if(getService().isConnected())
 				updateChannelList();
 		}
 		
 		@Override
 		public void onChannelRemoved(Channel channel) throws RemoteException {
-			if(channelProvider.getService().isConnected())
+			if(getService().isConnected())
 				updateChannelList();
 		}
 		
 		@Override
 		public void onChannelUpdated(Channel channel) throws RemoteException {
-			if(channelProvider.getService().isConnected())
+			if(getService().isConnected())
 				updateChannel(channel);
 		}
 
 		@Override
 		public void onUserAdded(final User user) throws RemoteException {
-			if(channelProvider.getService().isConnected())
+			if(getService().isConnected())
 				updateChannelList();
 		}
 
@@ -105,7 +104,6 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 	 * thrown otherwise.
 	 */
 	private ChannelProvider channelProvider;
-
 	private PlumbleNestedListView channelUsersList;
 	private UserListAdapter usersAdapter;
 
@@ -208,11 +206,10 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 	}
 	
 	@Override
-	public void onDetach() {
-		if(channelProvider.getService() != null)
-			channelProvider.getService().unregisterObserver(serviceObserver);
-		
-		super.onDetach();
+	public void onDestroy() {
+		if(hasBound())
+			getService().unregisterObserver(serviceObserver);
+		super.onDestroy();
 	}
 
 	/*
@@ -223,20 +220,15 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-
-		if(channelProvider.getService() != null &&
-				channelProvider.getService().isConnected())
-			onServiceAvailable();
-		
 		registerForContextMenu(channelUsersList);
 	}
 	
-	public void onServiceAvailable() {
-		usersAdapter = new UserListAdapter(getActivity(),
-				channelProvider.getService());
+	@Override
+	public void onServiceBound() {
+		usersAdapter = new UserListAdapter(getActivity(), getService());
 		channelUsersList.setAdapter(usersAdapter);
 		updateChannelList();
-		channelProvider.getService().registerObserver(serviceObserver);
+		getService().registerObserver(serviceObserver);
 	}
 
 	public void setChatTarget(User chatTarget) {
@@ -773,8 +765,8 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 				}
 				
 				commentView.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_action_comment, 0, 0);
-				if (channelProvider.getService() != null
-						&& !channelProvider.getService()
+				if (getService() != null
+						&& !getService()
 								.isConnectedServerPublic()) {
 					dbAdapter.setCommentSeen(
 							name,
@@ -811,7 +803,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 									dialog.isShowing()) {
 								webView.loadDataWithBaseURL("", user.comment,
 										"text/html", "utf-8", "");
-								channelProvider.getService().unregisterObserver(this);
+								getService().unregisterObserver(this);
 							}
 						}
 						
@@ -824,11 +816,11 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 									dialog.isShowing()) {
 								webView.loadDataWithBaseURL("", channel.description,
 										"text/html", "utf-8", "");
-								channelProvider.getService().unregisterObserver(this);
+								getService().unregisterObserver(this);
 							}
 						}
 					};
-					channelProvider.getService().registerObserver(serviceObserver);
+					getService().registerObserver(serviceObserver);
 					
 					// Retrieve comment from blob
 					final RequestBlob.Builder blobBuilder = RequestBlob
@@ -841,7 +833,7 @@ public class ChannelListFragment extends SherlockFragment implements OnNestedChi
 					new AsyncTask<Void, Void, Void>() {
 						@Override
 						protected Void doInBackground(Void... params) {
-							channelProvider.getService().sendTcpMessage(MessageType.RequestBlob, blobBuilder);
+							getService().sendTcpMessage(MessageType.RequestBlob, blobBuilder);
 							return null;
 						};
 					}.execute();
