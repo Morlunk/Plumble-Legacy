@@ -21,6 +21,7 @@ import android.widget.TextView.OnEditorActionListener;
 
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
+import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
 
@@ -118,18 +119,18 @@ public class ChannelChatFragment extends PlumbleServiceFragment {
 	}
 	
 	@Override
-	public void onServiceBound() {
+	public void onServiceBound(MumbleService service) {
+		super.onServiceBound(service);
 		clear();
 		for(String message : getService().getChatMessages()) {
 			if(message != null)
 				addChatMessage(message);
 		}
-		getService().registerObserver(serviceObserver);
 	}
 	
 	@Override
-	public void onServiceUnbound() {
-		getService().unregisterObserver(serviceObserver);
+	protected BaseServiceObserver getServiceObserver() {
+		return serviceObserver;
 	}
 	
 	/**

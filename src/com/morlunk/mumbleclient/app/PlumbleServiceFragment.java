@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleService;
 
 /**
@@ -46,25 +47,13 @@ public class PlumbleServiceFragment extends SherlockFragment {
 			notifyServiceBound();
 	}
 	
-	@Override
-	public void onResume() {
-		// TODO Auto-generated method stub
-		super.onResume();
-	}
-	
-	@Override
-	public void onPause() {
-		// TODO Auto-generated method stub
-		super.onPause();
-	}
-	
 	/**
 	 * Notified the fragment that a service has been bound to the activity.
 	 * Nothing will occur if the service is not bound.
 	 */
 	public void notifyServiceBound() {
 		if(!serviceBound && serviceProvider.getService() != null) {
-			onServiceBound();
+			onServiceBound(serviceProvider.getService());
 			serviceBound = true;
 		}
 	}
@@ -75,7 +64,7 @@ public class PlumbleServiceFragment extends SherlockFragment {
 	 */
 	public void notifyServiceUnbound() {
 		if(serviceBound) {
-			onServiceUnbound();
+			onServiceUnbound(serviceProvider.getService());
 			serviceBound = false;
 		}
 	}
@@ -88,12 +77,18 @@ public class PlumbleServiceFragment extends SherlockFragment {
 		return serviceProvider.getService();
 	}
 	
-	protected void onServiceBound() {
-		// Placeholder
+	protected BaseServiceObserver getServiceObserver() {
+		return null; // Placeholder
 	}
 	
-	protected void onServiceUnbound() {
-		// Placeholder
+	protected void onServiceBound(MumbleService service) {
+		if(getServiceObserver() != null)
+			service.registerObserver(getServiceObserver());
+	}
+	
+	protected void onServiceUnbound(MumbleService service) {
+		if(getServiceObserver() != null)
+			service.unregisterObserver(getServiceObserver());
 	}
 	
 	/**

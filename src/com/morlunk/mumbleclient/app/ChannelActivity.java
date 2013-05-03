@@ -441,6 +441,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
         	// Unbind to service
     		mService.unregisterObserver(mObserver);
     		unbindService(conn);
+    		
     		listFragment.notifyServiceUnbound();
     		chatFragment.notifyServiceUnbound();
     	}

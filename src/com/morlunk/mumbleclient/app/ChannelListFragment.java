@@ -234,17 +234,21 @@ public class ChannelListFragment extends PlumbleServiceFragment implements OnNes
 	}
 	
 	@Override
-	public void onServiceBound() {
-		getService().registerObserver(serviceObserver);
-		if(getService().isConnected())
-			setupChannelList();
+	public void onServiceBound(MumbleService service) {
+		super.onServiceBound(service);
+		if(getService().isConnected()) {
+			if(usersAdapter == null)
+				setupChannelList();
+			else
+				updateChannelList();
+		}
 	}
 	
 	@Override
-	public void onServiceUnbound() {
-		getService().unregisterObserver(serviceObserver);
+	protected BaseServiceObserver getServiceObserver() {
+		return serviceObserver;
 	}
-
+	
 	public void setChatTarget(User chatTarget) {
 		User oldTarget = chatTarget;
 		this.chatTarget = chatTarget;
