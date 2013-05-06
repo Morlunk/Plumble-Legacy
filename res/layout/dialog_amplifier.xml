@@ -27,8 +27,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_below="@+id/textView1"
-        android:max="10"
+        android:max="40"
         android:padding="10dp"
-        android:progress="5" />
+        android:progress="20" />
 
 </RelativeLayout>
