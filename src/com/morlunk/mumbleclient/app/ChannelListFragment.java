@@ -55,6 +55,8 @@ public class ChannelListFragment extends PlumbleServiceFragment implements OnNes
 		public void onConnectionStateChanged(int state) throws RemoteException {
 			if(state == MumbleService.CONNECTION_STATE_CONNECTED)
 				setupChannelList();
+			else if(state == MumbleService.CONNECTION_STATE_DISCONNECTED && channelUsersList != null)
+				channelUsersList.setAdapter(null);
 		};
 		
 		@Override

@@ -230,6 +230,10 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_channel);
+
+    	// Bind to service
+    	Intent serviceIntent = new Intent(this, MumbleService.class);
+		bindService(serviceIntent, conn, 0);
         
         // Handle differences in CallMode
         
@@ -404,10 +408,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     @Override
     protected void onResume() {
     	super.onResume();
-
-    	// Bind to service
-    	Intent serviceIntent = new Intent(this, MumbleService.class);
-		bindService(serviceIntent, conn, 0);
 		
     	if(settings.getCallMode().equals(Settings.ARRAY_CALL_MODE_VOICE))
     		setProximityEnabled(true);
@@ -437,14 +437,19 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
         	//if(settings.isPushToTalk() && !mTalkToggleBox.isChecked()) {
         	//	mService.setRecording(false);
         	//}
-
-        	// Unbind to service
-    		mService.unregisterObserver(mObserver);
-    		unbindService(conn);
-    		
-    		listFragment.notifyServiceUnbound();
-    		chatFragment.notifyServiceUnbound();
     	}
+    }
+    
+    @Override
+    protected void onDestroy() {
+    	// Unbind to service
+		mService.unregisterObserver(mObserver);
+		unbindService(conn);
+		
+		listFragment.notifyServiceUnbound();
+		chatFragment.notifyServiceUnbound();
+		
+    	super.onDestroy();
     }
     
     @Override

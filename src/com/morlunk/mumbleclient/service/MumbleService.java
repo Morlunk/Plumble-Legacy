@@ -1360,7 +1360,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} finally {
-					mAudioInput.terminate();
+					mAudioInput.shutdown();
 					mAudioInput = null;
 				}
 			}
@@ -1397,14 +1397,10 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			}
 			
 			// Handle voice activity
-			try {
-				mAudioInput.stopRecordingAndBlock(); // We block because we want to wait before restarting recording to avoid a concurrent modificatione exception.
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} finally {
-				if(settings.isVoiceActivity())
-					mAudioInput.startRecording();
-			}
+			if(settings.isVoiceActivity())
+				mAudioInput.startRecording();
+			else
+				setPushToTalk(false);
 		}
 	}
 }

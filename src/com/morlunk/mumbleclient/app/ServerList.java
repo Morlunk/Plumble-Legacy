@@ -227,6 +227,7 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 						alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
+								server.setPassword(passwordField.getText().toString());
 								// Update server in database if it's not public (id = -1)
 								if(server.getId() != -1) {
 									DbAdapter adapter = new DbAdapter(ServerList.this);
@@ -234,7 +235,6 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 									adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
 									adapter.close();
 								}
-								server.setPassword(passwordField.getText().toString());
 
 								// Reconnect
 								connectToServer(server);

@@ -62,7 +62,6 @@ public class AudioInput implements Runnable, Observer {
 
 	// Recording state
 	private AudioRecord audioRecord;
-	private boolean running;
 	private Thread recordThread;
 
 	@SuppressLint({ "InlinedApi", "NewApi" })
@@ -138,7 +137,6 @@ public class AudioInput implements Runnable, Observer {
 
 	@Override
 	public final void run() {
-		running = true;
 		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
 		if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
@@ -147,7 +145,8 @@ public class AudioInput implements Runnable, Observer {
 		
 		audioRecord.startRecording();
 
-		while (running && mService.isConnected()) {
+		while (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING &&
+				mService.isConnected()) {
 			final int read = audioRecord.read(buffer, 0, frameSize);
 
 			if (read == AudioRecord.ERROR_BAD_VALUE
@@ -262,11 +261,6 @@ public class AudioInput implements Runnable, Observer {
 				}
 			}
 		}
-
-		if (audioRecord != null
-				&& audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING)
-			audioRecord.stop();
-		recordThread = null;
 	}
 
 	/**
@@ -281,7 +275,7 @@ public class AudioInput implements Runnable, Observer {
 	 * thread is already active, do nothing.
 	 */
 	public void startRecording() {
-		if (recordThread != null) {
+		if (recordThread != null || isRecording()) {
 			Log.w(Globals.LOG_TAG,
 					"Attempted to start recording while a RecordThread was still running!");
 			return;
@@ -296,13 +290,14 @@ public class AudioInput implements Runnable, Observer {
 	 * active, do nothing.
 	 */
 	public void stopRecording() {
-		if (recordThread == null) {
+		if (recordThread == null || !isRecording()) {
 			Log.w(Globals.LOG_TAG,
 					"Attempted to stop recording when a RecordThread was not running!");
 			return;
 		}
-
-		running = false;
+		audioRecord.stop();
+		recordThread.interrupt();
+		recordThread = null;
 	}
 	
 	/**
@@ -314,8 +309,7 @@ public class AudioInput implements Runnable, Observer {
 					"Attempted to stop recording when a RecordThread was not running!");
 			return;
 		}
-
-		running = false;
+		audioRecord.stop();
 		recordThread.join();
 	}
 
@@ -323,7 +317,7 @@ public class AudioInput implements Runnable, Observer {
 	 * Stops the record thread and finalizes all allocated audio and native
 	 * resources. The AudioInput object cannot be reused after destruction.
 	 */
-	public void terminate() {
+	public void shutdown() {
 		if (speexResamplerState != 0)
 			Native.speex_resampler_destroy(speexResamplerState);
 
