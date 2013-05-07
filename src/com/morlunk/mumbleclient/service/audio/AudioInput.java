@@ -1,5 +1,6 @@
 package com.morlunk.mumbleclient.service.audio;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
@@ -142,6 +143,8 @@ public class AudioInput implements Runnable, Observer {
 		if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
 			return;
 		}
+		
+		Arrays.fill(buffer, (short) 0);
 		
 		audioRecord.startRecording();
 
