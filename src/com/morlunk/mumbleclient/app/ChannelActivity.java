@@ -125,10 +125,10 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			mService.registerObserver(mObserver);
 			listFragment.notifyServiceBound();
 			chatFragment.notifyServiceBound();
-			if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_CONNECTED)
-				onConnected();
-			else if(mService.getConnectionState() == MumbleService.CONNECTION_STATE_CONNECTING)
-				onConnecting();
+			try {
+				// Update with latest connection state
+				mObserver.onConnectionStateChanged(mService.getConnectionState());
+			} catch (RemoteException e) { e.printStackTrace(); }
 		}
 
 		/**
