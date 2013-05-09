@@ -59,11 +59,6 @@ public class PlumbleSectionsPagerAdapter extends PagerAdapter {
 		}
 		return fragment;
 	}
-	
-	@Override
-	public void destroyItem(ViewGroup container, int position, Object object) {
-		
-	}
 
 	@Override
 	public void finishUpdate(ViewGroup container) {

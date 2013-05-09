@@ -1,7 +1,6 @@
 package com.morlunk.mumbleclient.app;
 
 import android.app.Activity;
-import android.os.Bundle;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
@@ -40,8 +39,8 @@ public class PlumbleServiceFragment extends SherlockFragment {
 	}
 	
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
-		super.onActivityCreated(savedInstanceState);
+	public void onStart() {
+		super.onStart();
 		
 		if(serviceProvider.getService() != null)
 			notifyServiceBound();
@@ -52,7 +51,8 @@ public class PlumbleServiceFragment extends SherlockFragment {
 	 * Nothing will occur if the service is not bound.
 	 */
 	public void notifyServiceBound() {
-		if(!serviceBound && serviceProvider.getService() != null) {
+		/* If we're not bound and the view is available, let the fragment know to configure itself. */
+		if(!serviceBound && getView() != null) {
 			onServiceBound(serviceProvider.getService());
 			serviceBound = true;
 		}

@@ -357,7 +357,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
             
             getSupportActionBar().setCustomView(channelTabView);
             // Setup a pager that will return a fragment for each of the two primary sections of the app.
-            mSectionsPagerAdapter = new PlumbleSectionsPagerAdapter(mService, getSupportFragmentManager(), listFragment, chatFragment);
+            mSectionsPagerAdapter = new PlumbleSectionsPagerAdapter(this, getSupportFragmentManager(), listFragment, chatFragment);
             mViewPager.setAdapter(mSectionsPagerAdapter);
             
         } else {

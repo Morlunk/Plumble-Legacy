@@ -238,7 +238,7 @@ public class ChannelListFragment extends PlumbleServiceFragment implements OnNes
 	@Override
 	public void onServiceBound(MumbleService service) {
 		super.onServiceBound(service);
-		if(getService().isConnected()) {
+		if(getView() != null && getService().isConnected()) {
 			if(usersAdapter == null)
 				setupChannelList();
 			else
