@@ -795,8 +795,6 @@ public class ChannelListFragment extends PlumbleServiceFragment implements OnNes
 				}
 
 				AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-				builder.setTitle(R.string.comment);
-				builder.setPositiveButton(R.string.close, null);
 				final WebView webView = new WebView(getContext());
 				final StringBuilder sb = new StringBuilder();
 				sb.append("<center>");

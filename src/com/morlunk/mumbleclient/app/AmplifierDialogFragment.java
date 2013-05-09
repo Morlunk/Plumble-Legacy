@@ -7,6 +7,7 @@ import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
@@ -34,7 +35,7 @@ public class AmplifierDialogFragment extends DialogFragment implements OnSeekBar
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		getDialog().setTitle(R.string.amplifier);
+		getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		View view = inflater.inflate(R.layout.dialog_amplifier, null, false);
 		recordingMultiplierBar = (SeekBar) view.findViewById(R.id.recordingMultiplier);
 		recordingMultiplierBar.setOnSeekBarChangeListener(this);
