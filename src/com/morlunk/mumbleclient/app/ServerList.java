@@ -6,6 +6,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import net.sf.mumble.MumbleProto.Reject.RejectType;
 
@@ -14,6 +16,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -70,6 +73,7 @@ interface ServerConnectHandler {
  */
 public class ServerList extends SherlockFragmentActivity implements ServerInfoListener, ServerConnectHandler {
 
+	public static final int RECONNECT_WAIT_TIME = 10000;
 	public static final int CHANNEL_ACTIVITY_REQUEST = 1;
 	
 	private ServerListFragment serverListFragment;
@@ -188,25 +192,45 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 				// Check to see if we received an error that caused the disconnect, indicate the user if so.
 				DisconnectReason reason = DisconnectReason.values()[data.getIntExtra(ChannelActivity.EXTRA_DISCONNECT_TYPE, 0)];
 				final Server server = data.getParcelableExtra(ChannelActivity.EXTRA_SERVER);
+				
+				// In some cases, we may have been disconnected due to a connection error.
+				// Try to auto-reconnect after 10000ms in those scenarios (error reason 'Generic')
+				final Timer reconnectTimer = new Timer();
+				
 				AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
 				alertBuilder.setTitle(R.string.disconnected);
 				alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						connectToServer(server);
+						reconnectTimer.cancel();
 					}
 				});
 				alertBuilder.setNegativeButton(android.R.string.cancel, new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
+						reconnectTimer.cancel();
+					}
+				});
+				alertBuilder.setOnCancelListener(new OnCancelListener() {
+					
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						reconnectTimer.cancel();
 					}
 				});
 				
 				switch (reason) {
 				case Generic:
 					String response = data.getStringExtra(ChannelActivity.EXTRA_GENERIC_REASON);
-					alertBuilder.setMessage(response);
+					alertBuilder.setMessage(response+"\n"+getString(R.string.reconnecting, RECONNECT_WAIT_TIME/1000));
+					reconnectTimer.schedule(new TimerTask() {
+						@Override
+						public void run() {
+							connectToServer(server);
+						}
+					}, RECONNECT_WAIT_TIME);
 					break;
 
 				case Kick:
