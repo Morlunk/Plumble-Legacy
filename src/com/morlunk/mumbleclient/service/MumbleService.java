@@ -160,7 +160,10 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		@Override
 		public boolean isDeafened() {
-			return getCurrentUser().selfDeafened;
+			if(getCurrentUser() != null)
+				return getCurrentUser().selfDeafened;
+			else
+				return true; // Assume deafened, we don't want audio playing if we're not connected yet.
 		}
 	}
 
