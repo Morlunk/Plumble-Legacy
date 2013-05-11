@@ -87,8 +87,6 @@ public class User implements Parcelable {
 
 	@Override
 	public void writeToParcel(final Parcel dest, final int flags) {
-		dest.writeInt(0); // Version
-
 		dest.writeInt(session);
 		dest.writeString(name);
 		dest.writeInt(localMuted ? 1 : 0);
@@ -101,8 +99,6 @@ public class User implements Parcelable {
 	}
 
 	private void readFromParcel(final Parcel in) {
-		in.readInt(); // Version
-
 		session = in.readInt();
 		name = in.readString();
 		localMuted = in.readInt() == 1;

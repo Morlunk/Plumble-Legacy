@@ -43,8 +43,6 @@ public class Message implements Parcelable {
 	}
 
 	public void readFromParcel(final Parcel in) {
-		in.readInt(); // Version
-
 		message = in.readString();
 		sender = in.readString();
 		actor = in.readParcelable(null);
@@ -58,8 +56,6 @@ public class Message implements Parcelable {
 
 	@Override
 	public void writeToParcel(final Parcel dest, final int flags) {
-		dest.writeInt(0); // Version
-
 		dest.writeString(message);
 		dest.writeString(sender);
 		dest.writeParcelable(actor, 0);

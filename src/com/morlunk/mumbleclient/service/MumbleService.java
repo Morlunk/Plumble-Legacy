@@ -57,6 +57,8 @@ import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
 
+import crittercism.android.i;
+
 /**
  * Service for providing the client an access to the connection.
  * 
@@ -66,12 +68,6 @@ import com.morlunk.mumbleclient.service.model.User;
  * @author Rantanen
  */
 public class MumbleService extends Service implements OnInitListener, Observer {
-
-	public class LocalBinder extends Binder {
-		public MumbleService getService() {
-			return MumbleService.this;
-		}
-	}
 
 	public class ServiceAudioOutputHost extends AbstractHost implements
 			AudioOutputHost {
@@ -563,8 +559,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	private TextToSpeech tts;
 
 	private WakeLock wakeLock;
-
-	private final LocalBinder mBinder = new LocalBinder();
+	
 	final Handler handler = new Handler();
 
 	/**
@@ -597,13 +592,62 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	final List<User> users = new ArrayList<User>();
 	
 	private List<Favourite> favourites;
-
+	
 	// Use concurrent hash map so we can modify the collection while iterating.
-	private final Map<Object, BaseServiceObserver> observers = new ConcurrentHashMap<Object, BaseServiceObserver>();
+	private final Map<Object, IMumbleServiceObserver> observers = new ConcurrentHashMap<Object, IMumbleServiceObserver>();
 
 	private ServiceProtocolHost mProtocolHost;
 	private ServiceConnectionHost mConnectionHost;
 	public ServiceAudioOutputHost mAudioHost;
+	
+	private final IMumbleService.Stub mBinder = new IMumbleService.Stub() {
+
+		@Override
+		public int getConnectionState() throws RemoteException {
+			return serviceState;
+		}
+		
+		@Override
+		public Map<Integer, List<User>> getChannelMap() {
+			return mProtocol.channelMap;
+		}
+		
+		@Override
+		public List<Channel> getChannelList() throws RemoteException {
+			return sortedChannels;
+		}
+
+		@Override
+		public List<User> getChannelUsers(int channel)
+				throws RemoteException {
+			return mProtocol.channelMap.get(channel);
+		}
+
+		@Override
+		public List<User> getOnlineUsers() throws RemoteException {
+			return users;
+		}
+		
+		public User getUser(int id) throws RemoteException {
+			return mProtocol.users.get(id);
+		};
+		
+		public Channel getChannel(int id) throws RemoteException {
+			return mProtocol.channels.get(id);
+		};
+
+		@Override
+		public void registerObserver(IMumbleServiceObserver observer)
+				throws RemoteException {
+			observers.put(observer, observer);
+		}
+
+		@Override
+		public void unregisterObserver(IMumbleServiceObserver observer)
+				throws RemoteException {
+			observers.remove(observer);
+		}
+	};
 
 	public DbAdapter getDatabaseAdapter() {
 		return dbAdapter;
@@ -632,18 +676,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		if (mClient != null) {
 			mClient.disconnect();
 		}
-	}
-	
-	public Channel getChannel(int channelId) {
-		for(Channel channel : channels) {
-			if(channel.id == channelId)
-				return channel;
-		}
-		return null;
-	}
-
-	public Map<Integer, List<User>> getChannelMap() {
-		return mProtocol.channelMap;
 	}
 
 	public List<Channel> getChannelList() {

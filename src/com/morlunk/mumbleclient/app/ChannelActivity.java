@@ -61,10 +61,13 @@ import com.morlunk.mumbleclient.app.TokenDialogFragment.TokenDialogFragmentProvi
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
+import com.morlunk.mumbleclient.service.IMumbleService;
+import com.morlunk.mumbleclient.service.IMumbleServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleProtocol.DisconnectReason;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.MumbleService.LocalBinder;
 import com.morlunk.mumbleclient.service.model.Channel;
+import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
 
 
@@ -103,14 +106,111 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 	public static final Integer PROXIMITY_SCREEN_OFF_WAKE_LOCK = 32; // Undocumented feature! This will allow us to enable the phone proximity sensor.
 	
 	/**
-	 * The MumbleService instance that drives this activity's data.
+	 * The MumbleService binder instance that drives this activity's data.
 	 */
-	private MumbleService mService;
+	private IMumbleService mService;
 	
 	/**
 	 * An observer that monitors the state of the service.
 	 */
-	private ChannelServiceObserver mObserver;
+	private IMumbleServiceObserver.Stub mObserver = new IMumbleServiceObserver.Stub() {
+		
+		@Override
+		public void onUserUpdated(User user) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onUserTalkingUpdated(User user) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onUserAdded(User user) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onMessageSent(Message msg) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onMessageReceived(Message msg) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onCurrentChannelChanged() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onChannelUpdated(Channel channel) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onChannelRemoved(Channel channel) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onChannelAdded(Channel channel) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+		
+    	@Override
+    	public void onConnectionStateChanged(int state) throws RemoteException {
+    		switch (state) {
+    		case MumbleService.CONNECTION_STATE_CONNECTING:
+    			Log.i(Globals.LOG_TAG, String.format(
+    				"%s: Connecting",
+    				getClass().getName()));
+    			onConnecting();
+    			break;
+    		case MumbleService.CONNECTION_STATE_SYNCHRONIZING:
+    			Log.i(Globals.LOG_TAG, String.format(
+    				"%s: Synchronizing",
+    				getClass().getName()));
+    			onSynchronizing();
+    			break;
+    		case MumbleService.CONNECTION_STATE_CONNECTED:
+    			Log.i(Globals.LOG_TAG, String.format(
+    				"%s: Connected",
+    				getClass().getName()));
+    			onConnected();
+    			break;
+    		case MumbleService.CONNECTION_STATE_DISCONNECTED:
+    			Log.i(Globals.LOG_TAG, String.format(
+    				"%s: Disconnected",
+    				getClass().getName()));
+    			break;
+    		default:
+    			Assert.fail("Unknown connection state");
+    		}
+    	}
+		
+		@Override
+		public void onCurrentUserUpdated() throws RemoteException {
+			updateMuteDeafenMenuItems(mService.getCurrentUser().selfMuted, mService.getCurrentUser().selfDeafened);
+	        updateUserControlMenuItems();
+		}
+		
+		@Override
+		public void onPermissionDenied(String reason, int denyType) throws RemoteException {
+			permissionDenied(reason, DenyType.valueOf(denyType));
+		}
+	};
 	
 	/**
 	 * Management of service connection state.
@@ -119,9 +219,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
-			LocalBinder localBinder = (LocalBinder)service;
-			mObserver = new ChannelServiceObserver();
-			mService = localBinder.getService();
+			mService = IMumbleService.Stub.asInterface(service);
 			mService.registerObserver(mObserver);
 			listFragment.notifyServiceBound();
 			chatFragment.notifyServiceBound();
@@ -950,53 +1048,5 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 	 */
 	private void permissionDenied(String reason, DenyType denyType) {
 		Toast.makeText(getApplicationContext(), R.string.permDenied, Toast.LENGTH_SHORT).show();
-	}
-
-    class ChannelServiceObserver extends BaseServiceObserver {
-    	
-    	@Override
-    	public void onConnectionStateChanged(int state) throws RemoteException {
-    		switch (state) {
-    		case MumbleService.CONNECTION_STATE_CONNECTING:
-    			Log.i(Globals.LOG_TAG, String.format(
-    				"%s: Connecting",
-    				getClass().getName()));
-    			onConnecting();
-    			break;
-    		case MumbleService.CONNECTION_STATE_SYNCHRONIZING:
-    			Log.i(Globals.LOG_TAG, String.format(
-    				"%s: Synchronizing",
-    				getClass().getName()));
-    			onSynchronizing();
-    			break;
-    		case MumbleService.CONNECTION_STATE_CONNECTED:
-    			Log.i(Globals.LOG_TAG, String.format(
-    				"%s: Connected",
-    				getClass().getName()));
-    			onConnected();
-    			break;
-    		case MumbleService.CONNECTION_STATE_DISCONNECTED:
-    			Log.i(Globals.LOG_TAG, String.format(
-    				"%s: Disconnected",
-    				getClass().getName()));
-    			break;
-    		default:
-    			Assert.fail("Unknown connection state");
-    		}
-    	}
-		
-		@Override
-		public void onCurrentUserUpdated() throws RemoteException {
-			updateMuteDeafenMenuItems(mService.getCurrentUser().selfMuted, mService.getCurrentUser().selfDeafened);
-	        updateUserControlMenuItems();
-		}
-		
-		/* (non-Javadoc)
-		 * @see com.morlunk.mumbleclient.service.BaseServiceObserver#onPermissionDenied(int)
-		 */
-		@Override
-		public void onPermissionDenied(String reason, int denyType) throws RemoteException {
-			permissionDenied(reason, DenyType.valueOf(denyType));
-		}
 	}
 }

@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <permission android:name="com.morlunk.mumbleclient.permission.PLUMBLE_SERVICE" android:label="@string/service_permission" android:description="@string/service_permission_sum"></permission>
     
     <application
         android:icon="@drawable/plumble"
@@ -48,11 +49,12 @@
 
         <service
             android:name=".service.MumbleService"
-            android:stopWithTask="true"
-            android:enabled="true" />
-        <service
-            android:name=".service.MumbleNotificationService"
-            android:enabled="true" />
+            android:exported="true"
+            android:permission="com.morlunk.mumbleclient.permission.PLUMBLE_SERVICE">
+        	<intent-filter>
+        	    <action android:name="com.morlunk.mumbleclient.service.PLUMBLE_SERVICE"/>
+        	</intent-filter>
+        </service>
         
         <!-- Start of Crittercism.com Code -->
 		<activity android:name="com.crittercism.NotificationActivity"/>

@@ -68,8 +68,6 @@ public class Channel implements Parcelable {
 
 	@Override
 	public void writeToParcel(final Parcel dest, final int flags) {
-		dest.writeInt(0); // Version
-
 		dest.writeInt(id);
 		dest.writeString(name);
 		dest.writeInt(userCount);
@@ -80,8 +78,6 @@ public class Channel implements Parcelable {
 	}
 	
 	private void readFromParcel(final Parcel in) {
-		in.readInt(); // Version
-
 		id = in.readInt();
 		name = in.readString();
 		userCount = in.readInt();

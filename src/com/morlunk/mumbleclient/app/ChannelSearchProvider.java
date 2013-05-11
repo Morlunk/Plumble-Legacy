@@ -14,10 +14,11 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.IBinder;
+import android.os.RemoteException;
 
 import com.morlunk.mumbleclient.R;
+import com.morlunk.mumbleclient.service.IMumbleService;
 import com.morlunk.mumbleclient.service.MumbleService;
-import com.morlunk.mumbleclient.service.MumbleService.LocalBinder;
 import com.morlunk.mumbleclient.service.model.Channel;
 import com.morlunk.mumbleclient.service.model.User;
 
@@ -29,7 +30,7 @@ public class ChannelSearchProvider extends ContentProvider {
 	ServiceConnection conn = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
-			mService = ((LocalBinder) service).getService();
+			mService = IMumbleService.Stub.asInterface(service);
 		}
 
 		@SuppressLint("NewApi")
@@ -39,7 +40,7 @@ public class ChannelSearchProvider extends ContentProvider {
 		}
 	};
 	
-	private MumbleService mService;
+	private IMumbleService mService;
 	
 	@Override
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
@@ -74,6 +75,16 @@ public class ChannelSearchProvider extends ContentProvider {
 			Intent serviceIntent = new Intent(getContext(), MumbleService.class);
 			getContext().bindService(serviceIntent, conn, 0);
 			return null;
+		}		
+		
+		List<Channel> channels;
+		List<User> users;
+		try {
+			channels = mService.getChannelList();
+			users = mService.getOnlineUsers();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return null;
 		}
 		
 		String query = "";
@@ -87,16 +98,12 @@ public class ChannelSearchProvider extends ContentProvider {
 		
 		MatrixCursor cursor = new MatrixCursor(new String[] { "_ID", SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA, SearchManager.SUGGEST_COLUMN_TEXT_1, SearchManager.SUGGEST_COLUMN_ICON_1, SearchManager.SUGGEST_COLUMN_TEXT_2, SearchManager.SUGGEST_COLUMN_INTENT_DATA });
 		
-		List<Channel> channels = mService.getChannelList();
-		
 		for(int x=0;x<channels.size();x++) {
 			Channel channel = channels.get(x);
 			String channelNameLower = channel.name.toLowerCase(Locale.getDefault());
 			if(channelNameLower.contains(query))
 				cursor.addRow(new Object[] { x, INTENT_DATA_CHANNEL, channel.name, R.drawable.ic_action_channels, getContext().getString(R.string.search_channel_users, channel.userCount), channel.id });
 		}
-		
-		List<User> users = mService.getUserList();
 		for(int x=0;x<users.size();x++) {
 			User user = users.get(x);
 			String userNameLower = user.name.toLowerCase(Locale.getDefault());
