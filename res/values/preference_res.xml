@@ -116,4 +116,6 @@
     <string name="useTtsSum">Enable Text-to-Speech for incoming messages.</string>
     <string name="togglePtt">Toggle Push to Talk</string>
     <string name="togglePttSum">Toggles push to talk on and off when pressed.</string>
+    <string name="autoReconnect">Auto Reconnect</string>
+    <string name="autoReconnectSum">Automatically try to re-establish a connection when the server connection is lost.</string>
 </resources>

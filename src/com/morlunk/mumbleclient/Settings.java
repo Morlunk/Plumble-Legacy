@@ -61,6 +61,9 @@ public class Settings extends Observable {
 	public static final String PREF_USE_TTS = "useTts";
 	public static final Boolean DEFAULT_USE_TTS = true;
 	
+	public static final String PREF_AUTO_RECONNECT = "autoReconnect";
+	public static final Boolean DEFAULT_AUTO_RECONNECT = true;
+	
 	public static final String PREF_THEME = "theme";
 	public static final String ARRAY_THEME_LIGHTDARK = "lightDark";
 	public static final String ARRAY_THEME_DARK = "dark";
@@ -198,6 +201,10 @@ public class Settings extends Observable {
 	}
 	
 	*/
+	
+	public boolean isAutoReconnectEnabled() {
+		return preferences.getBoolean(PREF_AUTO_RECONNECT, DEFAULT_AUTO_RECONNECT);
+	}
 	
 	public boolean isTcpForced() {
 		return preferences.getBoolean(PREF_FORCE_TCP, DEFAULT_FORCE_TCP);

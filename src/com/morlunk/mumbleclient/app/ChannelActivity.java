@@ -10,7 +10,6 @@ import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -146,8 +145,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     private MenuItem userInformationItem;
 	
 	private User chatTarget;
-
-	private ProgressDialog mProgressDialog;
+	
 	private Button mTalkButton;
 	private View pttView;
 
@@ -699,13 +697,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 	 */
     
 	protected void onConnected() {
-		// We are now connected! \o/
-		
-		if (mProgressDialog != null) {
-			mProgressDialog.dismiss();
-			mProgressDialog = null;
-		}
-		
 		// Tell the service that we are now visible.
         mService.setActivityVisible(true);
         
@@ -842,6 +833,12 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 	}
 
     class ChannelServiceObserver extends BaseServiceObserver {
+    	
+    	@Override
+    	public void onConnectionStateChanged(int state) throws RemoteException {
+    		if(state == MumbleService.CONNECTION_STATE_DISCONNECTED)
+    			finish();
+    	}
     	
 		@Override
 		public void onCurrentUserUpdated() throws RemoteException {

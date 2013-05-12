@@ -12,6 +12,11 @@
             android:key="useTts"
             android:summary="@string/useTtsSum"
             android:title="@string/useTts" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="autoReconnect"
+            android:summary="@string/autoReconnectSum"
+            android:title="@string/autoReconnect" />
     </PreferenceScreen>
     <PreferenceScreen android:title="@string/authentication" android:summary="@string/authenticationSum">
         <Preference
