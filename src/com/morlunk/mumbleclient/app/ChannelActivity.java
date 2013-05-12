@@ -6,10 +6,7 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-import junit.framework.Assert;
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
-import net.sf.mumble.MumbleProto.Reject;
-import net.sf.mumble.MumbleProto.UserRemove;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -18,7 +15,6 @@ import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -36,7 +32,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -58,10 +53,8 @@ import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.PlumbleServiceFragment.PlumbleServiceProvider;
 import com.morlunk.mumbleclient.app.TokenDialogFragment.TokenDialogFragmentProvider;
-import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Favourite;
 import com.morlunk.mumbleclient.service.BaseServiceObserver;
-import com.morlunk.mumbleclient.service.MumbleProtocol.DisconnectReason;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.MumbleService.LocalBinder;
 import com.morlunk.mumbleclient.service.model.Channel;
@@ -85,17 +78,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 	 */
 	public static final String LIST_FRAGMENT_TAG = "listFragment";
 	public static final String CHAT_FRAGMENT_TAG = "chatFragment";
-	
-	/*
-	 * Disconnect extras sent in result intent.
-	 */
-	public static final String EXTRA_SERVER = "server";
-	public static final String EXTRA_DISCONNECT_TYPE = "disconnect_type";
-	public static final String EXTRA_REJECT_TYPE = "reject_type";
-	public static final String EXTRA_REJECT_REASON = "reject_reason";
-	public static final String EXTRA_KICK_ACTOR = "kick_actor";
-	public static final String EXTRA_KICK_REASON = "kick_reason";
-	public static final String EXTRA_GENERIC_REASON = "generic_reason";
 	
 	public static final String JOIN_CHANNEL = "join_channel";
 	public static final String SAVED_STATE_VISIBLE_CHANNEL = "visible_channel";
@@ -125,39 +107,11 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			mService.registerObserver(mObserver);
 			listFragment.notifyServiceBound();
 			chatFragment.notifyServiceBound();
-			try {
-				// Update with latest connection state
-				mObserver.onConnectionStateChanged(mService.getConnectionState());
-			} catch (RemoteException e) { e.printStackTrace(); }
+			onConnected();
 		}
-
-		/**
-		 * Called when service disconnects.
-		 * Propagate any error information, and return to the server selection screen.
-		 */
+		
 		@Override
-		public void onServiceDisconnected(ComponentName name) {
-			Intent returnIntent = new Intent(); // Return any error data from service
-			returnIntent.putExtra(EXTRA_SERVER, mService.getConnectedServer());
-			if(mService.getDisconnectReason() != null) {
-				Log.d(Globals.LOG_TAG, "Disconnect reason: "+mService.getDisconnectReason());
-				returnIntent.putExtra(EXTRA_DISCONNECT_TYPE, mService.getDisconnectReason().ordinal());
-				if(mService.getDisconnectReason() == DisconnectReason.Generic) {
-					returnIntent.putExtra(EXTRA_GENERIC_REASON, mService.getGenericDisconnectReason());
-				} else if(mService.getDisconnectReason() == DisconnectReason.Kick) {
-					UserRemove kickReason = mService.getKickReason();
-					returnIntent.putExtra(EXTRA_KICK_REASON, kickReason.getReason());
-					returnIntent.putExtra(EXTRA_KICK_ACTOR, kickReason.getActor());
-				} else if(mService.getDisconnectReason() == DisconnectReason.Reject) {
-					Reject rejectReason = mService.getRejectReason();
-					returnIntent.putExtra(EXTRA_REJECT_REASON, rejectReason.getReason());
-					returnIntent.putExtra(EXTRA_REJECT_TYPE, rejectReason.getType().ordinal());
-				}
-				setResult(RESULT_OK, returnIntent);
-			} else {
-				setResult(RESULT_CANCELED, returnIntent);
-			}
-			
+		public void onServiceDisconnected(ComponentName name) {			
 			finish();
 		}
 	};
@@ -694,24 +648,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     	
     	return super.onKeyUp(keyCode, event);
     }
-
-	/**
-	 * Retrieves and sends the access tokens for the active server from the database.
-	 */
-	public void sendAccessTokens() {
-		DbAdapter dbAdapter = mService.getDatabaseAdapter();
-		AsyncTask<DbAdapter, Void, Void> accessTask = new AsyncTask<DbAdapter, Void, Void>() {
-
-			@Override
-			protected Void doInBackground(DbAdapter... params) {
-				DbAdapter adapter = params[0];
-				List<String> tokens = adapter.fetchAllTokens(mService.getConnectedServer().getId());
-				mService.sendAccessTokens(tokens);
-				return null;
-			}
-		};
-		accessTask.execute(dbAdapter);
-	}
 	
 	/**
 	 * Sends the passed access tokens to the server.
@@ -776,9 +712,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
         // Update user control
         updateUserControlMenuItems();
 		
-		// Send access tokens after connection.
-		sendAccessTokens();
-		
 		// Restore push to talk state, if toggled. Otherwise make sure it's turned off.
 		if(settings.isPushToTalk() && 
 				mService.isRecording()) {
@@ -815,17 +748,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 		ShowcaseViewQueue queue = new ShowcaseViewQueue(showcaseViews);
 		queue.queueNext();
 	}
-
-	/**
-	 * Handles activity initialization when the Service is connecting.
-	 */
-	protected void onConnecting() {
-		showProgressDialog(R.string.connectionProgressConnectingMessage);
-	}
-	
-	protected void onSynchronizing() {
-		showProgressDialog(R.string.connectionProgressSynchronizingMessage);
-	}
 	
 	protected void disconnect() {
 		new AsyncTask<Void, Void, Void>() {
@@ -835,26 +757,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 				return null;
 			}
 		}.execute();
-	}
-	
-	private void showProgressDialog(final int message) {
-		if (mProgressDialog == null) {
-			mProgressDialog = ProgressDialog.show(
-				ChannelActivity.this,
-				getString(R.string.connectionProgressTitle),
-				getString(message),
-				true,
-				true,
-				new OnCancelListener() {
-					@Override
-					public void onCancel(final DialogInterface dialog) {
-						mProgressDialog.setMessage(getString(R.string.connectionProgressDisconnectingMessage));
-						disconnect();
-					}
-				});
-		} else {
-			mProgressDialog.setMessage(getString(message));
-		}
 	}
 	
 	/**
@@ -885,7 +787,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 		
 		for(Favourite favourite : mService.getFavourites()) {
 			int channelId = favourite.getChannelId();
-			Channel channel = findChannelById(channelId);
+			Channel channel = mService.getChannel(channelId);
 			
 			if(channel != null) {
 				items.add(channel.name);
@@ -901,7 +803,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					Favourite favourite = activeFavourites.get(which);
-					final Channel channel = findChannelById(favourite.getChannelId());
+					final Channel channel = mService.getChannel(favourite.getChannelId());
 					
 					new AsyncTask<Channel, Void, Void>() {
 						
@@ -920,19 +822,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 		builder.setNegativeButton(android.R.string.cancel, null);
 		
 		builder.show();
-	}
-	
-	/**
-	 * Looks through the list of channels and returns a channel with the passed ID. Returns null if not found.
-	 */
-	public Channel findChannelById(int channelId) {
-		List<Channel> channels = mService.getChannelList();
-		for(Channel channel : channels) {
-			if(channel.id == channelId) {
-				return channel;
-			}
-		}
-		return null;
 	}
 	
 	@Override
@@ -954,37 +843,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 
     class ChannelServiceObserver extends BaseServiceObserver {
     	
-    	@Override
-    	public void onConnectionStateChanged(int state) throws RemoteException {
-    		switch (state) {
-    		case MumbleService.CONNECTION_STATE_CONNECTING:
-    			Log.i(Globals.LOG_TAG, String.format(
-    				"%s: Connecting",
-    				getClass().getName()));
-    			onConnecting();
-    			break;
-    		case MumbleService.CONNECTION_STATE_SYNCHRONIZING:
-    			Log.i(Globals.LOG_TAG, String.format(
-    				"%s: Synchronizing",
-    				getClass().getName()));
-    			onSynchronizing();
-    			break;
-    		case MumbleService.CONNECTION_STATE_CONNECTED:
-    			Log.i(Globals.LOG_TAG, String.format(
-    				"%s: Connected",
-    				getClass().getName()));
-    			onConnected();
-    			break;
-    		case MumbleService.CONNECTION_STATE_DISCONNECTED:
-    			Log.i(Globals.LOG_TAG, String.format(
-    				"%s: Disconnected",
-    				getClass().getName()));
-    			break;
-    		default:
-    			Assert.fail("Unknown connection state");
-    		}
-    	}
-		
 		@Override
 		public void onCurrentUserUpdated() throws RemoteException {
 			updateMuteDeafenMenuItems(mService.getCurrentUser().selfMuted, mService.getCurrentUser().selfDeafened);

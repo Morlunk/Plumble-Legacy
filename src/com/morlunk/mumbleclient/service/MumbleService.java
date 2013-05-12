@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.PixelFormat;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -196,7 +197,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 						}
 						updateConnectionState();
 					} else if (state == MumbleConnectionHost.STATE_DISCONNECTED) {
-						dismissPTTOverlay();
 						doConnectionDisconnect();
 					} else {
 						updateConnectionState();
@@ -844,6 +844,24 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		mProtocol.sendAccessTokens(tokens);
 	}
 
+	/**
+	 * Retrieves and sends the access tokens for the active server from the database.
+	 */
+	public void sendAccessTokens() {
+		DbAdapter dbAdapter = getDatabaseAdapter();
+		AsyncTask<DbAdapter, Void, Void> accessTask = new AsyncTask<DbAdapter, Void, Void>() {
+
+			@Override
+			protected Void doInBackground(DbAdapter... params) {
+				DbAdapter adapter = params[0];
+				List<String> tokens = adapter.fetchAllTokens(getConnectedServer().getId());
+				sendAccessTokens(tokens);
+				return null;
+			}
+		};
+		accessTask.execute(dbAdapter);
+	}
+
 	@Override
 	public IBinder onBind(final Intent intent) {
 		Log.i(Globals.LOG_TAG, "MumbleService: Bound");
@@ -1108,6 +1126,16 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		// Broadcast state, this is synchronous with observers.
 		state = MumbleConnectionHost.STATE_DISCONNECTED;
 		updateConnectionState();
+		
+		// Remove PTT overlay and notification.
+		if(mStatusNotificationBuilder != null) {
+			// Post ticker that we disconnected
+			mStatusNotificationBuilder.setTicker(getString(R.string.plumbleDisconnected));
+			NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			notificationManager.notify(STATUS_NOTIFICATION_ID, mStatusNotificationBuilder.build());
+		}
+		dismissPTTOverlay();
+		hideNotification();
 
 		// Now observers shouldn't need these anymore.
 		chatMessages.clear();
@@ -1334,6 +1362,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			serviceState = CONNECTION_STATE_CONNECTING;
 			break;
 		case MumbleConnectionHost.STATE_CONNECTED:
+			sendAccessTokens();
 			settings.addObserver(this);
 			serviceState = synced ? CONNECTION_STATE_CONNECTED
 					: CONNECTION_STATE_SYNCHRONIZING;
@@ -1367,7 +1396,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 					mAudioInput = null;
 				}
 			}
-			hideNotification();
 			break;
 		default:
 			Assert.fail();

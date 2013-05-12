@@ -2,7 +2,6 @@ package com.morlunk.mumbleclient.service;
 
 import net.sf.mumble.MumbleProto.UserRemove;
 import net.sf.mumble.MumbleProto.UserState;
-import android.os.IBinder;
 import android.os.RemoteException;
 
 import com.morlunk.mumbleclient.service.model.Channel;
@@ -10,10 +9,6 @@ import com.morlunk.mumbleclient.service.model.Message;
 import com.morlunk.mumbleclient.service.model.User;
 
 public class BaseServiceObserver {
-	public IBinder asBinder() {
-		return null;
-	}
-
 	public void onChannelAdded(final Channel channel) throws RemoteException {
 	}
 

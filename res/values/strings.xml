@@ -87,6 +87,7 @@
     <string name="clearChat">Clear Chat</string>
     <string name="connected">Connected</string>
     <string name="plumbleConnected">Plumble Connected</string>
+    <string name="plumbleDisconnected">Plumble Disconnected</string>
     <string name="lostConnection">Lost connection to the server.</string>
     <string name="resume">Resume</string>
     <string name="channel">Channel</string>

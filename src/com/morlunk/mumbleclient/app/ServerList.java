@@ -9,20 +9,26 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.Reject.RejectType;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -43,8 +49,10 @@ import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.PublicServer;
 import com.morlunk.mumbleclient.app.db.Server;
+import com.morlunk.mumbleclient.service.BaseServiceObserver;
 import com.morlunk.mumbleclient.service.MumbleProtocol.DisconnectReason;
 import com.morlunk.mumbleclient.service.MumbleService;
+import com.morlunk.mumbleclient.service.MumbleService.LocalBinder;
 
 /**
  * Called whenever server info is changed.
@@ -186,93 +194,6 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 	}
 	
 	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if(requestCode == CHANNEL_ACTIVITY_REQUEST) {
-			if(resultCode == RESULT_OK) {
-				// Check to see if we received an error that caused the disconnect, indicate the user if so.
-				DisconnectReason reason = DisconnectReason.values()[data.getIntExtra(ChannelActivity.EXTRA_DISCONNECT_TYPE, 0)];
-				final Server server = data.getParcelableExtra(ChannelActivity.EXTRA_SERVER);
-				
-				// In some cases, we may have been disconnected due to a connection error.
-				// Try to auto-reconnect after 10000ms in those scenarios (error reason 'Generic')
-				final Timer reconnectTimer = new Timer();
-				
-				AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-				alertBuilder.setTitle(R.string.disconnected);
-				alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						connectToServer(server);
-						reconnectTimer.cancel();
-					}
-				});
-				alertBuilder.setNegativeButton(android.R.string.cancel, new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-						reconnectTimer.cancel();
-					}
-				});
-				alertBuilder.setOnCancelListener(new OnCancelListener() {
-					
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						reconnectTimer.cancel();
-					}
-				});
-				
-				switch (reason) {
-				case Generic:
-					String response = data.getStringExtra(ChannelActivity.EXTRA_GENERIC_REASON);
-					alertBuilder.setMessage(response+"\n"+getString(R.string.reconnecting, RECONNECT_WAIT_TIME/1000));
-					reconnectTimer.schedule(new TimerTask() {
-						@Override
-						public void run() {
-							connectToServer(server);
-						}
-					}, RECONNECT_WAIT_TIME);
-					break;
-
-				case Kick:
-					String kickReason = data.getStringExtra(ChannelActivity.EXTRA_KICK_REASON);
-					alertBuilder.setMessage(getString(R.string.kickedMessage, kickReason));
-					break;
-				
-				case Reject:
-					String rejectReason = data.getStringExtra(ChannelActivity.EXTRA_REJECT_REASON);
-					RejectType rejectType = RejectType.values()[data.getIntExtra(ChannelActivity.EXTRA_REJECT_TYPE, 0)];
-					alertBuilder.setMessage(rejectReason);
-					if(rejectType == RejectType.WrongUserPW || rejectType == RejectType.WrongServerPW) {		
-						// Allow password entry
-						final EditText passwordField = new EditText(this);
-						passwordField.setHint(R.string.serverPassword);
-						alertBuilder.setView(passwordField);
-
-						alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								server.setPassword(passwordField.getText().toString());
-								// Update server in database if it's not public (id = -1)
-								if(server.getId() != -1) {
-									DbAdapter adapter = new DbAdapter(ServerList.this);
-									adapter.open();
-									adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
-									adapter.close();
-								}
-
-								// Reconnect
-								connectToServer(server);
-							}
-						});
-					}
-					break;
-				}
-				alertBuilder.show();
-			}
-		}
-	}
-	
-	@Override
 	protected void onSaveInstanceState(final Bundle outState) {
 		super.onSaveInstanceState(outState);
 		getSupportFragmentManager().putFragment(outState, ServerListFragment.class.getName(), serverListFragment);
@@ -289,8 +210,7 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		connectionIntent.setAction(MumbleService.ACTION_CONNECT);
 		connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
 		startService(connectionIntent);
-		final Intent channelListIntent = new Intent(this, ChannelActivity.class);
-		startActivityForResult(channelListIntent, CHANNEL_ACTIVITY_REQUEST);
+		bindService(connectionIntent, conn, 0); // Bind service, listen to connection state in order to create channel list when connected.
 	}
 
 	/**
@@ -314,12 +234,7 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 			public void onClick(DialogInterface dialog, int which) {
 				PublicServer newServer = server;
 				newServer.setUsername(usernameField.getText().toString());
-				Intent connectionIntent = new Intent(ServerList.this, MumbleService.class);
-				connectionIntent.setAction(MumbleService.ACTION_CONNECT);
-				connectionIntent.putExtra(MumbleService.EXTRA_SERVER, server);
-				startService(connectionIntent);
-				final Intent channelListIntent = new Intent(ServerList.this, ChannelActivity.class);
-				startActivityForResult(channelListIntent, CHANNEL_ACTIVITY_REQUEST);
+				connectToServer(newServer);
 			}
 		});
 		
@@ -486,4 +401,154 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		}
 		
 	}
+	
+	private ServiceConnection conn = new ServiceConnection() {
+		
+		private ProgressDialog dialog;
+		private MumbleService mService;
+		
+		private BaseServiceObserver serviceObserver = new BaseServiceObserver() {
+			public void onConnectionStateChanged(int state) throws RemoteException {
+				switch (state) {
+				case MumbleService.CONNECTION_STATE_DISCONNECTED:
+					dialog.dismiss();
+					break;
+				case MumbleService.CONNECTION_STATE_CONNECTING:
+					dialog.setMessage(getString(R.string.connectionProgressConnectingMessage));
+					break;
+				case MumbleService.CONNECTION_STATE_SYNCHRONIZING:
+					dialog.setMessage(getString(R.string.connectionProgressSynchronizingMessage));
+					break;
+				case MumbleService.CONNECTION_STATE_CONNECTED:
+					dialog.dismiss();
+					final Intent channelListIntent = new Intent(ServerList.this, ChannelActivity.class);
+					startActivity(channelListIntent);
+					break;
+				}
+			};
+		};
+		
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			dialog.dismiss();
+			showDisconnectMessage();
+			mService.unregisterObserver(serviceObserver);
+			unbindService(this);
+		}
+		
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			mService = ((LocalBinder)service).getService();
+			mService.registerObserver(serviceObserver);
+			
+			// Create dialog
+			dialog = new ProgressDialog(ServerList.this);
+			dialog.setMessage(getString(R.string.connectionProgressConnectingMessage));
+			dialog.setOnCancelListener(new OnCancelListener() {
+				
+				@Override
+				public void onCancel(DialogInterface arg0) {
+					new AsyncTask<Void, Void, Void>() {
+
+						@Override
+						protected Void doInBackground(Void... params) {
+							mService.disconnect();
+							return null;
+						}
+						
+					}.execute();
+				}
+			});
+			dialog.show();
+			
+		}
+		
+		/**
+		 * Shows a disconnection message if the service connection ended forcefully.
+		 */
+		private void showDisconnectMessage() {
+			if(mService.getDisconnectReason() == null)
+				return;
+			
+			// Check to see if we received an error that caused the disconnect, indicate the user if so.
+			DisconnectReason reason = mService.getDisconnectReason();
+			final Server server = mService.getConnectedServer();
+			
+			// In some cases, we may have been disconnected due to a connection error.
+			// Try to auto-reconnect after 10000ms in those scenarios (error reason 'Generic')
+			final Timer reconnectTimer = new Timer();
+			
+			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ServerList.this);
+			alertBuilder.setTitle(R.string.disconnected);
+			alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					connectToServer(server);
+					reconnectTimer.cancel();
+				}
+			});
+			alertBuilder.setNegativeButton(android.R.string.cancel, new OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+					reconnectTimer.cancel();
+				}
+			});
+			alertBuilder.setOnCancelListener(new OnCancelListener() {
+				
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					reconnectTimer.cancel();
+				}
+			});
+			
+			switch (reason) {
+			case Generic:
+				String response = mService.getGenericDisconnectReason();
+				alertBuilder.setMessage(response+"\n"+getString(R.string.reconnecting, RECONNECT_WAIT_TIME/1000));
+				reconnectTimer.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						// TODO dismiss before connecting to prevent the dialog from being shown on return.
+						connectToServer(server);
+					}
+				}, RECONNECT_WAIT_TIME);
+				break;
+
+			case Kick:
+				String kickReason = mService.getKickReason().getReason();
+				alertBuilder.setMessage(getString(R.string.kickedMessage, kickReason));
+				break;
+			
+			case Reject:
+				Reject reject = mService.getRejectReason();
+				alertBuilder.setMessage(reject.getReason());
+				if(reject.getType() == RejectType.WrongUserPW || reject.getType() == RejectType.WrongServerPW) {		
+					// Allow password entry
+					final EditText passwordField = new EditText(ServerList.this);
+					passwordField.setHint(R.string.serverPassword);
+					alertBuilder.setView(passwordField);
+
+					alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							server.setPassword(passwordField.getText().toString());
+							// Update server in database if it's not public (id = -1)
+							if(server.getId() != -1) {
+								DbAdapter adapter = new DbAdapter(ServerList.this);
+								adapter.open();
+								adapter.updateServer(server.getId(), server.getName(), server.getHost(), server.getPort(), server.getUsername(), passwordField.getText().toString());
+								adapter.close();
+							}
+
+							// Reconnect
+							connectToServer(server);
+						}
+					});
+				}
+				break;
+			}
+			alertBuilder.show();
+		}
+	};
 }
