@@ -126,7 +126,7 @@ public class AudioInput implements Runnable, Observer {
 
 		audioRecord = new AudioRecord(AudioSource.MIC, recordingSampleRate,
 				AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
-				64 * 1024);
+				bufferSize);
 
 		/*
 		if(VERSION.SDK_INT >= 16 && AcousticEchoCanceler.isAvailable()) {
@@ -139,14 +139,8 @@ public class AudioInput implements Runnable, Observer {
 	@Override
 	public final void run() {
 		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-
-		if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
-			return;
-		}
 		
 		Arrays.fill(buffer, (short) 0);
-		
-		audioRecord.startRecording();
 
 		while (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING &&
 				mService.isConnected()) {
@@ -283,7 +277,8 @@ public class AudioInput implements Runnable, Observer {
 					"Attempted to start recording while a RecordThread was still running!");
 			return;
 		}
-
+		
+		audioRecord.startRecording();
 		recordThread = new Thread(this);
 		recordThread.start();
 	}
@@ -298,6 +293,7 @@ public class AudioInput implements Runnable, Observer {
 					"Attempted to stop recording when a RecordThread was not running!");
 			return;
 		}
+		
 		audioRecord.stop();
 		recordThread.interrupt();
 		recordThread = null;
