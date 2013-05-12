@@ -46,7 +46,7 @@
     <string name="connectionRefused">Connection Refused</string>
     <string name="sureDeleteServer">Are you sure you want to delete this server?</string>
     <string name="disconnected">Disconnected</string>
-    <string name="kickedMessage">Kicked from server. Reason: %s</string>
+    <string name="kickedMessage">Kicked from server.\nReason: %s</string>
     <string name="loading">Loading…</string>
     <string name="reset_key">Reset Key</string>
     <string name="externalStorageUnavailable">External storage unavailable, cannot load certificate</string>
@@ -145,6 +145,7 @@
     <string name="channel_row_close">CLOSE</string>
     <string name="search_channel_users">%d users</string>
     <string name="reconnecting">Reconnecting in %d seconds.</string>
+    <string name="tapToReconnect">Tap to reconnect</string>
     
     <string name="hint_ptt">Push to Talk</string>
     <string name="hint_ptt_summary">Simply press this button down to talk. Double-tap to toggle it.</string>

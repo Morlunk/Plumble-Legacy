@@ -548,6 +548,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	public static final String MUMBLE_NOTIFICATION_ACTION_DEAFEN = "deafen";
 	
 	public static final Integer STATUS_NOTIFICATION_ID = 1;
+	public static final Integer DISCONNECT_NOTIFICATION_ID = 2;
 
 	private MumbleConnection mClient;
 	private MumbleProtocol mProtocol;
@@ -558,9 +559,10 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 	private Thread mClientThread;
 	private AudioInput mAudioInput;
-
-	private Notification mStatusNotification;
+	
 	private NotificationCompat.Builder mStatusNotificationBuilder;
+	private NotificationCompat.Builder mDisconnectNotificationBuilder;
+	
 	private View overlayView; // Hot corner overlay view
 
 	private TextToSpeech tts;
@@ -874,6 +876,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		// Make sure our notification is gone.
 		hideNotification();
+		hideDisconnectNotification();
 
 		settings = Settings.getInstance(this);
 
@@ -1011,7 +1014,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		mStatusNotificationBuilder.setContentInfo(status);
 		mStatusNotificationBuilder.setSmallIcon(R.drawable.ic_stat_notify);
 
-		mStatusNotification = mStatusNotificationBuilder.build();
+		Notification mStatusNotification = mStatusNotificationBuilder.build();
 		NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		manager.notify(STATUS_NOTIFICATION_ID, mStatusNotification);
 	}
@@ -1123,17 +1126,16 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			mClientThread = null;
 		}
 
+		
+		// If there was a forceful disconnect, show a disconnection notification
+		if(disconnectReason != null)
+			showDisconnectNotification();
+		
 		// Broadcast state, this is synchronous with observers.
 		state = MumbleConnectionHost.STATE_DISCONNECTED;
 		updateConnectionState();
 		
 		// Remove PTT overlay and notification.
-		if(mStatusNotificationBuilder != null) {
-			// Post ticker that we disconnected
-			mStatusNotificationBuilder.setTicker(getString(R.string.plumbleDisconnected));
-			NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			notificationManager.notify(STATUS_NOTIFICATION_ID, mStatusNotificationBuilder.build());
-		}
 		dismissPTTOverlay();
 		hideNotification();
 
@@ -1199,9 +1201,52 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		builder.setContentIntent(pendingIntent);
 
 		mStatusNotificationBuilder = builder;
-		mStatusNotification = mStatusNotificationBuilder.build();
+		Notification mStatusNotification = mStatusNotificationBuilder.build();
 
 		startForeground(STATUS_NOTIFICATION_ID, mStatusNotification);
+	}
+	
+	/**
+	 * Shows a notification indicating that there was an error and the service will restart.
+	 */
+	public void showDisconnectNotification() {
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+		builder.setSmallIcon(R.drawable.ic_stat_notify);
+		builder.setContentText(getString(R.string.tapToReconnect));
+		String errorTitle = null;
+		
+		switch (disconnectReason) {
+		case Generic:
+			errorTitle = genericReason;
+			break;
+			
+		case Kick:
+			errorTitle = getString(R.string.kickedMessage, kickReason.getReason());
+			break;
+			
+		case Reject:
+			errorTitle = rejectReason.getReason();
+			break;
+		}
+		
+		builder.setTicker(errorTitle);
+		builder.setContentTitle(errorTitle);
+		
+		Intent serviceIntent = new Intent(this, MumbleService.class);
+		serviceIntent.putExtra(EXTRA_SERVER, getConnectedServer());
+		PendingIntent intent = PendingIntent.getService(this, 0, serviceIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+		builder.setContentIntent(intent);
+		
+		this.mDisconnectNotificationBuilder = builder;
+		
+		NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		notificationManager.notify(DISCONNECT_NOTIFICATION_ID, builder.build());
+	}
+
+	public void hideDisconnectNotification() {
+		// Clear notification
+		NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		notificationManager.cancel(DISCONNECT_NOTIFICATION_ID);
 	}
 
 	public void showChatNotification() {
@@ -1362,11 +1407,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			serviceState = CONNECTION_STATE_CONNECTING;
 			break;
 		case MumbleConnectionHost.STATE_CONNECTED:
-			sendAccessTokens();
 			settings.addObserver(this);
 			serviceState = synced ? CONNECTION_STATE_CONNECTED
 					: CONNECTION_STATE_SYNCHRONIZING;
 			if(synced) {
+				sendAccessTokens();
 				// Initialize audio input
 				mAudioInput = new AudioInput(this, mProtocol.codec);
 				if(settings.isVoiceActivity())

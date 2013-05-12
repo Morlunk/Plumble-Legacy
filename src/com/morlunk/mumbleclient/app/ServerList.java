@@ -6,8 +6,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.Reject.RejectType;
@@ -15,6 +13,8 @@ import net.sf.mumble.MumbleProto.Reject.RejectType;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
@@ -80,9 +80,6 @@ interface ServerConnectHandler {
  *
  */
 public class ServerList extends SherlockFragmentActivity implements ServerInfoListener, ServerConnectHandler {
-
-	public static final int RECONNECT_WAIT_TIME = 10000;
-	public static final int CHANNEL_ACTIVITY_REQUEST = 1;
 	
 	private ServerListFragment serverListFragment;
 	private PublicServerListFragment publicServerListFragment;
@@ -171,6 +168,15 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 			
 			alertBuilder.show();
 		}
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		// If the service is running, immediately start up channel activity.
+		if(isServiceRunning(MumbleService.class.getName()))
+			startActivity(new Intent(this, ChannelActivity.class));
 	}
 	
 	@Override
@@ -303,6 +309,16 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		serverListFragment.updateServers();
 	};
 	
+	private boolean isServiceRunning(String serviceName) {
+	    ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+	    for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+	        if (serviceName.equals(service.service.getClassName())) {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
+	
 	private class ServerListPagerAdapter extends FragmentPagerAdapter {
 
 		public ServerListPagerAdapter(FragmentManager fm) {
@@ -412,6 +428,7 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 				switch (state) {
 				case MumbleService.CONNECTION_STATE_DISCONNECTED:
 					dialog.dismiss();
+					showDisconnectMessage(); // Show a disconnect message if there's an issue with inital connection (before channel activity)
 					break;
 				case MumbleService.CONNECTION_STATE_CONNECTING:
 					dialog.setMessage(getString(R.string.connectionProgressConnectingMessage));
@@ -421,6 +438,8 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 					break;
 				case MumbleService.CONNECTION_STATE_CONNECTED:
 					dialog.dismiss();
+					mService.unregisterObserver(serviceObserver);
+					unbindService(conn);
 					final Intent channelListIntent = new Intent(ServerList.this, ChannelActivity.class);
 					startActivity(channelListIntent);
 					break;
@@ -430,9 +449,8 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
-			dialog.dismiss();
-			showDisconnectMessage();
-			mService.unregisterObserver(serviceObserver);
+			if(dialog.isShowing())
+				dialog.dismiss();
 			unbindService(this);
 		}
 		
@@ -474,45 +492,25 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 			DisconnectReason reason = mService.getDisconnectReason();
 			final Server server = mService.getConnectedServer();
 			
-			// In some cases, we may have been disconnected due to a connection error.
-			// Try to auto-reconnect after 10000ms in those scenarios (error reason 'Generic')
-			final Timer reconnectTimer = new Timer();
-			
 			AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ServerList.this);
 			alertBuilder.setTitle(R.string.disconnected);
 			alertBuilder.setPositiveButton(R.string.retry, new OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					connectToServer(server);
-					reconnectTimer.cancel();
 				}
 			});
 			alertBuilder.setNegativeButton(android.R.string.cancel, new OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					dialog.dismiss();
-					reconnectTimer.cancel();
-				}
-			});
-			alertBuilder.setOnCancelListener(new OnCancelListener() {
-				
-				@Override
-				public void onCancel(DialogInterface dialog) {
-					reconnectTimer.cancel();
 				}
 			});
 			
 			switch (reason) {
 			case Generic:
 				String response = mService.getGenericDisconnectReason();
-				alertBuilder.setMessage(response+"\n"+getString(R.string.reconnecting, RECONNECT_WAIT_TIME/1000));
-				reconnectTimer.schedule(new TimerTask() {
-					@Override
-					public void run() {
-						// TODO dismiss before connecting to prevent the dialog from being shown on return.
-						connectToServer(server);
-					}
-				}, RECONNECT_WAIT_TIME);
+				alertBuilder.setMessage(response);
 				break;
 
 			case Kick:
