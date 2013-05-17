@@ -929,7 +929,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			connectToServer(server);
 		}
 
-		return START_STICKY;
+		return START_NOT_STICKY;
 	}
 
 	/**

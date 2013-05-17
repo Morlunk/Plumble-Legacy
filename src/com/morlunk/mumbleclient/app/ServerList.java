@@ -13,8 +13,6 @@ import net.sf.mumble.MumbleProto.Reject.RejectType;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
@@ -98,6 +96,9 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		} else {
 			Log.i(Globals.LOG_TAG, "Crittercism disabled in debug build.");
 		}
+
+		Intent serviceIntent = new Intent(this, MumbleService.class);
+		bindService(serviceIntent, conn, BIND_AUTO_CREATE);
 		
 		if (savedInstanceState != null) {
 			serverListFragment = (ServerListFragment) getSupportFragmentManager().getFragment(savedInstanceState, ServerListFragment.class.getName());
@@ -175,11 +176,11 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 	@Override
 	protected void onResume() {
 		super.onResume();
-
-		Intent serviceIntent = new Intent(this, MumbleService.class);
-		startService(serviceIntent);
-		bindService(serviceIntent, conn, BIND_AUTO_CREATE);
+		
+		if(mService != null)
+			mService.registerObserver(serviceObserver);
 	}
+	
 	
 	@Override
 	protected void onPause() {
@@ -187,6 +188,11 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		
 		if(mService != null)
 			mService.unregisterObserver(serviceObserver);
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
 		unbindService(conn);
 	}
 	
