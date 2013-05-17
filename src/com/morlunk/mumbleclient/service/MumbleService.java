@@ -945,6 +945,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	 * Disconnects from existing server first.
 	 */
 	public void connectToServer(Server server) {
+		disconnectReason = null;
 		try {
 			Thread disconnectThread = new Thread(new Runnable() {
 				@Override
@@ -1112,8 +1113,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		// If there was a forceful disconnect, show a disconnection notification
 		if (disconnectReason != null)
 			showDisconnectNotification();
-		
-		disconnectReason = null;
 	}
 	
 	public void registerObserver(final BaseServiceObserver observer) {

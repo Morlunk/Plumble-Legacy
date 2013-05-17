@@ -176,7 +176,7 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 
 		Intent serviceIntent = new Intent(this, MumbleService.class);
 		startService(serviceIntent);
-		bindService(serviceIntent, conn, BIND_AUTO_CREATE);
+		bindService(serviceIntent, conn, 0);
 	}
 	
 	@Override
