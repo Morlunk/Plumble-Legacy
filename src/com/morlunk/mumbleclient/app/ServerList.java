@@ -96,9 +96,6 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		} else {
 			Log.i(Globals.LOG_TAG, "Crittercism disabled in debug build.");
 		}
-
-		Intent serviceIntent = new Intent(this, MumbleService.class);
-		bindService(serviceIntent, conn, BIND_AUTO_CREATE);
 		
 		if (savedInstanceState != null) {
 			serverListFragment = (ServerListFragment) getSupportFragmentManager().getFragment(savedInstanceState, ServerListFragment.class.getName());
@@ -176,11 +173,11 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
-		if(mService != null)
-			mService.registerObserver(serviceObserver);
+
+		Intent serviceIntent = new Intent(this, MumbleService.class);
+		startService(serviceIntent);
+		bindService(serviceIntent, conn, BIND_AUTO_CREATE);
 	}
-	
 	
 	@Override
 	protected void onPause() {
@@ -188,11 +185,6 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		
 		if(mService != null)
 			mService.unregisterObserver(serviceObserver);
-	}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
 		unbindService(conn);
 	}
 	
