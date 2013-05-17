@@ -38,7 +38,6 @@ import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.text.Html;
 import android.util.Log;
 import android.view.Gravity;
@@ -522,6 +521,15 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 	}
 	
+	private BroadcastReceiver audioNotificationReceiver = new BroadcastReceiver() {
+		public void onReceive(Context context, Intent intent) {
+			if(intent.getAction().equals(ACTION_MUTE))
+				setMuted(!isMuted());
+			else if(intent.getAction().equals(ACTION_DEAFEN))
+				setDeafened(!isDeafened());
+		};
+	};
+	
 	private BroadcastReceiver stopReconnectReceiver = new BroadcastReceiver() {
 
 		@Override
@@ -543,15 +551,13 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			"Connecting", "Synchronizing", "Connected" };
 
 	public static final String ACTION_CONNECT = "mumbleclient.action.CONNECT";
+	public static final String ACTION_MUTE = "mumbleclient.action.MUTE";
+	public static final String ACTION_DEAFEN = "mumbleclient.action.DEAFEN";
 	public static final String ACTION_CANCEL_RECONNECT = "mumbleclient.action.CANCEL_RECONNECT";
 
 	public static final String EXTRA_MESSAGE = "mumbleclient.extra.MESSAGE";
 	public static final String EXTRA_CONNECTION_STATE = "mumbleclient.extra.CONNECTION_STATE";
 	public static final String EXTRA_SERVER = "mumbleclient.extra.SERVER";
-	
-	public static final String MUMBLE_NOTIFICATION_ACTION_KEY = "notificationKey";
-	public static final String MUMBLE_NOTIFICATION_ACTION_MUTE = "mute";
-	public static final String MUMBLE_NOTIFICATION_ACTION_DEAFEN = "deafen";
 	
 	public static final Integer RECONNECT_TIME = 10000; // 10s
 	
@@ -902,6 +908,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		dbAdapter = new DbAdapter(this);
 		dbAdapter.open();
 		
+		registerReceiver(audioNotificationReceiver, new IntentFilter(ACTION_MUTE));
+		registerReceiver(audioNotificationReceiver, new IntentFilter(ACTION_DEAFEN));
 		registerReceiver(stopReconnectReceiver, new IntentFilter(ACTION_CANCEL_RECONNECT));
 	}
 
@@ -1233,22 +1241,15 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		builder.setOngoing(true);
 
 		// Add notification triggers
-		Intent muteIntent = new Intent(this, MumbleService.class);
-		muteIntent.putExtra(
-				MUMBLE_NOTIFICATION_ACTION_KEY,
-				MUMBLE_NOTIFICATION_ACTION_MUTE);
-
-		Intent deafenIntent = new Intent(this, MumbleService.class);
-		deafenIntent.putExtra(
-				MUMBLE_NOTIFICATION_ACTION_KEY,
-				MUMBLE_NOTIFICATION_ACTION_DEAFEN);
+		Intent muteIntent = new Intent(ACTION_MUTE);
+		Intent deafenIntent = new Intent(ACTION_DEAFEN);
 
 		builder.addAction(R.drawable.ic_action_microphone,
-				getString(R.string.mute), PendingIntent.getService(this, 0,
-						muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+				getString(R.string.mute), 
+				PendingIntent.getBroadcast(this, 1, muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
 		builder.addAction(R.drawable.ic_action_headphones,
-				getString(R.string.deafen), PendingIntent.getService(this, 1,
-						deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+				getString(R.string.deafen),
+				PendingIntent.getBroadcast(this, 1, deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
 
 		Intent channelListIntent = new Intent(MumbleService.this,
 				ChannelActivity.class);
