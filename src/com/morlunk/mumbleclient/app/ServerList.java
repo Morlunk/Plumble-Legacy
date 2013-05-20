@@ -7,6 +7,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.view.View;
+import android.widget.*;
+import com.actionbarsherlock.app.ActionBar;
 import com.morlunk.mumbleclient.Settings;
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.Reject.RejectType;
@@ -38,8 +41,6 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Xml;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
@@ -83,10 +84,9 @@ interface ServerConnectHandler {
 public class ServerList extends SherlockFragmentActivity implements ServerInfoListener, ServerConnectHandler {
 
 	private MumbleService mService;
-	
+
 	private ServerListFragment serverListFragment;
 	private PublicServerListFragment publicServerListFragment;
-	private ViewPager pager;
 	
 	@Override
 	protected final void onCreate(final Bundle savedInstanceState) {
@@ -99,42 +99,12 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		} else {
 			Log.i(Globals.LOG_TAG, "Crittercism disabled in debug build.");
 		}
-		
-		if (savedInstanceState != null) {
-			serverListFragment = (ServerListFragment) getSupportFragmentManager().getFragment(savedInstanceState, ServerListFragment.class.getName());
-			publicServerListFragment = (PublicServerListFragment) getSupportFragmentManager().getFragment(savedInstanceState, PublicServerListFragment.class.getName());
-		} else {
-			serverListFragment = new ServerListFragment();
-			publicServerListFragment = new PublicServerListFragment();
-		}
+
+		serverListFragment = new ServerListFragment();
+		publicServerListFragment = new PublicServerListFragment();
 				
 		setContentView(R.layout.activity_server_list);
-		
-		pager = (ViewPager) findViewById(R.id.pager);
-		ServerListPagerAdapter pagerAdapter = new ServerListPagerAdapter(getSupportFragmentManager());
-		pager.setAdapter(pagerAdapter);
-		pager.setOffscreenPageLimit(10);
-		
-		pager.setOnPageChangeListener(new OnPageChangeListener() {
-			
-			@Override
-			public void onPageSelected(int position) {
-				switch (position) {
-				case 1:
-					fillPublicList();
-					break;
-				}
-			}
-			
-			@Override
-			public void onPageScrolled(int arg0, float arg1, int arg2) {
-			}
-			
-			@Override
-			public void onPageScrollStateChanged(int arg0) {
-			}
-		});
-		
+
 		if(getIntent().getAction() == Intent.ACTION_VIEW) {
 			// Load mumble:// links
 			final Uri data = getIntent().getData();
@@ -171,6 +141,26 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 			
 			alertBuilder.show();
 		}
+
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        getSupportActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+        ServerListNavigationAdapter adapter = new ServerListNavigationAdapter();
+        getSupportActionBar().setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
+            @Override
+            public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+                switch (itemPosition) {
+                    case 0:
+                        getSupportFragmentManager().beginTransaction().replace(R.id.content_fragment, serverListFragment).commit();
+                        break;
+
+                    case 1:
+                        getSupportFragmentManager().beginTransaction().replace(R.id.content_fragment, publicServerListFragment).commit();
+                        fillPublicList();
+                        break;
+                }
+                return false;
+            }
+        });
 	}
 	
 	@Override
@@ -210,18 +200,11 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		publicServerListFragment.onOptionsItemSelected(item);
 		return false;
 	}
-	
-	@Override
-	protected void onSaveInstanceState(final Bundle outState) {
-		super.onSaveInstanceState(outState);
-		getSupportFragmentManager().putFragment(outState, ServerListFragment.class.getName(), serverListFragment);
-		getSupportFragmentManager().putFragment(outState, PublicServerListFragment.class.getName(), publicServerListFragment);
-	}
 
 	/**
 	 * Starts connecting to a server.
 	 *
-	 * @param id
+	 * @param server
 	 */
 	public void connectToServer(final Server server) {
 		mService.connectToServer(server);
@@ -230,7 +213,7 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 	/**
 	 * Starts connecting to a public server.
 	 *
-	 * @param id
+	 * @param server
 	 */
 	public void connectToPublicServer(final PublicServer server) {
 		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
@@ -317,15 +300,11 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 	}
 	
 	public void publicServerFavourited() {
-		pager.setCurrentItem(0, true);
+        getSupportActionBar().setSelectedNavigationItem(0);
 		serverListFragment.updateServers();
 	};
 	
-	private class ServerListPagerAdapter extends FragmentPagerAdapter {
-
-		public ServerListPagerAdapter(FragmentManager fm) {
-			super(fm);
-		}
+	private class ServerListNavigationAdapter extends BaseAdapter implements SpinnerAdapter {
 
 		@Override
 		public int getCount() {
@@ -333,32 +312,44 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 		}
 
 		@Override
-		public Fragment getItem(int arg0) {
-			switch (arg0) {
-			case 0:
-				return serverListFragment;
-			case 1:
-				return publicServerListFragment;
-			default:
-				return null;
-			}
+		public String getItem(int i) {
+            switch (i) {
+                case 0:
+                    return getString(R.string.server_list_title_favorite);
+                case 1:
+                    return getString(R.string.server_list_title_public_internet);
+            }
+            return null;
 		}
-		
-		@Override
-		public CharSequence getPageTitle(int position) {
-			switch (position) {
-			case 0:
-				return getString(R.string.server_list_title_favorite);
-			case 1:
-				return getString(R.string.server_list_title_public_internet);
-			}
-			return null;
-		}
-		
-		@Override
-		public void destroyItem(ViewGroup container, int position, Object object) {
-			// Override to do nothing.
-		}
+
+        @Override
+        public long getItemId(int i) {
+            return 0;
+        }
+
+        @Override
+        public int getViewTypeCount() {
+            return 1;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            return getDropDownView(i, view, viewGroup);
+        }
+
+        @Override
+        public View getDropDownView(int i, View view, ViewGroup viewGroup) {
+            TextView v = (TextView)view;
+            if(view == null) {
+                v = (TextView)getLayoutInflater().inflate(R.layout.sherlock_spinner_dropdown_item, viewGroup, false);
+                v.setTextColor(getResources().getColor(android.R.color.white));
+            }
+
+            String title = getItem(i);
+
+            v.setText(title);
+            return v;
+        }
 	}
 	
 	private class PublicServerFetchTask extends AsyncTask<Void, Void, List<PublicServer>> {

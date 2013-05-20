@@ -81,8 +81,10 @@ public class PublicServerListFragment extends SherlockFragment implements OnItem
 		View view = inflater.inflate(R.layout.fragment_public_server_list, container, false);
 		serverGrid = (GridView) view.findViewById(R.id.serverGrid);
 		serverGrid.setOnItemClickListener(this);
+        if(serverAdapter != null)
+            serverGrid.setAdapter(serverAdapter);
 		serverProgress = (ProgressBar) view.findViewById(R.id.serverProgress);
-		serverProgress.setVisibility(View.VISIBLE);
+		serverProgress.setVisibility(serverAdapter == null ? View.VISIBLE : View.GONE);
 		return view;
 	}
 	

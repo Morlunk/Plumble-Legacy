@@ -5,16 +5,10 @@
     android:orientation="vertical"
 	android:background="#e5e5e5" >
     
-    <android.support.v4.view.ViewPager
-        android:id="@+id/pager"
+    <FrameLayout
+        android:id="@+id/content_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-        <android.support.v4.view.PagerTabStrip
-            android:id="@+id/tabstrip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top" />
-    </android.support.v4.view.ViewPager>
+    </FrameLayout>
 
 </LinearLayout>

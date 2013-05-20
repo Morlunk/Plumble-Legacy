@@ -105,9 +105,9 @@
     <string name="chat_notify_connected">%s connected.</string>
     <string name="chat_notify_disconnected">%s disconnected.</string>
     <string name="unknown">Unknown</string>
-    <string name="server_list_title_favorite">FAVORITES</string>
+    <string name="server_list_title_favorite">Favourites</string>
     <string name="server_list_title_lan">LAN</string>
-    <string name="server_list_title_public_internet">PUBLIC INTERNET</string>
+    <string name="server_list_title_public_internet">Public Internet</string>
     <string name="ping">Ping</string>
     <string name="sort">Sort</string>
     <string name="sortBy">Sort by…</string>
