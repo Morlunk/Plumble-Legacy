@@ -301,7 +301,6 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 	
 	public void publicServerFavourited() {
         getSupportActionBar().setSelectedNavigationItem(0);
-		serverListFragment.updateServers();
 	};
 	
 	private class ServerListNavigationAdapter extends BaseAdapter implements SpinnerAdapter {

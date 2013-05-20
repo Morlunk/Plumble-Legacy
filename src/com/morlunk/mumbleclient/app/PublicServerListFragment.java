@@ -39,6 +39,7 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
+import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.PublicServer;
 
@@ -270,10 +271,12 @@ public class PublicServerListFragment extends SherlockFragment implements OnItem
 				@Override
 				public void onClick(View v) {
 					AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getContext());
-					
+
+                    Settings settings = Settings.getInstance(getActivity());
+
 					// Allow username entry
 					final EditText usernameField = new EditText(getContext());
-					usernameField.setHint(R.string.serverUsername);
+					usernameField.setHint(settings.getDefaultUsername());
 					alertBuilder.setView(usernameField);
 
 					alertBuilder.setTitle(R.string.addFavorite);
@@ -281,9 +284,13 @@ public class PublicServerListFragment extends SherlockFragment implements OnItem
 					alertBuilder.setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
+                            String username = usernameField.getText().toString();
+                            if(username.equals(""))
+                                username = usernameField.getHint().toString();
+
 							DbAdapter adapter = new DbAdapter(getActivity());
 							adapter.open();
-							adapter.createServer(server.getName(), server.getHost(), server.getPort(), usernameField.getText().toString(), "");
+							adapter.createServer(server.getName(), server.getHost(), server.getPort(), username, "");
 							adapter.close();
 							connectHandler.publicServerFavourited();
 						}

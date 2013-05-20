@@ -71,12 +71,6 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 	}
 	
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
-		super.onActivityCreated(savedInstanceState);
-		updateServers();
-	}
-	
-	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_server_list, container, false);
@@ -99,8 +93,14 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 			serverAddShowcaseView = ShowcaseView.insertShowcaseViewWithType(ShowcaseView.ITEM_ACTION_ITEM, R.id.menu_add_server_item, getActivity(), R.string.hint_server_add, R.string.hint_server_add_summary, serverAddConfig);
 		}
 	}
-	
-	@Override
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateServers();
+    }
+
+    @Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if(item.getItemId() == R.id.menu_add_server_item) {
 			addServer();
