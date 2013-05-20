@@ -166,10 +166,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		@Override
 		public boolean isDeafened() {
-			if(getCurrentUser() != null)
+			if (getCurrentUser() != null)
 				return getCurrentUser().selfDeafened;
 			else
-				return true; // Assume deafened, we don't want audio playing if we're not connected yet.
+				return true; // Assume deafened, we don't want audio playing if
+								// we're not connected yet.
 		}
 	}
 
@@ -191,7 +192,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 					}
 
 					MumbleService.this.state = state;
-					
+
 					updateConnectionState();
 				}
 
@@ -261,7 +262,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			});
 		}
 
-		@Override  
+		@Override
 		public void channelRemoved(final int channelId) {
 			handler.post(new ServiceProtocolMessage() {
 				Channel channel;
@@ -287,7 +288,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		@Override
 		public void channelMoved(Channel channel) {
-			sortCurrentChannels(); // Sort when moved. We already send a channel update broadcast with channelUdpated.
+			sortCurrentChannels(); // Sort when moved. We already send a channel
+									// update broadcast with channelUdpated.
 		}
 
 		@Override
@@ -520,26 +522,26 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			kickReason = kick;
 		}
 	}
-	
+
 	private BroadcastReceiver audioNotificationReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
-			if(intent.getAction().equals(ACTION_MUTE))
+			if (intent.getAction().equals(ACTION_MUTE))
 				setMuted(!isMuted());
-			else if(intent.getAction().equals(ACTION_DEAFEN))
+			else if (intent.getAction().equals(ACTION_DEAFEN))
 				setDeafened(!isDeafened());
 		};
 	};
-	
+
 	private BroadcastReceiver stopReconnectReceiver = new BroadcastReceiver() {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			Log.d(Globals.LOG_TAG, "Canceled reconnection");
-			if(reconnectTimer != null)
+			if (reconnectTimer != null)
 				reconnectTimer.cancel();
 			hideDisconnectNotification();
 		}
-		
+
 	};
 
 	public static final int CONNECTION_STATE_DISCONNECTED = 0;
@@ -558,12 +560,12 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	public static final String EXTRA_MESSAGE = "mumbleclient.extra.MESSAGE";
 	public static final String EXTRA_CONNECTION_STATE = "mumbleclient.extra.CONNECTION_STATE";
 	public static final String EXTRA_SERVER = "mumbleclient.extra.SERVER";
-	
+
 	public static final Integer RECONNECT_TIME = 10000; // 10s
-	
+
 	public static final Integer STATUS_NOTIFICATION_ID = 1;
 	public static final Integer DISCONNECT_NOTIFICATION_ID = 2;
-	
+
 	private MumbleConnection mClient;
 	private MumbleProtocol mProtocol;
 
@@ -573,12 +575,13 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 	private Thread mClientThread;
 	private AudioInput mAudioInput;
-	
+
 	private NotificationCompat.Builder mStatusNotificationBuilder;
 	private NotificationCompat.Builder mDisconnectNotificationBuilder;
-	
-	private Timer reconnectTimer; // Timer to reconnect after forceful disconnection
-	
+
+	private Timer reconnectTimer; // Timer to reconnect after forceful
+									// disconnection
+
 	private View overlayView; // Hot corner overlay view
 
 	private TextToSpeech tts;
@@ -616,7 +619,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	final List<Channel> channels = new ArrayList<Channel>();
 	final List<Channel> sortedChannels = new ArrayList<Channel>();
 	final List<User> users = new ArrayList<User>();
-	
+
 	private List<Favourite> favourites;
 
 	// Use concurrent hash map so we can modify the collection while iterating.
@@ -654,10 +657,10 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			mClient.disconnect();
 		}
 	}
-	
+
 	public Channel getChannel(int channelId) {
-		for(Channel channel : channels) {
-			if(channel.id == channelId)
+		for (Channel channel : channels) {
+			if (channel.id == channelId)
 				return channel;
 		}
 		return null;
@@ -672,14 +675,17 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	}
 
 	/**
-	 * Gets a list of channels sorted alphabetically, by position, and hierarchy.
+	 * Gets a list of channels sorted alphabetically, by position, and
+	 * hierarchy.
+	 * 
 	 * @return A list of Channel objects in use on the server, sorted.
 	 */
 	public List<Channel> getSortedChannelList() {
 		return Collections.unmodifiableList(sortedChannels);
 	}
 
-	private List<Channel> getNestedChannels(Channel channel, List<Channel> channels) {
+	private List<Channel> getNestedChannels(Channel channel,
+			List<Channel> channels) {
 		List<Channel> nestedChannels = new ArrayList<Channel>();
 		for (Channel c : channels) {
 			if (c.parent == channel.id) {
@@ -688,61 +694,66 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				nestedChannels.addAll(internalChannels);
 			}
 		}
-		
+
 		return nestedChannels;
 	}
-	
+
 	/**
 	 * Sorts and organizes the channel list into a hierarchy.
 	 */
 	public void sortCurrentChannels() {
-		List<Channel> unsortedChannels = new ArrayList<Channel>(getChannelList());
+		List<Channel> unsortedChannels = new ArrayList<Channel>(
+				getChannelList());
 		List<Channel> sortedChannels = new ArrayList<Channel>();
-		
+
 		sortChannelList(unsortedChannels);
-		
+
 		for (Channel channel : unsortedChannels) {
 			if (channel.parent == -1) {
 				sortedChannels.add(channel);
-				sortedChannels.addAll(getNestedChannels(channel, unsortedChannels));
+				sortedChannels.addAll(getNestedChannels(channel,
+						unsortedChannels));
 			}
 		}
 
 		this.sortedChannels.clear();
 		this.sortedChannels.addAll(sortedChannels);
 	}
-	
+
 	/**
 	 * Sorts the passed list of channels alphebetically and by position.
+	 * 
 	 * @param channels
 	 */
 	private void sortChannelList(List<Channel> channels) {
 		Collections.sort(channels, new Comparator<Channel>() {
 			@Override
 			public int compare(Channel lhs, Channel rhs) {
-				return lhs.name.toLowerCase(Locale.getDefault()).compareTo(rhs.name.toLowerCase(Locale.getDefault()));
+				return lhs.name.toLowerCase(Locale.getDefault()).compareTo(
+						rhs.name.toLowerCase(Locale.getDefault()));
 			}
 		});
 		Collections.sort(channels, new Comparator<Channel>() {
 			@Override
 			public int compare(Channel lhs, Channel rhs) {
-				return ((Integer)lhs.position).compareTo(((Integer)rhs.position));
+				return ((Integer) lhs.position)
+						.compareTo(((Integer) rhs.position));
 			}
 		});
 	}
-	
+
 	public void updateFavourites() {
-        DbAdapter dbAdapter = getDatabaseAdapter();
-        favourites = dbAdapter.fetchAllFavourites(getConnectedServer().getId());
+		DbAdapter dbAdapter = getDatabaseAdapter();
+		favourites = dbAdapter.fetchAllFavourites(getConnectedServer().getId());
 	}
-	
+
 	public List<Favourite> getFavourites() {
 		return favourites;
 	}
-	
+
 	public Favourite getFavouriteForChannel(Channel channel) {
-		for(Favourite favourite : favourites) {
-			if(favourite.getChannelId() == channel.id)
+		for (Favourite favourite : favourites) {
+			if (favourite.getChannelId() == channel.id)
 				return favourite;
 		}
 		return null;
@@ -782,14 +793,15 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Returns the reason that the user was disconnected.
-	 * More data can be obtained from the disconnection-specific methods.
+	 * Returns the reason that the user was disconnected. More data can be
+	 * obtained from the disconnection-specific methods.
+	 * 
 	 * @category Disconnect
 	 * @return The reason the user was disconnected
 	 */
-	
+
 	public DisconnectReason getDisconnectReason() {
 		return disconnectReason;
 	}
@@ -801,7 +813,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		Assert.assertEquals(disconnectReason, DisconnectReason.Reject);
 		return rejectReason;
 	}
-	
+
 	/**
 	 * @category Disconnect
 	 */
@@ -809,7 +821,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		Assert.assertEquals(disconnectReason, DisconnectReason.Kick);
 		return kickReason;
 	}
-	
+
 	/**
 	 * @category Disconnect
 	 */
@@ -849,7 +861,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	public boolean isMuted() {
 		return mProtocol.currentUser.selfMuted;
 	}
-	
+
 	public void registerSelf() {
 		mProtocol.registerUser(getCurrentUser());
 	}
@@ -863,7 +875,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	}
 
 	/**
-	 * Retrieves and sends the access tokens for the active server from the database.
+	 * Retrieves and sends the access tokens for the active server from the
+	 * database.
 	 */
 	public void sendAccessTokens() {
 		DbAdapter dbAdapter = getDatabaseAdapter();
@@ -872,7 +885,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			@Override
 			protected Void doInBackground(DbAdapter... params) {
 				DbAdapter adapter = params[0];
-				List<String> tokens = adapter.fetchAllTokens(getConnectedServer().getId());
+				List<String> tokens = adapter
+						.fetchAllTokens(getConnectedServer().getId());
 				sendAccessTokens(tokens);
 				return null;
 			}
@@ -907,10 +921,13 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		dbAdapter = new DbAdapter(this);
 		dbAdapter.open();
-		
-		registerReceiver(audioNotificationReceiver, new IntentFilter(ACTION_MUTE));
-		registerReceiver(audioNotificationReceiver, new IntentFilter(ACTION_DEAFEN));
-		registerReceiver(stopReconnectReceiver, new IntentFilter(ACTION_CANCEL_RECONNECT));
+
+		registerReceiver(audioNotificationReceiver, new IntentFilter(
+				ACTION_MUTE));
+		registerReceiver(audioNotificationReceiver, new IntentFilter(
+				ACTION_DEAFEN));
+		registerReceiver(stopReconnectReceiver, new IntentFilter(
+				ACTION_CANCEL_RECONNECT));
 	}
 
 	@Override
@@ -919,11 +936,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		// Make sure our notification is gone.
 		hideNotification();
-		
+
 		unregisterReceiver(stopReconnectReceiver);
 
 		Log.i(Globals.LOG_TAG, "MumbleService: Destroyed");
-		
+
 		dbAdapter.close();
 	}
 
@@ -932,8 +949,9 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			final int startId) {
 		Log.i(Globals.LOG_TAG, "MumbleService: Starting service");
 
-		if(intent.hasExtra(EXTRA_SERVER)) {
-			Server server = intent.getParcelableExtra(MumbleService.EXTRA_SERVER);
+		if (intent.hasExtra(EXTRA_SERVER)) {
+			Server server = intent
+					.getParcelableExtra(MumbleService.EXTRA_SERVER);
 			connectToServer(server);
 		}
 
@@ -941,8 +959,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	}
 
 	/**
-	 * Connects to the passed 'Server' object.
-	 * Disconnects from existing server first.
+	 * Connects to the passed 'Server' object. Disconnects from existing server
+	 * first.
 	 */
 	public void connectToServer(Server server) {
 		disconnectReason = null;
@@ -958,12 +976,12 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
-		
+
 		this.connectedServer = server;
-		
-		if(reconnectTimer != null)
+
+		if (reconnectTimer != null)
 			reconnectTimer.cancel(); // Cancel auto-reconnect timer
-		
+
 		hideDisconnectNotification();
 
 		String plumbleVersion;
@@ -997,29 +1015,30 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		// Enable TTS
 		tts = new TextToSpeech(this, this);
 	}
-	
+
 	private void onConnected() {
 		settings.addObserver(this);
 		serviceState = synced ? CONNECTION_STATE_CONNECTED
 				: CONNECTION_STATE_SYNCHRONIZING;
-		if(synced) {
+		if (synced) {
 			sendAccessTokens();
 			// Initialize audio input
 			mAudioInput = new AudioInput(this, mProtocol.codec);
-			if(settings.isVoiceActivity())
-				mAudioInput.startRecording(); // Immediately begin record if using voice activity
+			if (settings.isVoiceActivity())
+				mAudioInput.startRecording(); // Immediately begin record if
+												// using voice activity
 
 			if (settings.isDeafened()) {
 				setDeafened(true);
 			} else if (settings.isMuted()) {
 				setMuted(true);
 			}
-			
+
 			updateFavourites();
 			showNotification();
 			sortCurrentChannels();
 		}
-		
+
 		// Create PTT overlay
 		if (settings.isPushToTalk()
 				&& !settings.getHotCorner().equals(
@@ -1027,11 +1046,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			createPTTOverlay();
 		}
 	}
-	
+
 	private void onConnecting() {
-		
+
 	}
-	
+
 	private void onDisconnected() {
 		// First disable all hosts to prevent old callbacks from being
 		// processed.
@@ -1049,9 +1068,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			mAudioHost.disable();
 			mAudioHost = null;
 		}
-		
 
-		if(mAudioInput != null) {
+		if (mAudioInput != null) {
 			try {
 				mAudioInput.stopRecordingAndBlock();
 			} catch (InterruptedException e) {
@@ -1107,14 +1125,14 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			tts.stop();
 			tts.shutdown();
 		}
-		
+
 		settings.deleteObserver(this);
 
 		// If there was a forceful disconnect, show a disconnection notification
 		if (disconnectReason != null)
 			showDisconnectNotification();
 	}
-	
+
 	public void registerObserver(final BaseServiceObserver observer) {
 		observers.put(observer, observer);
 	}
@@ -1154,13 +1172,14 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	public ServiceAudioOutputHost getAudioHost() {
 		return mAudioHost;
 	}
-	
+
 	public void setPushToTalk(final boolean state) {
 		if (mProtocol == null || mProtocol.currentUser == null)
 			return;
-		
-		Assert.assertTrue("Push to talk not on, but setPushToTalk called!", !settings.isVoiceActivity());
-		
+
+		Assert.assertTrue("Push to talk not on, but setPushToTalk called!",
+				!settings.isVoiceActivity());
+
 		if (state) {
 			mAudioHost.setTalkState(getCurrentUser(),
 					AudioOutputHost.STATE_TALKING);
@@ -1198,7 +1217,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		} else if (deafened && muted) {
 			status = getString(R.string.status_notify_muted_and_deafened);
 		}
-		
+
 		mStatusNotificationBuilder.setContentInfo(status);
 		mStatusNotificationBuilder.setSmallIcon(R.drawable.ic_stat_notify);
 
@@ -1244,11 +1263,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		Intent deafenIntent = new Intent(ACTION_DEAFEN);
 
 		builder.addAction(R.drawable.ic_action_microphone,
-				getString(R.string.mute), 
-				PendingIntent.getBroadcast(this, 1, muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+				getString(R.string.mute), PendingIntent.getBroadcast(this, 1,
+						muteIntent, PendingIntent.FLAG_CANCEL_CURRENT));
 		builder.addAction(R.drawable.ic_action_headphones,
-				getString(R.string.deafen),
-				PendingIntent.getBroadcast(this, 1, deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+				getString(R.string.deafen), PendingIntent.getBroadcast(this, 1,
+						deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
 
 		Intent channelListIntent = new Intent(MumbleService.this,
 				ChannelActivity.class);
@@ -1263,54 +1282,69 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		startForeground(STATUS_NOTIFICATION_ID, mStatusNotification);
 	}
-	
+
 	/**
-	 * Shows a notification indicating that there was an error and the service will restart.
+	 * Shows a notification indicating that there was an error and the service
+	 * will restart.
 	 */
 	public void showDisconnectNotification() {
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(
+				this);
 		builder.setSmallIcon(R.drawable.ic_stat_notify);
 		String errorTitle = null;
 		String errorTicker = null;
-		
+
 		switch (disconnectReason) {
 		case Generic:
-			errorTitle = getGenericDisconnectReason();
-			errorTicker = errorTitle + "\n" + getString(R.string.reconnecting, RECONNECT_TIME/1000);
-			builder.setContentText(getString(R.string.reconnecting, RECONNECT_TIME/1000));
-			reconnectTimer = new Timer();
-			final Server server = connectedServer;
-			reconnectTimer.schedule(new TimerTask() {
-				@Override
-				public void run() {
-					connectToServer(server);
-				}
-			}, RECONNECT_TIME);
-			Intent cancelDisconnect = new Intent(ACTION_CANCEL_RECONNECT);
-			PendingIntent intent = PendingIntent.getBroadcast(getApplicationContext(), 3, cancelDisconnect, PendingIntent.FLAG_CANCEL_CURRENT);
-			builder.addAction(R.drawable.ic_action_delete_dark, getString(android.R.string.cancel), intent);
+			errorTitle = errorTicker = getGenericDisconnectReason();
+			builder.setContentText(getString(R.string.tapToReconnect));
+			if(settings.isAutoReconnectEnabled()) {
+				errorTicker = errorTitle + "\n"
+						+ getString(R.string.reconnecting, RECONNECT_TIME / 1000);
+				builder.setContentText(getString(R.string.reconnecting,
+						RECONNECT_TIME / 1000));
+				reconnectTimer = new Timer();
+				final Server server = connectedServer;
+				reconnectTimer.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						connectToServer(server);
+					}
+				}, RECONNECT_TIME);
+				Intent cancelDisconnect = new Intent(ACTION_CANCEL_RECONNECT);
+				PendingIntent intent = PendingIntent.getBroadcast(
+						getApplicationContext(), 3, cancelDisconnect,
+						PendingIntent.FLAG_CANCEL_CURRENT);
+				builder.addAction(R.drawable.ic_action_delete_dark,
+						getString(android.R.string.cancel), intent);
+				
+			}
 			break;
-			
+
 		case Kick:
-			errorTitle = errorTicker = getString(R.string.kickedMessage, kickReason.getReason());
+			errorTitle = errorTicker = getString(R.string.kickedMessage,
+					kickReason.getReason());
 			builder.setContentText(getString(R.string.tapToReconnect));
 			break;
-			
+
 		case Reject:
 			errorTitle = errorTicker = rejectReason.getReason();
 			builder.setContentText(getString(R.string.tapToReconnect));
 			break;
 		}
-		
+
 		builder.setContentTitle(errorTitle);
 		builder.setTicker(errorTicker);
-		
-		Intent listIntent = new Intent(getApplicationContext(), ServerList.class);
-		PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 2, listIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+		Intent listIntent = new Intent(getApplicationContext(),
+				ServerList.class);
+		PendingIntent intent = PendingIntent.getActivity(
+				getApplicationContext(), 2, listIntent,
+				PendingIntent.FLAG_CANCEL_CURRENT);
 		builder.setContentIntent(intent);
-		
+
 		this.mDisconnectNotificationBuilder = builder;
-		
+
 		NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		notificationManager.notify(DISCONNECT_NOTIFICATION_ID, builder.build());
 	}
@@ -1508,8 +1542,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	@Override
 	public void update(Observable observable, Object data) {
 		Settings settings = (Settings) observable;
-		
-		if(data.equals(Settings.OBSERVER_KEY_ALL)) {
+
+		if (data.equals(Settings.OBSERVER_KEY_ALL)) {
 			// Create PTT overlay
 			dismissPTTOverlay();
 			if (settings.isPushToTalk()
@@ -1517,9 +1551,9 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 							Settings.ARRAY_HOT_CORNER_NONE)) {
 				createPTTOverlay();
 			}
-			
+
 			// Handle voice activity
-			if(settings.isVoiceActivity())
+			if (settings.isVoiceActivity())
 				mAudioInput.startRecording();
 			else
 				setPushToTalk(false);

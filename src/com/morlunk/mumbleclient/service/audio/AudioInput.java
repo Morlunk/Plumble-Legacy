@@ -64,6 +64,7 @@ public class AudioInput implements Runnable, Observer {
 	// Recording state
 	private AudioRecord audioRecord;
 	private Thread recordThread;
+	private boolean recordThreadEnabled;
 
 	@SuppressLint({ "InlinedApi", "NewApi" })
 	public AudioInput(final MumbleService service, final int codec) {
@@ -141,8 +142,11 @@ public class AudioInput implements Runnable, Observer {
 		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 		
 		Arrays.fill(buffer, (short) 0);
+		
+		recordThreadEnabled = true;
+		audioRecord.startRecording();
 
-		while (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING &&
+		while (recordThreadEnabled &&
 				mService.isConnected()) {
 			final int read = audioRecord.read(buffer, 0, frameSize);
 
@@ -258,6 +262,9 @@ public class AudioInput implements Runnable, Observer {
 				}
 			}
 		}
+		
+		if(audioRecord != null && isRecording())
+			audioRecord.stop();
 	}
 
 	/**
@@ -278,7 +285,6 @@ public class AudioInput implements Runnable, Observer {
 			return;
 		}
 		
-		audioRecord.startRecording();
 		recordThread = new Thread(this);
 		recordThread.start();
 	}
@@ -294,8 +300,7 @@ public class AudioInput implements Runnable, Observer {
 			return;
 		}
 		
-		audioRecord.stop();
-		recordThread.interrupt();
+		recordThreadEnabled = false;
 		recordThread = null;
 	}
 	
@@ -308,8 +313,9 @@ public class AudioInput implements Runnable, Observer {
 					"Attempted to stop recording when a RecordThread was not running!");
 			return;
 		}
-		audioRecord.stop();
+		recordThreadEnabled = false;
 		recordThread.join();
+		recordThread = null;
 	}
 
 	/**
