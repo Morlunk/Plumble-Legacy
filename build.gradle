@@ -1,0 +1,39 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.4'
+    }
+}
+apply plugin: 'android'
+
+dependencies {
+    compile files('../../../../../Plumble/libs/crittercism_v3_0_2_sdkonly.jar')
+    compile files('../../../../../Plumble/libs/sc-light-jdk15on-1.47.0.2.jar')
+    compile files('../../../../../Plumble/libs/scprov-jdk15on-1.47.0.2.jar')
+    compile files('../../../../../Plumble/libs/scpkix-jdk15on-1.47.0.2.jar')
+}
+
+android {
+    compileSdkVersion 17
+    buildToolsVersion "17"
+
+    defaultConfig {
+        minSdkVersion 7
+        targetSdkVersion 18
+    }
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            resources.srcDirs = ['src']
+            aidl.srcDirs = ['src']
+            renderscript.srcDirs = ['src']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
+
+        instrumentTest.setRoot('tests')
+    }
+}

@@ -14,6 +14,7 @@ import android.widget.EditText;
 
 import com.actionbarsherlock.app.SherlockDialogFragment;
 import com.morlunk.mumbleclient.R;
+import com.morlunk.mumbleclient.Settings;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
 
@@ -53,6 +54,8 @@ public class ServerInfo extends SherlockDialogFragment {
 		LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getActivity());
 
+        Settings settings = Settings.getInstance(getActivity());
+
 		View view = inflater.inflate(R.layout.server_add, null, false);
 		alertBuilder.setView(view);
 		
@@ -60,6 +63,7 @@ public class ServerInfo extends SherlockDialogFragment {
 		hostEdit = (EditText) view.findViewById(R.id.serverHostEdit);
 		portEdit = (EditText) view.findViewById(R.id.serverPortEdit);
 		usernameEdit = (EditText) view.findViewById(R.id.serverUsernameEdit);
+        usernameEdit.setHint(settings.getDefaultUsername());
 		if (server != null) {
 			nameEdit.setText(server.getName());
 			hostEdit.setText(server.getHost());
@@ -108,6 +112,9 @@ public class ServerInfo extends SherlockDialogFragment {
 		}
 
 		String username = (usernameEdit).getText().toString().trim();
+
+        if(username.equals(""))
+            username = usernameEdit.getHint().toString();
 
 		DbAdapter db = new DbAdapter(getActivity());
 		

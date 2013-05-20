@@ -34,6 +34,12 @@
             android:password="true"
             android:summary="@string/certificatePasswordSum"
             android:title="@string/certificatePassword" />
+
+        <EditTextPreference
+            android:key="defaultUsername"
+            android:summary="@string/defaultUsernameSum"
+            android:title="@string/defaultUsername"
+            android:defaultValue="@string/defaultUsernameDefault"/>
     </PreferenceScreen>
     <PreferenceScreen android:title="@string/audio" android:summary="@string/audioSum">
         <ListPreference

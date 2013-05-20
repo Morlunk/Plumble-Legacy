@@ -54,9 +54,9 @@
     <string name="forceTcp">Erzwinge TCP</string>
     <string name="forceTcpSum">Es wird ausschließlich TCP benutzt und UDP wird abgeschaltet.</string>
     <string name="addFavorite">Favorit hinzufügen</string>
-    <string name="removeFavorite">Favorit entfernen</string><string name="viewFavorites">View Favorites</string>
+    <string name="removeFavorite">Favorit entfernen</string>
+    <string name="viewFavorites">View Favorites</string>
     <string name="favorites">Favoriten</string>
-    <string name="viewFavorites">Favoriten anzeigen</string>
     <string name="favoriteRemoved">Favorit entfernt.</string>
     <string name="favoriteAdded">Favorit zugefügt.</string>
     <string name="noFavorites">Keine Favoriten gespeichert.</string>

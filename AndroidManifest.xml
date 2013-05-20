@@ -36,7 +36,6 @@
                 <data android:scheme="mumble"/>
             </intent-filter>
         </activity>
-        <activity android:name=".app.ServerInfo" android:parentActivityName=".app.ServerList"/>
 		<provider android:name=".app.ChannelSearchProvider" android:authorities="com.morlunk.mumbleclient.app.ChannelSearchProvider" android:exported="false"></provider>
         <activity android:name=".app.ChannelActivity" android:launchMode="singleTop">
             <intent-filter>
@@ -50,9 +49,6 @@
         <service
             android:name=".service.MumbleService"
             android:stopWithTask="true"
-            android:enabled="true" />
-        <service
-            android:name=".service.MumbleNotificationService"
             android:enabled="true" />
         
         <!-- Start of Crittercism.com Code -->

@@ -1,3 +1,13 @@
+# Android Studio
+.idea/
+*.iml
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+out/
 bin/
 gen/
 obj/

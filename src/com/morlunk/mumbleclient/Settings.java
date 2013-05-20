@@ -73,6 +73,9 @@ public class Settings extends Observable {
 	public static final String PREF_CERT = "certificatePath";
 	public static final String PREF_CERT_PASSWORD = "certificatePassword";
 
+    public static final String PREF_DEFAULT_USERNAME = "defaultUsername";
+    public static final String DEFAULT_DEFAULT_USERNAME = "Plumble_User"; // funny var name
+
 	/* TODO reimplement with new channel list
 	public static final String PREF_CHANNELLIST_ROW_HEIGHT = "channellistrowheight";
 	public static final String DEFAULT_CHANNELLIST_ROW_HEIGHT = "35";
@@ -157,6 +160,10 @@ public class Settings extends Observable {
 	public String getCertificatePassword() {
 		return preferences.getString(PREF_CERT_PASSWORD, "");
 	}
+
+    public String getDefaultUsername() {
+        return preferences.getString(PREF_DEFAULT_USERNAME, DEFAULT_DEFAULT_USERNAME);
+    }
 	
 	public boolean isVoiceActivity() {
 		return preferences.getString(PREF_METHOD, ARRAY_METHOD_VOICE).equals(ARRAY_METHOD_VOICE);

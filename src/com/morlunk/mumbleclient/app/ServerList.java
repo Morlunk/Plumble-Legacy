@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.morlunk.mumbleclient.Settings;
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.Reject.RejectType;
 
@@ -32,6 +33,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Xml;
 import android.view.ViewGroup;
@@ -230,12 +233,13 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 	 * @param id
 	 */
 	public void connectToPublicServer(final PublicServer server) {
-		
 		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-		
+
+        final Settings settings = Settings.getInstance(this);
+
 		// Allow username entry
 		final EditText usernameField = new EditText(this);
-		usernameField.setHint(R.string.serverUsername);
+		usernameField.setHint(settings.getDefaultUsername());
 		alertBuilder.setView(usernameField);
 
 		alertBuilder.setTitle(R.string.connectToServer);
@@ -244,12 +248,15 @@ public class ServerList extends SherlockFragmentActivity implements ServerInfoLi
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				PublicServer newServer = server;
-				newServer.setUsername(usernameField.getText().toString());
+                if(!usernameField.getText().toString().equals(""))
+				    newServer.setUsername(usernameField.getText().toString());
+                else
+                    newServer.setUsername(settings.getDefaultUsername());
 				connectToServer(newServer);
 			}
 		});
-		
-		alertBuilder.show();
+
+        alertBuilder.show();
 	}
 	
 	private Server parseServerUri(Uri data) {

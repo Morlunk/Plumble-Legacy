@@ -64,7 +64,6 @@
     <string name="accessAdd">Add Access Token</string>
     <string name="pushToTalkHint">(tick checkbox to enable toggle)</string>
     <string name="messageReceived">New message</string>
-    <string name="general">General</string>
     <string name="generateCert">Generate Certificate</string>
     <string name="generateCertSuccess">Your certificate has been set and saved as %s!</string>
     <string name="generateCertFailure">Failed to generate certificate.</string>
