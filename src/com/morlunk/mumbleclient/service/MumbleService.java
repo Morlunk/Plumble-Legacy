@@ -1021,15 +1021,13 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		serviceState = synced ? CONNECTION_STATE_CONNECTED
 				: CONNECTION_STATE_SYNCHRONIZING;
 
-        // Initialize audio input
-        if(mAudioInput == null) {
+		if (synced) {
+			sendAccessTokens();
+
+            // Initialize audio input
             mAudioInput = new AudioInput(this, mProtocol.codec);
             if (settings.isVoiceActivity())
                 mAudioInput.startRecording(); // Immediately begin record if using voice activity
-        }
-
-		if (synced) {
-			sendAccessTokens();
 
 			if (settings.isDeafened()) {
 				setDeafened(true);
