@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="chatNotify"
+        android:summary="@string/chatNotificationsSum"
+        android:title="@string/chatNotifications" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="useTts"
+        android:summary="@string/useTtsSum"
+        android:title="@string/useTts" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="autoReconnect"
+        android:summary="@string/autoReconnectSum"
+        android:title="@string/autoReconnect" />
+</PreferenceScreen>

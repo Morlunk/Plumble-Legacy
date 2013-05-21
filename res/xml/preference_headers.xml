@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+    <header
+        android:title="@string/general"
+        android:summary="@string/generalSum"
+        android:fragment="com.morlunk.mumbleclient.app.Preferences$PlumblePreferenceFragment">
+        <extra android:name="settings" android:value="general"></extra>
+    </header>
+    <header
+        android:title="@string/authentication"
+        android:summary="@string/authenticationSum"
+        android:fragment="com.morlunk.mumbleclient.app.Preferences$PlumblePreferenceFragment">
+        <extra android:name="settings" android:value="authentication"></extra>
+    </header>
+    <header
+        android:title="@string/audio"
+        android:summary="@string/audioSum"
+        android:fragment="com.morlunk.mumbleclient.app.Preferences$PlumblePreferenceFragment">
+        <extra android:name="settings" android:value="audio"></extra>
+    </header>
+    <header
+        android:title="@string/appearance"
+        android:summary="@string/appearanceSum"
+        android:fragment="com.morlunk.mumbleclient.app.Preferences$PlumblePreferenceFragment">
+        <extra android:name="settings" android:value="appearance"></extra>
+    </header>
+</preference-headers>

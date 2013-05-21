@@ -599,7 +599,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			return true;
 		case R.id.menu_preferences:
 			Intent intent = new Intent(this, Preferences.class);
-			intent.putExtra(Preferences.EXTRA_CONNECTED, true);
 			startActivity(intent);
 			return true;
 		case R.id.menu_disconnect_item:
@@ -751,7 +750,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 	}
 	
 	/**
-	 * @see http://stackoverflow.com/questions/6335875/help-with-proximity-screen-off-wake-lock-in-android
+	 * http://stackoverflow.com/questions/6335875/help-with-proximity-screen-off-wake-lock-in-android
 	 */
 	@SuppressLint("Wakelock")
 	private void setProximityEnabled(boolean enabled) {
