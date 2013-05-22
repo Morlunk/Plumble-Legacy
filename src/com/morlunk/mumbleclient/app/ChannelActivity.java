@@ -6,6 +6,12 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
+import android.content.res.Configuration;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SlidingPaneLayout;
+import android.view.Gravity;
+import android.widget.*;
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -36,9 +42,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -77,12 +80,10 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 	 */
 	public static final String LIST_FRAGMENT_TAG = "listFragment";
 	public static final String CHAT_FRAGMENT_TAG = "chatFragment";
-	
-	public static final String JOIN_CHANNEL = "join_channel";
-	public static final String SAVED_STATE_VISIBLE_CHANNEL = "visible_channel";
+
 	public static final String SAVED_STATE_CHAT_TARGET = "chat_target";
 	public static final Integer PROXIMITY_SCREEN_OFF_WAKE_LOCK = 32; // Undocumented feature! This will allow us to enable the phone proximity sensor.
-	
+
 	/**
 	 * The MumbleService instance that drives this activity's data.
 	 */
@@ -114,6 +115,13 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			finish();
 		}
 	};
+
+    private ListView.OnItemClickListener mDrawerItemListener = new ListView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            selectItem(i);
+        }
+    };
 	
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide fragments for each of the
@@ -128,9 +136,11 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
      */
     private ViewPager mViewPager;
     
-    // Tabs
-    private View channelsIndicator;
-    private View chatIndicator;
+    // Drawer
+    private DrawerLayout mDrawerLayout;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private ListView mDrawerList;
+    private String[] mDrawerItemTitles;
     
     private MenuItem fullscreenButton;
     
@@ -239,7 +249,19 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 		});
     	
         updatePTTConfiguration();
-        
+
+        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView)findViewById(R.id.left_drawer);
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.drawable.ic_drawer, R.string.open_drawer, R.string.close_drawer);
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+
+        mDrawerItemTitles = getResources().getStringArray(R.array.drawer_items);
+        mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list_item, mDrawerItemTitles));
+        mDrawerList.setOnItemClickListener(mDrawerItemListener);
+
         mViewPager = (ViewPager) findViewById(R.id.pager);
 		FragmentManager fragmentManager = getSupportFragmentManager();
 		
@@ -273,9 +295,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 						InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 			            imm.hideSoftInputFromWindow(mViewPager.getApplicationWindowToken(), 0);
 					}
-					// Update indicator
-					channelsIndicator.setVisibility(arg0 == 0 ? View.VISIBLE : View.INVISIBLE);
-					chatIndicator.setVisibility(arg0 == 1 ? View.VISIBLE : View.INVISIBLE);
 				}
 				
 				@Override
@@ -284,30 +303,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 				@Override
 				public void onPageScrollStateChanged(int arg0) { }
 			});
-            
-            // Set up tabs
-            getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-            
-            View channelTabView = getLayoutInflater().inflate(R.layout.channel_tab_view, null);
-            channelsIndicator = channelTabView.findViewById(R.id.tab_channels_indicator);
-            chatIndicator = channelTabView.findViewById(R.id.tab_chat_indicator);
-            
-            ImageButton channelsButton = (ImageButton) channelTabView.findViewById(R.id.tab_channels);
-            ImageButton chatButton = (ImageButton) channelTabView.findViewById(R.id.tab_chat);
-            channelsButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					mViewPager.setCurrentItem(0, true);
-				}
-			});
-            chatButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					mViewPager.setCurrentItem(1, true);
-				}
-			});
-            
-            getSupportActionBar().setCustomView(channelTabView);
+
             // Setup a pager that will return a fragment for each of the two primary sections of the app.
             mSectionsPagerAdapter = new PlumbleSectionsPagerAdapter(this, getSupportFragmentManager(), listFragment, chatFragment);
             mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -326,7 +322,19 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			chatTarget = (User) savedInstanceState.getParcelable(SAVED_STATE_CHAT_TARGET);
         }
     }
-    
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
     // Settings observer
     @Override
     public void update(Observable observable, Object data) {
@@ -408,20 +416,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     public boolean onPrepareOptionsMenu(Menu menu) {
     	// Only show favourites and access tokens (DB-related) if the connected server has a DB representation (non-public).
     	MenuItem fullscreenItem = menu.findItem(R.id.menu_fullscreen);
-    	MenuItem favouritesViewItem = menu.findItem(R.id.menu_view_favorites_button);
-    	MenuItem accessTokensItem = menu.findItem(R.id.menu_access_tokens_button);
-    	
-    	userRegisterItem = menu.findItem(R.id.menu_user_register);
-    	userCommentItem = menu.findItem(R.id.menu_user_comment);
-    	userInformationItem = menu.findItem(R.id.menu_user_information);
-    	
-    	if(mService != null &&
-    			mService.getConnectedServer() != null) {
-    		
-    		favouritesViewItem.setVisible(!mService.isConnectedServerPublic());
-    		accessTokensItem.setVisible(!mService.isConnectedServerPublic());
-    	}
-    	
     	fullscreenItem.setVisible(mViewPager == null); // Only show fullscreen option if in tablet mode
     	
     	return super.onPrepareOptionsMenu(menu);
@@ -514,15 +508,63 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 		userCommentItem.setEnabled(userRegistered);
 		userInformationItem.setEnabled(userRegistered);
     }
+
+    /** Called when an item in the drawer is selected. */
+    private void selectItem(int position) {
+        switch (position) {
+            case 0: // Channels
+                mViewPager.setCurrentItem(0, true);
+                break;
+            case 1: // Chat
+                mViewPager.setCurrentItem(1, true);
+                break;
+            case 2: // Favorites
+                showFavouritesDialog();
+                break;
+            case 3: // Access Tokens
+                TokenDialogFragment dialogFragment = TokenDialogFragment.newInstance();
+                dialogFragment.show(getSupportFragmentManager(), "tokens");
+                break;
+            case 4: // Server Info
+                // TODO
+                Toast.makeText(this, R.string.coming_soon, Toast.LENGTH_SHORT).show();
+                break;
+            case 5: // Comment
+                // TODO
+                Toast.makeText(this, R.string.coming_soon, Toast.LENGTH_SHORT).show();
+                break;
+            case 6: // Register
+                new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        mService.registerSelf();
+                        return null;
+                    }
+
+                    protected void onPostExecute(Void result) {
+                        Toast.makeText(ChannelActivity.this, R.string.registerSelfSuccess, Toast.LENGTH_SHORT).show();
+                    };
+                }.execute();
+                break;
+        }
+        mDrawerLayout.closeDrawers();
+    }
     
     /* (non-Javadoc)
      * @see android.app.Activity#onOptionsItemSelected(android.view.MenuItem)
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-    	
     	switch (item.getItemId()) {
-		case R.id.menu_mute_button:
+            case android.R.id.home:
+                // FIXME Temporary fix while ABS does not have Drawer support.
+                if (mDrawerLayout.isDrawerOpen(Gravity.START)) {
+                    mDrawerLayout.closeDrawer(Gravity.START);
+                } else {
+                    mDrawerLayout.openDrawer(Gravity.START);
+                }
+                return true;
+            case R.id.menu_mute_button:
 			if(!mService.isMuted()) {
 				// Switching to muted
 				updateMuteDeafenMenuItems(true, mService.isDeafened());
@@ -553,50 +595,8 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 				fullscreenButton.setIcon(R.drawable.ic_action_fullscreen);
 			}
 			return true;
-		case R.id.menu_view_favorites_button:
-			showFavouritesDialog();
-			return true;
-		case R.id.menu_user_register:
-			new AsyncTask<Void, Void, Void>() {
-				@Override
-				protected Void doInBackground(Void... params) {
-					mService.registerSelf();
-					return null;
-				}
-				
-				protected void onPostExecute(Void result) {
-					Toast.makeText(ChannelActivity.this, R.string.registerSelfSuccess, Toast.LENGTH_SHORT).show();
-				};
-			}.execute();
-			return true;
-		case R.id.menu_user_comment:
-			// TODO
-			Toast.makeText(this, R.string.coming_soon, Toast.LENGTH_SHORT).show();
-			return true;
-		case R.id.menu_user_information:
-			// TODO
-			Toast.makeText(this, R.string.coming_soon, Toast.LENGTH_SHORT).show();
-			return true;
-		case R.id.menu_clear_chat:
-			mService.clearChat();
-			chatFragment.clear();
-			return true;
 		case R.id.menu_search:
 			return false;
-		case R.id.menu_access_tokens_button:
-			TokenDialogFragment dialogFragment = TokenDialogFragment.newInstance();
-			//if(mViewPager != null) {
-				// Phone
-				//getSupportFragmentManager().beginTransaction().replace(R.id.pager, dialogFragment).commit();
-			//} else {
-				// Tablet
-				dialogFragment.show(getSupportFragmentManager(), "tokens");
-			//}
-			return true;
-		case R.id.menu_amplifier:
-			AmplifierDialogFragment amplifierDialogFragment = AmplifierDialogFragment.newInstance();
-			amplifierDialogFragment.show(getSupportFragmentManager(), "amplifier");
-			return true;
 		case R.id.menu_preferences:
 			Intent intent = new Intent(this, Preferences.class);
 			startActivity(intent);
