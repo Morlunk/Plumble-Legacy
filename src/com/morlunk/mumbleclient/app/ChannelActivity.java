@@ -340,8 +340,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     }
     
     public void setPushToTalk(final boolean talking) {
-    	if(mService.isRecording() != talking)
-        	mService.setPushToTalk(talking);
+    	mService.setPushToTalk(talking);
     	
     	int pushToTalkBackground = mViewPager != null ? R.color.push_to_talk_background : 0; // Use special 'second action bar' look for background of paged.
     	

@@ -144,7 +144,6 @@ public class AudioInput implements Runnable, Observer {
 		Arrays.fill(buffer, (short) 0);
 		
 		recordThreadEnabled = true;
-		audioRecord.startRecording();
 
 		while (recordThreadEnabled &&
 				mService.isConnected()) {
@@ -262,9 +261,6 @@ public class AudioInput implements Runnable, Observer {
 				}
 			}
 		}
-		
-		if(audioRecord != null && isRecording())
-			audioRecord.stop();
 	}
 
 	/**
@@ -279,12 +275,13 @@ public class AudioInput implements Runnable, Observer {
 	 * thread is already active, do nothing.
 	 */
 	public void startRecording() {
-		if (recordThread != null || isRecording()) {
+		if (isRecording()) {
 			Log.w(Globals.LOG_TAG,
-					"Attempted to start recording while a RecordThread was still running!");
+					"Attempted to start recording while an AudioRecord was still running!");
 			return;
 		}
-		
+
+        audioRecord.startRecording();
 		recordThread = new Thread(this);
 		recordThread.start();
 	}
@@ -294,13 +291,14 @@ public class AudioInput implements Runnable, Observer {
 	 * active, do nothing.
 	 */
 	public void stopRecording() {
-		if (recordThread == null || !isRecording()) {
+		if (recordThread == null) {
 			Log.w(Globals.LOG_TAG,
 					"Attempted to stop recording when a RecordThread was not running!");
 			return;
 		}
 		
 		recordThreadEnabled = false;
+        audioRecord.stop();
 		recordThread = null;
 	}
 	
@@ -314,7 +312,12 @@ public class AudioInput implements Runnable, Observer {
 			return;
 		}
 		recordThreadEnabled = false;
-		recordThread.join();
+        audioRecord.stop();;
+        try {
+            recordThread.join();
+        } catch (InterruptedException e) {
+
+        }
 		recordThread = null;
 	}
 
