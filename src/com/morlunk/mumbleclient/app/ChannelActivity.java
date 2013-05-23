@@ -584,13 +584,8 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			return false;
 		case R.id.menu_access_tokens_button:
 			TokenDialogFragment dialogFragment = TokenDialogFragment.newInstance();
-			//if(mViewPager != null) {
-				// Phone
-				//getSupportFragmentManager().beginTransaction().replace(R.id.pager, dialogFragment).commit();
-			//} else {
-				// Tablet
-				dialogFragment.show(getSupportFragmentManager(), "tokens");
-			//}
+            dialogFragment.setShowsDialog(mViewPager == null);
+		    dialogFragment.show(getSupportFragmentManager(), "tokens");
 			return true;
 		case R.id.menu_amplifier:
 			AmplifierDialogFragment amplifierDialogFragment = AmplifierDialogFragment.newInstance();

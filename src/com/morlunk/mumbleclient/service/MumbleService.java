@@ -544,6 +544,20 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 	};
 
+    private BroadcastReceiver toggleOverlayReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Toggle overlay
+            if(mOverlay == null) {
+                mOverlay = new PlumbleOverlay(MumbleService.this);
+                mOverlay.show();
+            } else {
+                mOverlay.hide();
+                mOverlay = null;
+            }
+        }
+    };
+
 	public static final int CONNECTION_STATE_DISCONNECTED = 0;
 	public static final int CONNECTION_STATE_CONNECTING = 1;
 	public static final int CONNECTION_STATE_SYNCHRONIZING = 2;
@@ -556,6 +570,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	public static final String ACTION_MUTE = "mumbleclient.action.MUTE";
 	public static final String ACTION_DEAFEN = "mumbleclient.action.DEAFEN";
 	public static final String ACTION_CANCEL_RECONNECT = "mumbleclient.action.CANCEL_RECONNECT";
+    public static final String ACTION_TOGGLE_OVERLAY = "mumbleclient.action.TOGGLE_OVERLAY";
 
 	public static final String EXTRA_MESSAGE = "mumbleclient.extra.MESSAGE";
 	public static final String EXTRA_CONNECTION_STATE = "mumbleclient.extra.CONNECTION_STATE";
@@ -582,7 +597,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	private Timer reconnectTimer; // Timer to reconnect after forceful
 									// disconnection
 
-	private View overlayView; // Hot corner overlay view
+    private PlumbleOverlay mOverlay;
+	private View pttOverlayView; // Hot corner overlay view
 
 	private TextToSpeech tts;
 
@@ -928,6 +944,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				ACTION_DEAFEN));
 		registerReceiver(stopReconnectReceiver, new IntentFilter(
 				ACTION_CANCEL_RECONNECT));
+        registerReceiver(toggleOverlayReceiver, new IntentFilter(
+                ACTION_TOGGLE_OVERLAY));
 	}
 
 	@Override
@@ -937,7 +955,9 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		// Make sure our notification is gone.
 		hideNotification();
 
-		unregisterReceiver(stopReconnectReceiver);
+        unregisterReceiver(audioNotificationReceiver);
+        unregisterReceiver(stopReconnectReceiver);
+		unregisterReceiver(toggleOverlayReceiver);
 
 		Log.i(Globals.LOG_TAG, "MumbleService: Destroyed");
 
@@ -1106,6 +1126,12 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			mClientThread = null;
 		}
 
+        // Hide overlay
+        if(mOverlay != null) {
+            mOverlay.hide();
+            mOverlay = null;
+        }
+
 		// Remove PTT overlay and notification.
 		dismissPTTOverlay();
 		hideNotification();
@@ -1262,6 +1288,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		// Add notification triggers
 		Intent muteIntent = new Intent(ACTION_MUTE);
 		Intent deafenIntent = new Intent(ACTION_DEAFEN);
+        Intent overlayIntent = new Intent(ACTION_TOGGLE_OVERLAY);
 
 		builder.addAction(R.drawable.ic_action_microphone,
 				getString(R.string.mute), PendingIntent.getBroadcast(this, 1,
@@ -1269,6 +1296,9 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		builder.addAction(R.drawable.ic_action_headphones,
 				getString(R.string.deafen), PendingIntent.getBroadcast(this, 1,
 						deafenIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+        builder.addAction(R.drawable.ic_action_channels,
+                getString(R.string.overlay), PendingIntent.getBroadcast(this, 2,
+                        overlayIntent, PendingIntent.FLAG_CANCEL_CURRENT));
 
 		Intent channelListIntent = new Intent(MumbleService.this,
 				ChannelActivity.class);
@@ -1467,27 +1497,27 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 		WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
 		LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-		overlayView = inflater.inflate(R.layout.overlay, null);
+		pttOverlayView = inflater.inflate(R.layout.ptt_overlay, null);
 		final Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-		overlayView.setOnTouchListener(new View.OnTouchListener() {
+		pttOverlayView.setOnTouchListener(new View.OnTouchListener() {
 
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				if (event.getAction() == MotionEvent.ACTION_DOWN) {
-					setPushToTalk(true);
-					// Vibrate to provide haptic feedback
-					vibrator.vibrate(10);
-					overlayView.setBackgroundColor(0xAA33b5e5);
-				} else if (event.getAction() == MotionEvent.ACTION_UP) {
-					setPushToTalk(false);
-					overlayView.setBackgroundColor(0);
-				}
-				return false;
-			}
-		});
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    setPushToTalk(true);
+                    // Vibrate to provide haptic feedback
+                    vibrator.vibrate(10);
+                    pttOverlayView.setBackgroundColor(0xAA33b5e5);
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    setPushToTalk(false);
+                    pttOverlayView.setBackgroundColor(0);
+                }
+                return false;
+            }
+        });
 
 		// Add layout to window manager
-		wm.addView(overlayView, pttParams);
+		wm.addView(pttOverlayView, pttParams);
 	}
 
 	/**
@@ -1495,9 +1525,9 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	 */
 	public void dismissPTTOverlay() {
 		WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-		if (overlayView != null) {
+		if (pttOverlayView != null) {
 			try {
-				wm.removeView(overlayView);
+				wm.removeView(pttOverlayView);
 			} catch (Exception e) {
 				// We do a catchall here because removing a view from a
 				// WindowManager can be unreliable.

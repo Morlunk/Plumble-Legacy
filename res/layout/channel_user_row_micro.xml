@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/channel_user_row_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/channel_user_row_title"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:orientation="horizontal"
+        android:padding="4dp">
+
+        <ImageView
+            android:id="@+id/userRowState"
+            android:layout_width="24dp"
+            android:layout_height="match_parent"
+            android:src="@drawable/plumble" />
+
+        <TextView
+            android:id="@+id/userRowName"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:lines="1"
+            android:paddingLeft="10dp"
+            android:singleLine="true"
+            android:text="[Name]"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+</FrameLayout>

@@ -145,6 +145,7 @@
     <string name="search_channel_users">%d users</string>
     <string name="reconnecting">Reconnecting in %d seconds.</string>
     <string name="tapToReconnect">Tap to reconnect</string>
+    <string name="overlay">Overlay</string>
     
     <string name="hint_ptt">Push to Talk</string>
     <string name="hint_ptt_summary">Simply press this button down to talk. Double-tap to toggle it.</string>

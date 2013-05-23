@@ -10,7 +10,7 @@
 		android:layout_height="fill_parent"
 		android:layout_width="fill_parent"
 		android:gravity="center"
-		android:columnWidth="240dp"
+		android:columnWidth="320dp"
 		android:numColumns="auto_fit"
 		android:verticalSpacing="10dp"
 		android:horizontalSpacing="10dp"
