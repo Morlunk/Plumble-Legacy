@@ -25,7 +25,6 @@ typedef enum {
 	Native_celt_1encoder_1destroy_FUNC,
 	Native_celt_1mode_1create_FUNC,
 	Native_celt_1mode_1destroy_FUNC,
-	Native_speex_1echo_1cancellation_FUNC,
 	Native_speex_1echo_1capture_FUNC,
 	Native_speex_1echo_1ctl_FUNC,
 	Native_speex_1echo_1playback_FUNC,

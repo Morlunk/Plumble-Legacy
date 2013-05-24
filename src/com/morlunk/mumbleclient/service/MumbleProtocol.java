@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.morlunk.mumbleclient.service.audio.EchoCanceller;
 import net.sf.mumble.MumbleProto.Authenticate;
 import net.sf.mumble.MumbleProto.ChannelRemove;
 import net.sf.mumble.MumbleProto.ChannelState;
@@ -86,6 +87,7 @@ public class MumbleProtocol {
 	private final Context ctx;
 
 	private AudioOutput ao;
+    private EchoCanceller mEchoCanceller;
 	private Thread audioOutputThread;
 	private Thread pingThread;
 
@@ -98,9 +100,11 @@ public class MumbleProtocol {
 		final MumbleProtocolHost host,
 		final AudioOutputHost audioHost,
 		final MumbleConnection connection,
+        final EchoCanceller echoCanceller,
 		final Context ctx) {
 		this.host = host;
 		this.audioHost = audioHost;
+        mEchoCanceller = echoCanceller;
 		this.conn = connection;
 		this.ctx = ctx;
 
@@ -235,7 +239,7 @@ public class MumbleProtocol {
 					conn.sendTcpMessage(MessageType.UDPTunnel, tunnelBuilder);
 				}
 
-				ao = new AudioOutput(ctx, audioHost);
+				ao = new AudioOutput(ctx, audioHost, mEchoCanceller);
 				audioOutputThread = new Thread(ao, "audio output");
 				audioOutputThread.start();
 			}

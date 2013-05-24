@@ -12,10 +12,10 @@ extern SpeexResamplerState *speex_resampler_init(unsigned int nb_channels, unsig
 
 extern SpeexEchoState *speex_echo_state_init (int frame_size, int filter_length);
 extern void speex_echo_state_destroy (SpeexEchoState *st);
-extern void speex_echo_cancellation (SpeexEchoState *st, const unsigned int *rec, const unsigned int *play, unsigned int *out);
-extern void speex_echo_cancel (SpeexEchoState *st, const unsigned int *rec, const unsigned int *play, unsigned int *out, unsigned int *Yout);
-extern void speex_echo_capture (SpeexEchoState *st, const unsigned int *rec, unsigned int *out);
-extern void speex_echo_playback (SpeexEchoState *st, const unsigned int *play);
+extern void speex_echo_cancellation (SpeexEchoState *st, const short *rec, const short *play, short *out);
+extern void speex_echo_cancel (SpeexEchoState *st, const short *rec, const short *play, short *out, int *Yout);
+extern void speex_echo_capture (SpeexEchoState *st, const short *rec, short *out);
+extern void speex_echo_playback (SpeexEchoState *st, const short *play);
 extern void speex_echo_state_reset (SpeexEchoState *st);
 extern int speex_echo_ctl (SpeexEchoState *st, int request, void *ptr);
 

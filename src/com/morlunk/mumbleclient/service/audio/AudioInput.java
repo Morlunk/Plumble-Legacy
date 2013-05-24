@@ -9,6 +9,8 @@ import android.annotation.SuppressLint;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
+import android.media.audiofx.AcousticEchoCanceler;
+import android.os.Build;
 import android.util.Log;
 
 import com.morlunk.mumbleclient.Globals;
@@ -53,6 +55,7 @@ public class AudioInput implements Runnable, Observer {
 	private long opusEncoder;
 
 	private final MumbleService mService;
+    private final EchoCanceller mEchoCanceller;
 	private final int framesPerPacket = 6;
 	private final LinkedList<byte[]> outputQueue = new LinkedList<byte[]>();
 	private final short[] resampleBuffer = new short[MumbleProtocol.FRAME_SIZE];
@@ -67,8 +70,9 @@ public class AudioInput implements Runnable, Observer {
 	private boolean recordThreadEnabled;
 
 	@SuppressLint({ "InlinedApi", "NewApi" })
-	public AudioInput(final MumbleService service, final int codec) {
+	public AudioInput(final MumbleService service, final EchoCanceller echoCanceller, final int codec) {
 		mService = service;
+        mEchoCanceller = echoCanceller;
 		this.codec = codec;
 
 		Settings settings = Settings.getInstance(service);
@@ -128,13 +132,6 @@ public class AudioInput implements Runnable, Observer {
 		audioRecord = new AudioRecord(AudioSource.MIC, recordingSampleRate,
 				AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
 				bufferSize);
-
-		/*
-		if(VERSION.SDK_INT >= 16 && AcousticEchoCanceler.isAvailable()) {
-			Log.d(Globals.LOG_TAG, "Enabled echo cancellation. "+audioRecord.getAudioSessionId());
-			AcousticEchoCanceler.create(audioRecord.getAudioSessionId());
-		}
-		*/
 	}
 
 	@Override
@@ -164,6 +161,10 @@ public class AudioInput implements Runnable, Observer {
 			} else {
 				out = buffer;
 			}
+
+            // Filter echo
+            if(mEchoCanceller != null)
+                out = mEchoCanceller.cancelEcho(out);
 
 			long totalAmplitude = 0;
 
@@ -282,6 +283,7 @@ public class AudioInput implements Runnable, Observer {
 		}
 
         audioRecord.startRecording();
+
 		recordThread = new Thread(this);
 		recordThread.start();
 	}

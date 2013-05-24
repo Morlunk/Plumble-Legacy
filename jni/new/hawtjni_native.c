@@ -119,56 +119,42 @@ JNIEXPORT void JNICALL Native_NATIVE(celt_1mode_1destroy)
 	Native_NATIVE_EXIT(env, that, Native_celt_1mode_1destroy_FUNC);
 }
 
-JNIEXPORT void JNICALL Native_NATIVE(speex_1echo_1cancellation)
-	(JNIEnv *env, jclass that, jlong arg0, jintArray arg1, jintArray arg2, jintArray arg3)
-{
-	jint *lparg1=NULL;
-	jint *lparg2=NULL;
-	jint *lparg3=NULL;
-	Native_NATIVE_ENTER(env, that, Native_speex_1echo_1cancellation_FUNC);
-	if (arg1) if ((lparg1 = (*env)->GetIntArrayElements(env, arg1, NULL)) == NULL) goto fail;
-	if (arg2) if ((lparg2 = (*env)->GetIntArrayElements(env, arg2, NULL)) == NULL) goto fail;
-	if (arg3) if ((lparg3 = (*env)->GetIntArrayElements(env, arg3, NULL)) == NULL) goto fail;
-	speex_echo_cancellation((SpeexEchoState *)(intptr_t)arg0, lparg1, lparg2, lparg3);
-fail:
-	if (arg3 && lparg3) (*env)->ReleaseIntArrayElements(env, arg3, lparg3, 0);
-	if (arg2 && lparg2) (*env)->ReleaseIntArrayElements(env, arg2, lparg2, JNI_ABORT);
-	if (arg1 && lparg1) (*env)->ReleaseIntArrayElements(env, arg1, lparg1, JNI_ABORT);
-	Native_NATIVE_EXIT(env, that, Native_speex_1echo_1cancellation_FUNC);
-}
-
 JNIEXPORT void JNICALL Native_NATIVE(speex_1echo_1capture)
-	(JNIEnv *env, jclass that, jlong arg0, jintArray arg1, jintArray arg2)
+	(JNIEnv *env, jclass that, jlong arg0, jshortArray arg1, jshortArray arg2)
 {
-	jint *lparg1=NULL;
-	jint *lparg2=NULL;
+	jshort *lparg1=NULL;
+	jshort *lparg2=NULL;
 	Native_NATIVE_ENTER(env, that, Native_speex_1echo_1capture_FUNC);
-	if (arg1) if ((lparg1 = (*env)->GetIntArrayElements(env, arg1, NULL)) == NULL) goto fail;
-	if (arg2) if ((lparg2 = (*env)->GetIntArrayElements(env, arg2, NULL)) == NULL) goto fail;
+	if (arg1) if ((lparg1 = (*env)->GetShortArrayElements(env, arg1, NULL)) == NULL) goto fail;
+	if (arg2) if ((lparg2 = (*env)->GetShortArrayElements(env, arg2, NULL)) == NULL) goto fail;
 	speex_echo_capture((SpeexEchoState *)(intptr_t)arg0, lparg1, lparg2);
 fail:
-	if (arg2 && lparg2) (*env)->ReleaseIntArrayElements(env, arg2, lparg2, 0);
-	if (arg1 && lparg1) (*env)->ReleaseIntArrayElements(env, arg1, lparg1, JNI_ABORT);
+	if (arg2 && lparg2) (*env)->ReleaseShortArrayElements(env, arg2, lparg2, 0);
+	if (arg1 && lparg1) (*env)->ReleaseShortArrayElements(env, arg1, lparg1, JNI_ABORT);
 	Native_NATIVE_EXIT(env, that, Native_speex_1echo_1capture_FUNC);
 }
 
 JNIEXPORT void JNICALL Native_NATIVE(speex_1echo_1ctl)
-	(JNIEnv *env, jclass that, jlong arg0, jint arg1, jint arg2)
+	(JNIEnv *env, jclass that, jlong arg0, jint arg1, jlongArray arg2)
 {
+	jlong *lparg2=NULL;
 	Native_NATIVE_ENTER(env, that, Native_speex_1echo_1ctl_FUNC);
-	speex_echo_ctl((SpeexEchoState *)(intptr_t)arg0, arg1, (void *)arg2);
+	if (arg2) if ((lparg2 = (*env)->GetLongArrayElements(env, arg2, NULL)) == NULL) goto fail;
+	speex_echo_ctl((SpeexEchoState *)(intptr_t)arg0, arg1, lparg2);
+fail:
+	if (arg2 && lparg2) (*env)->ReleaseLongArrayElements(env, arg2, lparg2, 0);
 	Native_NATIVE_EXIT(env, that, Native_speex_1echo_1ctl_FUNC);
 }
 
 JNIEXPORT void JNICALL Native_NATIVE(speex_1echo_1playback)
-	(JNIEnv *env, jclass that, jlong arg0, jintArray arg1)
+	(JNIEnv *env, jclass that, jlong arg0, jshortArray arg1)
 {
-	jint *lparg1=NULL;
+	jshort *lparg1=NULL;
 	Native_NATIVE_ENTER(env, that, Native_speex_1echo_1playback_FUNC);
-	if (arg1) if ((lparg1 = (*env)->GetIntArrayElements(env, arg1, NULL)) == NULL) goto fail;
+	if (arg1) if ((lparg1 = (*env)->GetShortArrayElements(env, arg1, NULL)) == NULL) goto fail;
 	speex_echo_playback((SpeexEchoState *)(intptr_t)arg0, lparg1);
 fail:
-	if (arg1 && lparg1) (*env)->ReleaseIntArrayElements(env, arg1, lparg1, JNI_ABORT);
+	if (arg1 && lparg1) (*env)->ReleaseShortArrayElements(env, arg1, lparg1, JNI_ABORT);
 	Native_NATIVE_EXIT(env, that, Native_speex_1echo_1playback_FUNC);
 }
 

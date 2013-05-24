@@ -13,6 +13,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.morlunk.mumbleclient.service.audio.EchoCanceller;
 import junit.framework.Assert;
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.UserRemove;
@@ -590,6 +591,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 	private Thread mClientThread;
 	private AudioInput mAudioInput;
+    private EchoCanceller mEchoCanceller;
 
 	private NotificationCompat.Builder mStatusNotificationBuilder;
 	private NotificationCompat.Builder mDisconnectNotificationBuilder;
@@ -1024,8 +1026,10 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				certificatePath, certificatePassword, settings.isTcpForced(),
 				settings.isOpusDisabled());
 
+        mEchoCanceller = EchoCanceller.initialize();
+
 		mProtocol = new MumbleProtocol(mProtocolHost, mAudioHost, mClient,
-				getApplicationContext());
+				mEchoCanceller, getApplicationContext());
 
 		mClientThread = mClient.start(mProtocol);
 
@@ -1045,7 +1049,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			sendAccessTokens();
 
             // Initialize audio input
-            mAudioInput = new AudioInput(this, mProtocol.codec);
+            mAudioInput = new AudioInput(this, mEchoCanceller, mProtocol.codec);
             if (settings.isVoiceActivity())
                 mAudioInput.startRecording(); // Immediately begin record if using voice activity
 
@@ -1100,6 +1104,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				mAudioInput = null;
 			}
 		}
+
+        if(mEchoCanceller != null) {
+            mEchoCanceller.destroy();
+            mEchoCanceller = null;
+        }
 
 		// Stop threads.
 		if (mProtocol != null) {

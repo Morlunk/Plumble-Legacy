@@ -43,6 +43,7 @@ public class AudioOutput implements Runnable {
 	private final Settings settings;
 
 	private boolean shouldRun;
+    private final EchoCanceller mEchoCanceller;
 	private final AudioTrack at;
 	private final int bufferSize;
 	private final int minBufferSize;
@@ -58,9 +59,10 @@ public class AudioOutput implements Runnable {
 
 	private final AudioOutputHost host;
 
-	public AudioOutput(final Context ctx, final AudioOutputHost host) {
+	public AudioOutput(final Context ctx, final AudioOutputHost host, final EchoCanceller echoCanceller) {
 		this.settings = Settings.getInstance(ctx);
 		this.host = host;
+        mEchoCanceller = echoCanceller;
 		
 		String callMode = settings.getCallMode();
 		int stream = AudioManager.STREAM_MUSIC;
@@ -137,7 +139,7 @@ public class AudioOutput implements Runnable {
 	}
 
 	private void audioLoop() throws InterruptedException {
-		final short[] out = new short[MumbleProtocol.FRAME_SIZE*12];
+		final short[] out = new short[MumbleProtocol.FRAME_SIZE];
 		final List<AudioUser> mix = new LinkedList<AudioUser>();
 
 		int buffered = 0;
@@ -154,16 +156,10 @@ public class AudioOutput implements Runnable {
 					!host.isDeafened()) {
 				// Mix all the frames into one array.
 				mix(out, mix);
-				
-				// Trim the mix, removing unused samples by selecting the longest frame size.
-				int mixSize = 0;
-				for(AudioUser user : mix)
-					mixSize = Math.max(mixSize, user.bufferSize);
-				
-				short[] clippedOut = new short[mixSize];
-				System.arraycopy(out, 0, clippedOut, 0, mixSize);
-				
-				at.write(out, 0, mixSize);
+
+                if(mEchoCanceller != null)
+                    mEchoCanceller.addPlaybackFrame(out);
+				at.write(out, 0, out.length);
 
 				// Make sure we are playing when there are enough samples
 				// buffered.
@@ -237,7 +233,7 @@ public class AudioOutput implements Runnable {
 		}
 
 		// Clip buffer for real output.
-		for (int i = 0; i < MumbleProtocol.FRAME_SIZE*12; i++) {
+		for (int i = 0; i < MumbleProtocol.FRAME_SIZE; i++) {
 			clipOut[i] = (short) (Short.MAX_VALUE * (tempMix[i] < -1.0f ? -1.0f
 				: (tempMix[i] > 1.0f ? 1.0f : tempMix[i])));
 		}
