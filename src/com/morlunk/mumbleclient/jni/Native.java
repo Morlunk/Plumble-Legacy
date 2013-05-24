@@ -49,4 +49,16 @@ public class Native {
 	public final static native long speex_resampler_init(long nb_channels, long in_rate, long out_rate, int quality);
 	public final static native void speex_resampler_destroy(@JniArg(cast = "SpeexResamplerState *") long st);
 	public final static native int speex_resampler_process_int(@JniArg(cast = "SpeexResamplerState *") long st, int channel_index, @JniArg(flags = {NO_OUT}) short[] in, int[] in_len, @JniArg(flags = {NO_IN}) short[] out, int[] out_len);
+
+    /*
+     * Echo cancellation.
+     */
+
+    @JniMethod(cast = "SpeexEchoState *")
+    public final static native long speex_echo_state_init(int frame_size, int filter_length);
+    public final static native void speex_echo_state_destroy(@JniArg(cast = "SpeexEchoState *")long st);
+    public final static native void speex_echo_cancellation(@JniArg(cast = "SpeexEchoState *")long st, @JniArg(flags = {NO_OUT}) int[] rec, @JniArg(flags = {NO_OUT}) int[] play, @JniArg(flags = {NO_IN}) int[] out);
+    public final static native void speex_echo_capture(@JniArg(cast = "SpeexEchoState *")long st, @JniArg(flags = {NO_OUT}) int[] rec, @JniArg(flags = {NO_IN}) int[] out);
+    public final static native void speex_echo_ctl(@JniArg(cast = "SpeexEchoState *")long st, int request, @JniArg(cast = "void *") int value);
+    public final static native void speex_echo_playback(@JniArg(cast = "SpeexEchoState *")long st, @JniArg(flags = {NO_OUT}) int[] play);
 }

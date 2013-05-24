@@ -6,8 +6,18 @@
 #include <stdlib.h>
 #include <jni.h>
 
+typedef struct SpeexEchoState SpeexEchoState;
 typedef struct SpeexResamplerState SpeexResamplerState;
 extern SpeexResamplerState *speex_resampler_init(unsigned int nb_channels, unsigned int in_rate, unsigned int out_rate, int quality, int *err);
+
+extern SpeexEchoState *speex_echo_state_init (int frame_size, int filter_length);
+extern void speex_echo_state_destroy (SpeexEchoState *st);
+extern void speex_echo_cancellation (SpeexEchoState *st, const unsigned int *rec, const unsigned int *play, unsigned int *out);
+extern void speex_echo_cancel (SpeexEchoState *st, const unsigned int *rec, const unsigned int *play, unsigned int *out, unsigned int *Yout);
+extern void speex_echo_capture (SpeexEchoState *st, const unsigned int *rec, unsigned int *out);
+extern void speex_echo_playback (SpeexEchoState *st, const unsigned int *play);
+extern void speex_echo_state_reset (SpeexEchoState *st);
+extern int speex_echo_ctl (SpeexEchoState *st, int request, void *ptr);
 
 typedef struct JitterBuffer JitterBuffer;
 typedef struct _JitterBufferPacket JitterBufferPacket;

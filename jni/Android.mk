@@ -182,8 +182,9 @@ LOCAL_SRC_FILES		:= cb_search.c		exc_10_32_table.c 	exc_8_128_table.c 	filters.c
 					   exc_5_64_table.c	gain_table_lbr.c 	hexc_10_32_table.c	lpc.c \
 					   lsp_tables_nb.c 	modes.c 			modes_wb.c 			nb_celp.c \
 					   quant_lsp.c		sb_celp.c			speex_callbacks.c 	speex_header.c \
-					   window.c			resample.c			jitter.c
-LOCAL_CFLAGS		:= -I$(LOCAL_PATH)/../include -D__EMX__ -DFIXED_POINT -DEXPORT=''
+					   window.c			resample.c			jitter.c            preprocess.c \
+					   mdf.c            kiss_fft.c          kiss_fftr.c         fftwrap.c
+LOCAL_CFLAGS		:= -I$(LOCAL_PATH)/../include -D__EMX__ -DUSE_KISS_FFT -DFIXED_POINT -DEXPORT=''
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
