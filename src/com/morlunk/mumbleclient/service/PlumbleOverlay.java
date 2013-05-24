@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.RemoteException;
-import android.os.Vibrator;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
@@ -41,6 +40,12 @@ public class PlumbleOverlay {
             super.onUserTalkingUpdated(user);
             mAdapter.notifyDataSetChanged();
         }
+
+        @Override
+        public void onUserUpdated(User user) throws RemoteException {
+            super.onUserUpdated(user);
+            mAdapter.notifyDataSetChanged();
+        }
     };
 
     public PlumbleOverlay(MumbleService service) {
@@ -69,7 +74,7 @@ public class PlumbleOverlay {
 
         TextView titleBar = (TextView)mOverlayView.findViewById(R.id.overlay_title);
 
-        mListView.setOnTouchListener(new View.OnTouchListener() {
+        titleBar.setOnTouchListener(new View.OnTouchListener() {
 
             private int offsetX = 0;
             private int offsetY = 0;
@@ -83,9 +88,8 @@ public class PlumbleOverlay {
                     params.x = (int) motionEvent.getRawX() - offsetX;
                     params.y = (int) motionEvent.getRawY() - offsetY;
                     windowManager.updateViewLayout(mOverlayView, params);
-                    return true;
                 }
-                return false;
+                return true;
             }
         });
         ImageView talkButton = (ImageView)mOverlayView.findViewById(R.id.overlay_talk);
@@ -102,11 +106,11 @@ public class PlumbleOverlay {
             }
         });
 
-        ImageView closeButton = (ImageView)mOverlayView.findViewById(R.id.overlay_close);
-        closeButton.setOnClickListener(new View.OnClickListener() {
+        ImageView shrinkButton = (ImageView)mOverlayView.findViewById(R.id.overlay_shrink);
+        shrinkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mService.sendBroadcast(new Intent(MumbleService.ACTION_TOGGLE_OVERLAY));
+                mListView.setVisibility(mListView.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
             }
         });
 
@@ -153,7 +157,24 @@ public class PlumbleOverlay {
 
             User user = getItem(i);
             nameView.setText(user.name);
-            stateView.setImageResource(user.talkingState == User.TALKINGSTATE_TALKING ? R.drawable.ic_talking_on : R.drawable.ic_talking_off);
+
+            if (user.selfDeafened) {
+                stateView.setImageResource(R.drawable.ic_deafened);
+            } else if (user.selfMuted) {
+                stateView.setImageResource(R.drawable.ic_muted);
+            } else if (user.serverDeafened) {
+                stateView.setImageResource(R.drawable.ic_server_deafened);
+            } else if (user.serverMuted) {
+                stateView.setImageResource(R.drawable.ic_server_muted);
+            } else if (user.suppressed) {
+                stateView.setImageResource(R.drawable.ic_suppressed);
+            } else {
+                if (user.talkingState == User.TALKINGSTATE_TALKING) {
+                    stateView.setImageResource(R.drawable.ic_talking_on);
+                } else {
+                    stateView.setImageResource(R.drawable.ic_talking_off);
+                }
+            }
 
             return view;
         }
