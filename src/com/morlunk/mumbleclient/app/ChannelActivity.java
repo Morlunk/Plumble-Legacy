@@ -186,23 +186,16 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     	// Bind to service
     	Intent serviceIntent = new Intent(this, MumbleService.class);
 		bindService(serviceIntent, conn, 0);
-        
+
         // Handle differences in CallMode
-        
+
         String callMode = settings.getCallMode();
-        
-        if(callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
-    		setVolumeControlStream(AudioManager.STREAM_MUSIC);
-        } else if(callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
-        	setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
-        }
+
+        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
     	
     	// Set up proximity sensor
     	PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
     	proximityLock = powerManager.newWakeLock(PROXIMITY_SCREEN_OFF_WAKE_LOCK, Globals.LOG_TAG);
-        
-        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_IN_CALL);
         
         // Set up PTT button.
     	
@@ -553,8 +546,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			}
 			return true;
 		case R.id.menu_view_favorites_button:
-            mService.enableBluetooth();
-			//showFavouritesDialog();
+			showFavouritesDialog();
 			return true;
 		case R.id.menu_user_register:
 			new AsyncTask<Void, Void, Void>() {
@@ -588,6 +580,13 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
             dialogFragment.setShowsDialog(mViewPager == null);
 		    dialogFragment.show(getSupportFragmentManager(), "tokens");
 			return true;
+        case R.id.menu_bluetooth:
+            item.setChecked(!item.isChecked());
+            if(item.isChecked())
+                mService.enableBluetooth();
+            else
+                mService.disableBluetooth();
+            break;
 		case R.id.menu_amplifier:
 			AmplifierDialogFragment amplifierDialogFragment = AmplifierDialogFragment.newInstance();
 			amplifierDialogFragment.show(getSupportFragmentManager(), "amplifier");

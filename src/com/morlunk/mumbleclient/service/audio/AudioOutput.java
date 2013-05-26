@@ -54,21 +54,13 @@ public class AudioOutput implements Runnable {
 	 * Buffer used to hold temporary float values while mixing multiple
 	 * inputs. Only for use in the audio thread.
 	 */
-	final float[] tempMix = new float[MumbleProtocol.FRAME_SIZE];
+	final float[] tempMix = new float[MumbleProtocol.FRAME_SIZE*12];
 
 	private final AudioOutputHost host;
 
 	public AudioOutput(final Context ctx, final AudioOutputHost host) {
 		this.settings = Settings.getInstance(ctx);
 		this.host = host;
-		
-		String callMode = settings.getCallMode();
-		int stream = AudioManager.STREAM_MUSIC;
-		//if(callMode.equals(Settings.ARRAY_CALL_MODE_SPEAKER)) {
-		//	stream = AudioManager.STREAM_MUSIC;
-		//} else if(callMode.equals(Settings.ARRAY_CALL_MODE_VOICE)) {
-			stream = AudioManager.STREAM_VOICE_CALL;
-		//}
 
 		minBufferSize = AudioTrack.getMinBufferSize(
 			MumbleProtocol.SAMPLE_RATE,
@@ -85,11 +77,11 @@ public class AudioOutput implements Runnable {
 		bufferSize = frameCount * (MumbleProtocol.FRAME_SIZE);
 
 		at = new AudioTrack(
-			stream,
+			AudioManager.STREAM_VOICE_CALL,
 			MumbleProtocol.SAMPLE_RATE,
 			AudioFormat.CHANNEL_OUT_MONO,
 			AudioFormat.ENCODING_PCM_16BIT,
-			bufferSize,
+			bufferSize*2,
 			AudioTrack.MODE_STREAM);
 
 		// Set this here so this.start(); this.shouldRun = false; doesn't

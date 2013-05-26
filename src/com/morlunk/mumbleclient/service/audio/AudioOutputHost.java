@@ -10,4 +10,5 @@ public interface AudioOutputHost {
 	public void setSelfMuted(User user, boolean muted);
 	public void setSelfDeafened(User user, boolean deafened);
 	public boolean isDeafened();
+    public boolean isBluetoothActive();
 }

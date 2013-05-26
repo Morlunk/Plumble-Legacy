@@ -446,7 +446,7 @@ public class MumbleProtocol {
 	}
 
     public void setupAudioOutput() {
-        if(audioOutputThread != null) {
+        if(ao != null && audioOutputThread != null) {
             ao.stop();
             try {
                 audioOutputThread.join();

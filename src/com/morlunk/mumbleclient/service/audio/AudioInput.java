@@ -117,6 +117,7 @@ public class AudioInput implements Runnable, Observer {
 					celtConstants.CELT_SET_VBR_RATE_REQUEST, audioQuality);
 		}
 
+
 		if (recordingSampleRate != TARGET_SAMPLE_RATE) {
 			Log.d(Globals.LOG_TAG, "Initializing Speex resampler.");
 			speexResamplerState = Native.speex_resampler_init(1,
@@ -312,12 +313,12 @@ public class AudioInput implements Runnable, Observer {
 			return;
 		}
 		recordThreadEnabled = false;
-        audioRecord.stop();;
         try {
             recordThread.join();
         } catch (InterruptedException e) {
 
         }
+        audioRecord.stop();
 		recordThread = null;
 	}
 

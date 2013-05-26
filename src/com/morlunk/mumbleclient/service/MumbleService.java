@@ -174,7 +174,12 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				return true; // Assume deafened, we don't want audio playing if
 								// we're not connected yet.
 		}
-	}
+
+        @Override
+        public boolean isBluetoothActive() {
+            return MumbleService.this.isBluetoothActive();
+        }
+    }
 
 	public class ServiceConnectionHost extends AbstractHost implements
 			MumbleConnectionHost {
@@ -568,13 +573,12 @@ public class MumbleService extends Service implements OnInitListener, Observer {
         public void onReceive(Context context, Intent intent) {
             int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
             if(state == AudioManager.SCO_AUDIO_STATE_CONNECTED) {
-                setupAudioInput();
-                mProtocol.setupAudioOutput();
+                bluetoothConnected = true;
+                setupAudioInput(); // Reconfigure audio input. I believe audio output will automatically readjust to headset. (if MODE_IN_CALL is set)
             } else if(state == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
-                if(isConnected()) {
+                if(isConnected())
                     setupAudioInput();
-                    mProtocol.setupAudioOutput();
-                }
+                bluetoothConnected = false;
                 unregisterReceiver(this);
             }
         }
@@ -638,6 +642,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	int state;
 	boolean synced;
 	int serviceState;
+    private boolean bluetoothConnected = false;
 
 	/** @category Disconnect */
 	private DisconnectReason disconnectReason;
@@ -1063,7 +1068,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
         if(mAudioInput != null) {
             try {
                 mAudioInput.stopRecordingAndBlock();
-                mAudioInput = null;
+                mAudioInput.shutdown();
             } catch(InterruptedException e) {
                 e.printStackTrace();
             }
@@ -1075,6 +1080,10 @@ public class MumbleService extends Service implements OnInitListener, Observer {
     }
 
 	private void onConnected() {
+        AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_IN_CALL);
+        audioManager.setSpeakerphoneOn(true);
+
 		settings.addObserver(this);
 		serviceState = synced ? CONNECTION_STATE_CONNECTED
 				: CONNECTION_STATE_SYNCHRONIZING;
@@ -1133,6 +1142,9 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				mAudioInput = null;
 			}
 		}
+
+        AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_NORMAL);
 
         // Disable bluetooth, if active
         disableBluetooth();
@@ -1274,12 +1286,20 @@ public class MumbleService extends Service implements OnInitListener, Observer {
     public void enableBluetooth() {
         registerReceiver(bluetoothReceiver, new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
         AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+        audioManager.setSpeakerphoneOn(false);
+        audioManager.setBluetoothScoOn(true);
         audioManager.startBluetoothSco();
     }
 
     public void disableBluetooth() {
         AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
-        audioManager.stopBluetoothSco(); // Will unregister receiver from callback
+        audioManager.setBluetoothScoOn(false);
+        audioManager.stopBluetoothSco();
+        audioManager.setSpeakerphoneOn(true);
+    }
+
+    public boolean isBluetoothActive() {
+        return bluetoothConnected;
     }
 
 

@@ -1,5 +1,7 @@
 package com.morlunk.mumbleclient.service;
 
+import android.util.Log;
+import com.morlunk.mumbleclient.Globals;
 import net.sf.mumble.MumbleProto.Ping;
 
 class PingThread implements Runnable {
@@ -42,7 +44,7 @@ class PingThread implements Runnable {
 				p.setResync(cs.uiResync);
 				
 				mc.sendTcpMessage(MumbleProtocol.MessageType.Ping, p);
-				Thread.sleep(5000);
+                Thread.sleep(5000);
 			} catch (final InterruptedException e) {
 				e.printStackTrace();
 				running = false;
