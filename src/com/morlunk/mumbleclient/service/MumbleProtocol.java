@@ -453,8 +453,6 @@ public class MumbleProtocol {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            ao = null;
-            audioOutputThread = null;
         }
         ao = new AudioOutput(ctx, audioHost);
         audioOutputThread = new Thread(ao, "audio output");

@@ -568,8 +568,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
         public void onReceive(Context context, Intent intent) {
             int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
             if(state == AudioManager.SCO_AUDIO_STATE_CONNECTED) {
-                AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
-                audioManager.setMode(AudioManager.MODE_IN_CALL);
                 setupAudioInput();
                 mProtocol.setupAudioOutput();
             } else if(state == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
@@ -1277,13 +1275,11 @@ public class MumbleService extends Service implements OnInitListener, Observer {
         registerReceiver(bluetoothReceiver, new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
         AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
         audioManager.startBluetoothSco();
-        audioManager.setBluetoothScoOn(true);
     }
 
     public void disableBluetooth() {
         AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
         audioManager.stopBluetoothSco(); // Will unregister receiver from callback
-        audioManager.setBluetoothScoOn(false);
     }
 
 
