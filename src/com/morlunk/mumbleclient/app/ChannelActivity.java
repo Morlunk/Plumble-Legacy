@@ -553,7 +553,8 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			}
 			return true;
 		case R.id.menu_view_favorites_button:
-			showFavouritesDialog();
+            mService.enableBluetooth();
+			//showFavouritesDialog();
 			return true;
 		case R.id.menu_user_register:
 			new AsyncTask<Void, Void, Void>() {

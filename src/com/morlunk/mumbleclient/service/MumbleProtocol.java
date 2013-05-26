@@ -159,6 +159,7 @@ public class MumbleProtocol {
 			break;
 		case Ping:
 			Ping msg = Ping.parseFrom(buffer);
+
 			CryptState cryptState = conn.cryptState;
 			cryptState.uiRemoteGood = msg.getGood();
 			cryptState.uiRemoteLate = msg.getLate();
@@ -234,10 +235,7 @@ public class MumbleProtocol {
 					tunnelBuilder.setPacket(ByteString.EMPTY);
 					conn.sendTcpMessage(MessageType.UDPTunnel, tunnelBuilder);
 				}
-
-				ao = new AudioOutput(ctx, audioHost);
-				audioOutputThread = new Thread(ao, "audio output");
-				audioOutputThread.start();
+                setupAudioOutput();
 			}
 			
 			Log.d(Globals.LOG_TAG, ">>> " + t);
@@ -446,6 +444,22 @@ public class MumbleProtocol {
 			Log.w(Globals.LOG_TAG, "unhandled message type " + t);
 		}
 	}
+
+    public void setupAudioOutput() {
+        if(audioOutputThread != null) {
+            ao.stop();
+            try {
+                audioOutputThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            ao = null;
+            audioOutputThread = null;
+        }
+        ao = new AudioOutput(ctx, audioHost);
+        audioOutputThread = new Thread(ao, "audio output");
+        audioOutputThread.start();
+    }
 	
 	private void sortChannelUsers(List<User> users) {
 		// Sort alphabetically

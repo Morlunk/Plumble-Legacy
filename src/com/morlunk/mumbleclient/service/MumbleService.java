@@ -13,6 +13,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import android.annotation.TargetApi;
+import android.media.AudioManager;
 import junit.framework.Assert;
 import net.sf.mumble.MumbleProto.Reject;
 import net.sf.mumble.MumbleProto.UserRemove;
@@ -558,6 +560,28 @@ public class MumbleService extends Service implements OnInitListener, Observer {
         }
     };
 
+    /**
+     * Listens for AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED
+     */
+    private BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
+            if(state == AudioManager.SCO_AUDIO_STATE_CONNECTED) {
+                AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+                audioManager.setMode(AudioManager.MODE_IN_CALL);
+                setupAudioInput();
+                mProtocol.setupAudioOutput();
+            } else if(state == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
+                if(isConnected()) {
+                    setupAudioInput();
+                    mProtocol.setupAudioOutput();
+                }
+                unregisterReceiver(this);
+            }
+        }
+    };
+
 	public static final int CONNECTION_STATE_DISCONNECTED = 0;
 	public static final int CONNECTION_STATE_CONNECTING = 1;
 	public static final int CONNECTION_STATE_SYNCHRONIZING = 2;
@@ -1036,6 +1060,22 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		tts = new TextToSpeech(this, this);
 	}
 
+    private void setupAudioInput() {
+        // Disable old thread, if exists
+        if(mAudioInput != null) {
+            try {
+                mAudioInput.stopRecordingAndBlock();
+                mAudioInput = null;
+            } catch(InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        // Initialize audio input
+        mAudioInput = new AudioInput(this, mProtocol.codec);
+        if (settings.isVoiceActivity())
+            mAudioInput.startRecording(); // Immediately begin record if using voice activity
+    }
+
 	private void onConnected() {
 		settings.addObserver(this);
 		serviceState = synced ? CONNECTION_STATE_CONNECTED
@@ -1043,12 +1083,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 
 		if (synced) {
 			sendAccessTokens();
-
-            // Initialize audio input
-            mAudioInput = new AudioInput(this, mProtocol.codec);
-            if (settings.isVoiceActivity())
-                mAudioInput.startRecording(); // Immediately begin record if using voice activity
-
+            setupAudioInput();
 			if (settings.isDeafened()) {
 				setDeafened(true);
 			} else if (settings.isMuted()) {
@@ -1100,6 +1135,9 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				mAudioInput = null;
 			}
 		}
+
+        // Disable bluetooth, if active
+        disableBluetooth();
 
 		// Stop threads.
 		if (mProtocol != null) {
@@ -1233,6 +1271,21 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 			settings.setMutedAndDeafened(state, state);
 		}
 	}
+
+    @TargetApi(8)
+    public void enableBluetooth() {
+        registerReceiver(bluetoothReceiver, new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
+        AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+        audioManager.startBluetoothSco();
+        audioManager.setBluetoothScoOn(true);
+    }
+
+    public void disableBluetooth() {
+        AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+        audioManager.stopBluetoothSco(); // Will unregister receiver from callback
+        audioManager.setBluetoothScoOn(false);
+    }
+
 
 	public void updateNotificationState(User user) {
 		boolean muted = user.selfMuted;
