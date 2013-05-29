@@ -6,17 +6,13 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
+import android.content.*;
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.SearchManager;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -114,6 +110,22 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			finish();
 		}
 	};
+
+    /**
+     * Monitor bluetooth changes.
+     */
+    private final BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(isInitialStickyBroadcast())
+                return;
+
+            boolean scoOn = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, AudioManager.SCO_AUDIO_STATE_ERROR) == AudioManager.SCO_AUDIO_STATE_CONNECTED;
+
+            if(bluetoothItem != null)
+                bluetoothItem.setChecked(scoOn);
+        }
+    };
 	
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide fragments for each of the
@@ -133,7 +145,9 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     private View chatIndicator;
     
     private MenuItem fullscreenButton;
-    
+
+    private MenuItem bluetoothItem;
+
     // Favourites
     private MenuItem searchItem;
     private MenuItem mutedButton;
@@ -186,6 +200,9 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     	// Bind to service
     	Intent serviceIntent = new Intent(this, MumbleService.class);
 		bindService(serviceIntent, conn, 0);
+
+        // Register bluetooth SCO monitor
+        registerReceiver(bluetoothReceiver, new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
 
         // Handle differences in CallMode
 
@@ -388,6 +405,9 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     	// Unbind to service
 		mService.unregisterObserver(mObserver);
 		unbindService(conn);
+
+        // Unregister bluetooth receiver
+        unregisterReceiver(bluetoothReceiver);
 		
 		listFragment.notifyServiceUnbound();
 		chatFragment.notifyServiceUnbound();
@@ -417,7 +437,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 
         // Show whether or not SCO is enabled
         AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
-        MenuItem bluetoothItem = menu.findItem(R.id.menu_bluetooth);
+        bluetoothItem = menu.findItem(R.id.menu_bluetooth);
         bluetoothItem.setChecked(audioManager.isBluetoothScoOn());
 
     	return super.onPrepareOptionsMenu(menu);
