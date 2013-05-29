@@ -174,11 +174,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				return true; // Assume deafened, we don't want audio playing if
 								// we're not connected yet.
 		}
-
-        @Override
-        public boolean isBluetoothActive() {
-            return MumbleService.this.isBluetoothActive();
-        }
     }
 
 	public class ServiceConnectionHost extends AbstractHost implements
@@ -566,19 +561,24 @@ public class MumbleService extends Service implements OnInitListener, Observer {
     };
 
     /**
-     * Listens for AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED
+     * Listens for AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED
      */
-    private BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
+            if(isInitialStickyBroadcast())
+                return; // Only listen for changes
+
+            int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, AudioManager.SCO_AUDIO_STATE_ERROR);
+            Log.d(Globals.LOG_TAG, "SCO enabled: "+state);
             if(state == AudioManager.SCO_AUDIO_STATE_CONNECTED) {
-                bluetoothConnected = true;
-                setupAudioInput(); // Reconfigure audio input. I believe audio output will automatically readjust to headset. (if MODE_IN_CALL is set)
+                mProtocol.setupAudioOutput(true);
+                setupAudioInput(); // Reconfigure audio input.
             } else if(state == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
-                if(isConnected())
+                if(isConnected()) {
+                    mProtocol.setupAudioOutput(false);
                     setupAudioInput();
-                bluetoothConnected = false;
+                }
                 unregisterReceiver(this);
             }
         }
@@ -642,7 +642,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 	int state;
 	boolean synced;
 	int serviceState;
-    private boolean bluetoothConnected = false;
 
 	/** @category Disconnect */
 	private DisconnectReason disconnectReason;
@@ -1080,10 +1079,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
     }
 
 	private void onConnected() {
-        AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_IN_CALL);
-        audioManager.setSpeakerphoneOn(true);
-
 		settings.addObserver(this);
 		serviceState = synced ? CONNECTION_STATE_CONNECTED
 				: CONNECTION_STATE_SYNCHRONIZING;
@@ -1142,9 +1137,6 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 				mAudioInput = null;
 			}
 		}
-
-        AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_NORMAL);
 
         // Disable bluetooth, if active
         disableBluetooth();
@@ -1285,23 +1277,19 @@ public class MumbleService extends Service implements OnInitListener, Observer {
     @TargetApi(8)
     public void enableBluetooth() {
         registerReceiver(bluetoothReceiver, new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
+        Log.d(Globals.LOG_TAG, "Starting bluetooth SCO");
         AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
-        audioManager.setSpeakerphoneOn(false);
         audioManager.setBluetoothScoOn(true);
         audioManager.startBluetoothSco();
     }
 
+    @TargetApi(8)
     public void disableBluetooth() {
+        Log.d(Globals.LOG_TAG, "Ending bluetooth SCO");
         AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
         audioManager.setBluetoothScoOn(false);
         audioManager.stopBluetoothSco();
-        audioManager.setSpeakerphoneOn(true);
     }
-
-    public boolean isBluetoothActive() {
-        return bluetoothConnected;
-    }
-
 
 	public void updateNotificationState(User user) {
 		boolean muted = user.selfMuted;

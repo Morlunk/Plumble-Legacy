@@ -235,7 +235,7 @@ public class MumbleProtocol {
 					tunnelBuilder.setPacket(ByteString.EMPTY);
 					conn.sendTcpMessage(MessageType.UDPTunnel, tunnelBuilder);
 				}
-                setupAudioOutput();
+                setupAudioOutput(false);
 			}
 			
 			Log.d(Globals.LOG_TAG, ">>> " + t);
@@ -445,7 +445,7 @@ public class MumbleProtocol {
 		}
 	}
 
-    public void setupAudioOutput() {
+    public void setupAudioOutput(boolean bluetoothConnected) {
         if(ao != null && audioOutputThread != null) {
             ao.stop();
             try {
@@ -454,7 +454,7 @@ public class MumbleProtocol {
                 e.printStackTrace();
             }
         }
-        ao = new AudioOutput(ctx, audioHost);
+        ao = new AudioOutput(ctx, audioHost, bluetoothConnected);
         audioOutputThread = new Thread(ao, "audio output");
         audioOutputThread.start();
     }

@@ -58,9 +58,18 @@ public class AudioOutput implements Runnable {
 
 	private final AudioOutputHost host;
 
-	public AudioOutput(final Context ctx, final AudioOutputHost host) {
+	public AudioOutput(final Context ctx, final AudioOutputHost host, final boolean bluetoothConnected) {
 		this.settings = Settings.getInstance(ctx);
 		this.host = host;
+
+        Log.d(Globals.LOG_TAG, "Setting up audio output with bluetooth "+bluetoothConnected);
+
+        int audioStream;
+        if(bluetoothConnected || Settings.ARRAY_CALL_MODE_VOICE.equals(settings.getCallMode())) {
+            audioStream = AudioManager.STREAM_VOICE_CALL;
+        } else {
+            audioStream = AudioManager.STREAM_MUSIC;
+        }
 
 		minBufferSize = AudioTrack.getMinBufferSize(
 			MumbleProtocol.SAMPLE_RATE,
@@ -77,7 +86,7 @@ public class AudioOutput implements Runnable {
 		bufferSize = frameCount * (MumbleProtocol.FRAME_SIZE);
 
 		at = new AudioTrack(
-			AudioManager.STREAM_VOICE_CALL,
+			audioStream,
 			MumbleProtocol.SAMPLE_RATE,
 			AudioFormat.CHANNEL_OUT_MONO,
 			AudioFormat.ENCODING_PCM_16BIT,

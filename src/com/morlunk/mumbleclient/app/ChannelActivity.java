@@ -190,8 +190,7 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
         // Handle differences in CallMode
 
         String callMode = settings.getCallMode();
-
-        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+        setVolumeControlStream(Settings.ARRAY_CALL_MODE_SPEAKER.equals(callMode) ? AudioManager.STREAM_MUSIC : AudioManager.STREAM_VOICE_CALL);
     	
     	// Set up proximity sensor
     	PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
@@ -415,7 +414,12 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     	}
     	
     	fullscreenItem.setVisible(mViewPager == null); // Only show fullscreen option if in tablet mode
-    	
+
+        // Show whether or not SCO is enabled
+        AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+        MenuItem bluetoothItem = menu.findItem(R.id.menu_bluetooth);
+        bluetoothItem.setChecked(audioManager.isBluetoothScoOn());
+
     	return super.onPrepareOptionsMenu(menu);
     }
     
