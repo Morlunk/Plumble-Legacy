@@ -2,11 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.morlunk.mumbleclient"
     android:installLocation="auto"
-    android:versionCode="43"
-    android:versionName="2.0.0" >
+    android:versionCode="44"
+    android:versionName="2.0.0a" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="7"
         android:targetSdkVersion="18" />
     <uses-feature android:name="android.hardware.microphone" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />

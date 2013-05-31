@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.*;
 import net.sf.mumble.MumbleProto.PermissionDenied.DenyType;
 import android.annotation.SuppressLint;
@@ -435,10 +436,16 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
     	
     	fullscreenItem.setVisible(mViewPager == null); // Only show fullscreen option if in tablet mode
 
-        // Show whether or not SCO is enabled
-        AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        // SCO only supported on 2.2+
         bluetoothItem = menu.findItem(R.id.menu_bluetooth);
-        bluetoothItem.setChecked(audioManager.isBluetoothScoOn());
+        if(VERSION.SDK_INT >= Build.VERSION_CODES.FROYO && bluetoothAdapter != null) {
+            // Show whether or not SCO is enabled
+            AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+            bluetoothItem.setChecked(audioManager.isBluetoothScoOn());
+        } else {
+            bluetoothItem.setVisible(false);
+        }
 
     	return super.onPrepareOptionsMenu(menu);
     }
