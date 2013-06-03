@@ -1,8 +1,17 @@
+/*
+ * Copyright (C) 2013 Andrew Comminos
+ *
+ * Licensed under the
+ *
+ */
+
 package com.morlunk.mumbleclient.service.audio;
 
 import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import android.util.Log;
 
@@ -14,12 +23,7 @@ import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.PacketDataStream;
 import com.morlunk.mumbleclient.service.model.User;
 
-/**
- * Thread safe buffer for audio data.
- * Implements audio queue and decoding.
- *
- * @author pcgod, Rantanen
- */
+
 public class AudioUser {
 	public interface PacketReadyHandler {
 		public void packetReady(AudioUser user);
@@ -30,9 +34,11 @@ public class AudioUser {
 	private long mOpusDecoder;
 
     private long mJitterBuffer;
+    private final Lock mJitterLock = new ReentrantLock(true);
 
     private final Queue<byte[]> mFrames = new ConcurrentLinkedQueue<byte[]>();
-	private final int mCodec;
+	private final Queue<byte[]> mDataArrayPool = new ConcurrentLinkedQueue<byte[]>(); // Use this queue to keep frames in memory (no gc)
+    private final int mCodec;
     private int mFrameSize = MumbleProtocol.FRAME_SIZE;
     private int mAudioBufferSize;
     private int mConsumedSamples;
@@ -64,13 +70,12 @@ public class AudioUser {
         mJitterBuffer = Native.jitter_buffer_init(mFrameSize);
         int margin = 10 * mFrameSize;
         Native.jitter_buffer_ctl(mJitterBuffer, Native.JITTER_BUFFER_SET_MARGIN, new int[] { margin });
-
-		Log.i(Globals.LOG_TAG, "AudioUser created");
 	}
 
 	public boolean addFrameToBuffer(
 		final PacketDataStream pds,
 		final PacketReadyHandler readyHandler) {
+        mJitterLock.lock();
 
 		final int packetHeader = pds.next();
 
@@ -115,6 +120,7 @@ public class AudioUser {
 
         if(!pds.isValid()) {
             Log.e(Globals.LOG_TAG, "Invalid packet data stream used when adding frame to buffer!");
+            mJitterLock.unlock();
             return false;
         }
 
@@ -122,6 +128,8 @@ public class AudioUser {
         pds.rewind();
         byte[] data = new byte[pds.capacity()];
         pds.dataBlock(data, pds.capacity());
+
+        mDataArrayPool.add(data);
 
         final JitterBufferPacket jbp = new JitterBufferPacket();
         jbp.data = data;
@@ -131,6 +139,8 @@ public class AudioUser {
 
         Native.jitter_buffer_put(mJitterBuffer, jbp);
         readyHandler.packetReady(this);
+
+        mJitterLock.unlock();
 		
 		return true;
 	}
@@ -161,7 +171,24 @@ public class AudioUser {
                 // If this is a new frame, clear the buffer
                 Arrays.fill(mBuffer, 0);
             } else {
+
+                int avail = 0;
+
+                mJitterLock.lock();
+                int ts = Native.jitter_buffer_get_pointer_timestamp(mJitterBuffer);
+                Native.jitter_buffer_ctl(mJitterBuffer, Native.JITTER_BUFFER_GET_AVAILABLE_COUNT, new int[] { avail });
+                mJitterLock.unlock();
+
+                if(ts == 0) {
+                    if(mMissedFrames < 20) {
+                        Arrays.fill(output, 0);
+                        mBufferFilled += decodedSamples;
+                        continue;
+                    }
+                }
+
                 if(mFrames.size() == 0) {
+                    mJitterLock.lock();
                     byte[] data = new byte[4096];
 
                     JitterBufferPacket jbp = new JitterBufferPacket();
@@ -210,10 +237,13 @@ public class AudioUser {
                         if(mMissedFrames > 10)
                             nextAlive = false;
                     }
+                    mJitterLock.unlock();
                 }
 
                 if(mFrames.size() > 0) {
                     byte[] frameData = mFrames.poll();
+
+                    Log.i(Globals.LOG_TAG, "Frame data from JBP: "+Arrays.toString(frameData));
 
                     if(mCodec == MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS)  {
                         decodedSamples = NativeAudio.opusDecodeFloat(mOpusDecoder, frameData, frameData.length, output, mAudioBufferSize, 0);
@@ -231,9 +261,11 @@ public class AudioUser {
 
                 Log.d(Globals.LOG_TAG, "Decoded: " + decodedSamples);
 
+                mJitterLock.lock();
                 for(int i=0; i < decodedSamples/mFrameSize; i++) {
                     Native.jitter_buffer_tick(mJitterBuffer); // Tick for each sample decoded
                 }
+                mJitterLock.unlock();
             }
 
             mBufferFilled += decodedSamples;

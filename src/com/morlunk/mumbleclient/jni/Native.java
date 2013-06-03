@@ -27,7 +27,7 @@ public class Native {
 	}
 
     public static final int JITTER_BUFFER_BAD_ARGUMENT = -2;
-    public static final int JITTER_BUFFER_GET_AVALIABLE_COUNT = 3;
+    public static final int JITTER_BUFFER_GET_AVAILABLE_COUNT = 3;
     public static final int JITTER_BUFFER_GET_MARGIN = 1;
     public static final int JITTER_BUFFER_INCOMPLETE = 2;
     public static final int JITTER_BUFFER_INTERNAL_ERROR = -1;
