@@ -20,11 +20,20 @@ public class Native {
 	public static class JitterBufferPacket {
 		public byte[] data;
 		public int len;
-		public int timestamp;
+		public long timestamp;
 		public int span;
 		public short sequence;
 		public int user_data;
 	}
+
+    public static final int JITTER_BUFFER_BAD_ARGUMENT = -2;
+    public static final int JITTER_BUFFER_GET_AVALIABLE_COUNT = 3;
+    public static final int JITTER_BUFFER_GET_MARGIN = 1;
+    public static final int JITTER_BUFFER_INCOMPLETE = 2;
+    public static final int JITTER_BUFFER_INTERNAL_ERROR = -1;
+    public static final int JITTER_BUFFER_MISSING = 1;
+    public static final int JITTER_BUFFER_OK = 0;
+    public static final int JITTER_BUFFER_SET_MARGIN = 0;
 
 	@JniMethod(accessor = "wrap_celt_mode_create", cast = "CELTMode *")
 	public final static native long celt_mode_create(int Fs, int frame_size);
@@ -51,7 +60,7 @@ public class Native {
 	public final static native int speex_resampler_process_int(@JniArg(cast = "SpeexResamplerState *") long st, int channel_index, @JniArg(flags = {NO_OUT}) short[] in, int[] in_len, @JniArg(flags = {NO_IN}) short[] out, int[] out_len);
 
     /*
-     * Echo cancellation.
+     * Echo cancellation
      */
 
     @JniMethod(cast = "SpeexEchoState *")
@@ -61,4 +70,18 @@ public class Native {
     public final static native void speex_echo_capture(@JniArg(cast = "SpeexEchoState *")long st, @JniArg(flags = {NO_OUT}) int[] rec, @JniArg(flags = {NO_IN}) int[] out);
     public final static native void speex_echo_ctl(@JniArg(cast = "SpeexEchoState *")long st, int request, @JniArg(cast = "void *") int value);
     public final static native void speex_echo_playback(@JniArg(cast = "SpeexEchoState *")long st, @JniArg(flags = {NO_OUT}) int[] play);
+
+    /*
+     * Jitter buffer
+     */
+    @JniMethod(cast = "JitterBuffer *")
+    public final static native long jitter_buffer_init(int tick);
+    public final static native void jitter_buffer_reset(@JniArg(cast = "JitterBuffer *")long st);
+    public final static native void jitter_buffer_destroy(@JniArg(cast = "JitterBuffer *")long st);
+    public final static native void jitter_buffer_put(@JniArg(cast = "JitterBuffer *")long st, JitterBufferPacket packet);
+    public final static native int jitter_buffer_get(@JniArg(cast = "JitterBuffer *")long st, JitterBufferPacket packet, int[] startOffset);
+    public final static native int jitter_buffer_get_pointer_timestamp(@JniArg(cast = "JitterBuffer *")long st);
+    public final static native void jitter_buffer_tick(@JniArg(cast = "JitterBuffer *")long st);
+    public final static native void jitter_buffer_ctl(@JniArg(cast = "JitterBuffer *")long st, int request, int[] ptr);
+    public final static native int jitter_buffer_update_delay(@JniArg(cast = "JitterBuffer *")long st, JitterBufferPacket packet, int[] offset);
 }

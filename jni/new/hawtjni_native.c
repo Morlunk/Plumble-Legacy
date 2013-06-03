@@ -119,6 +119,108 @@ JNIEXPORT void JNICALL Native_NATIVE(celt_1mode_1destroy)
 	Native_NATIVE_EXIT(env, that, Native_celt_1mode_1destroy_FUNC);
 }
 
+JNIEXPORT void JNICALL Native_NATIVE(jitter_1buffer_1ctl)
+	(JNIEnv *env, jclass that, jlong arg0, jint arg1, jintArray arg2)
+{
+	jint *lparg2=NULL;
+	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1ctl_FUNC);
+	if (arg2) if ((lparg2 = (*env)->GetIntArrayElements(env, arg2, NULL)) == NULL) goto fail;
+	jitter_buffer_ctl((JitterBuffer *)(intptr_t)arg0, arg1, lparg2);
+fail:
+	if (arg2 && lparg2) (*env)->ReleaseIntArrayElements(env, arg2, lparg2, 0);
+	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1ctl_FUNC);
+}
+
+JNIEXPORT void JNICALL Native_NATIVE(jitter_1buffer_1destroy)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1destroy_FUNC);
+	jitter_buffer_destroy((JitterBuffer *)(intptr_t)arg0);
+	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1destroy_FUNC);
+}
+
+JNIEXPORT jint JNICALL Native_NATIVE(jitter_1buffer_1get)
+	(JNIEnv *env, jclass that, jlong arg0, jobject arg1, jintArray arg2)
+{
+	JitterBufferPacket _arg1, *lparg1=NULL;
+	jint *lparg2=NULL;
+	jint rc = 0;
+	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1get_FUNC);
+	if (arg1) if ((lparg1 = getJitterBufferPacketFields(env, arg1, &_arg1)) == NULL) goto fail;
+	if (arg2) if ((lparg2 = (*env)->GetIntArrayElements(env, arg2, NULL)) == NULL) goto fail;
+	rc = jitter_buffer_get((JitterBuffer *)(intptr_t)arg0, lparg1, lparg2);
+fail:
+	if (arg2 && lparg2) (*env)->ReleaseIntArrayElements(env, arg2, lparg2, 0);
+	if (arg1 && lparg1) setJitterBufferPacketFields(env, arg1, lparg1);
+	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1get_FUNC);
+	return rc;
+}
+
+JNIEXPORT jint JNICALL Native_NATIVE(jitter_1buffer_1get_1pointer_1timestamp)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jint rc = 0;
+	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1get_1pointer_1timestamp_FUNC);
+	rc = jitter_buffer_get_pointer_timestamp((JitterBuffer *)(intptr_t)arg0);
+	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1get_1pointer_1timestamp_FUNC);
+	return rc;
+}
+
+JNIEXPORT jlong JNICALL Native_NATIVE(jitter_1buffer_1init)
+	(JNIEnv *env, jclass that, jint arg0)
+{
+	jlong rc = 0;
+	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1init_FUNC);
+	rc = (intptr_t)(JitterBuffer *)jitter_buffer_init(arg0);
+	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1init_FUNC);
+	return rc;
+}
+
+JNIEXPORT void JNICALL Native_NATIVE(jitter_1buffer_1put)
+	(JNIEnv *env, jclass that, jlong arg0, jobject arg1)
+{
+	JitterBufferPacket _arg1, *lparg1=NULL;
+	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1put_FUNC);
+	if (arg1) if ((lparg1 = getJitterBufferPacketFields(env, arg1, &_arg1)) == NULL) goto fail;
+	jitter_buffer_put((JitterBuffer *)(intptr_t)arg0, lparg1);
+fail:
+	if (arg1 && lparg1) setJitterBufferPacketFields(env, arg1, lparg1);
+	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1put_FUNC);
+}
+
+JNIEXPORT void JNICALL Native_NATIVE(jitter_1buffer_1reset)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1reset_FUNC);
+	jitter_buffer_reset((JitterBuffer *)(intptr_t)arg0);
+	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1reset_FUNC);
+}
+
+JNIEXPORT void JNICALL Native_NATIVE(jitter_1buffer_1tick)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1tick_FUNC);
+	jitter_buffer_tick((JitterBuffer *)(intptr_t)arg0);
+	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1tick_FUNC);
+}
+
+JNIEXPORT jint JNICALL Native_NATIVE(jitter_1buffer_1update_1delay)
+	(JNIEnv *env, jclass that, jlong arg0, jobject arg1, jintArray arg2)
+{
+	JitterBufferPacket _arg1, *lparg1=NULL;
+	jint *lparg2=NULL;
+	jint rc = 0;
+	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1update_1delay_FUNC);
+	if (arg1) if ((lparg1 = getJitterBufferPacketFields(env, arg1, &_arg1)) == NULL) goto fail;
+	if (arg2) if ((lparg2 = (*env)->GetIntArrayElements(env, arg2, NULL)) == NULL) goto fail;
+	rc = jitter_buffer_update_delay((JitterBuffer *)(intptr_t)arg0, lparg1, lparg2);
+fail:
+	if (arg2 && lparg2) (*env)->ReleaseIntArrayElements(env, arg2, lparg2, 0);
+	if (arg1 && lparg1) setJitterBufferPacketFields(env, arg1, lparg1);
+	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1update_1delay_FUNC);
+	return rc;
+}
+
 JNIEXPORT void JNICALL Native_NATIVE(speex_1echo_1cancellation)
 	(JNIEnv *env, jclass that, jlong arg0, jintArray arg1, jintArray arg2, jintArray arg3)
 {

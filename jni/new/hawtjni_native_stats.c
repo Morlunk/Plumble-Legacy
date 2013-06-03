@@ -4,8 +4,8 @@
 
 #ifdef NATIVE_STATS
 
-int Native_nativeFunctionCount = 19;
-int Native_nativeFunctionCallCount[19];
+int Native_nativeFunctionCount = 28;
+int Native_nativeFunctionCallCount[28];
 char * Native_nativeFunctionNames[] = {
 	"celt_1decode",
 	"celt_1decode_1float",
@@ -17,6 +17,15 @@ char * Native_nativeFunctionNames[] = {
 	"celt_1encoder_1destroy",
 	"celt_1mode_1create",
 	"celt_1mode_1destroy",
+	"jitter_1buffer_1ctl",
+	"jitter_1buffer_1destroy",
+	"jitter_1buffer_1get",
+	"jitter_1buffer_1get_1pointer_1timestamp",
+	"jitter_1buffer_1init",
+	"jitter_1buffer_1put",
+	"jitter_1buffer_1reset",
+	"jitter_1buffer_1tick",
+	"jitter_1buffer_1update_1delay",
 	"speex_1echo_1cancellation",
 	"speex_1echo_1capture",
 	"speex_1echo_1ctl",

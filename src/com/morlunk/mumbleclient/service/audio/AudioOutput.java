@@ -90,7 +90,7 @@ public class AudioOutput implements Runnable {
 			MumbleProtocol.SAMPLE_RATE,
 			AudioFormat.CHANNEL_OUT_MONO,
 			AudioFormat.ENCODING_PCM_16BIT,
-			bufferSize*2,
+			bufferSize,
 			AudioTrack.MODE_STREAM);
 
 		// Set this here so this.start(); this.shouldRun = false; doesn't
@@ -108,7 +108,7 @@ public class AudioOutput implements Runnable {
 		int codecVersion = header >> 5 & 0x7;
 		pds.rewind();
 		AudioUser user = users.get(u);
-		if (user == null || user.codec != codecVersion) {
+		if (user == null || user.getCodec() != codecVersion) {
 			user = new AudioUser(u, codecVersion);
 			users.put(u, user);
 			// Don't add the user to userPackets yet. The collection should
@@ -155,16 +155,8 @@ public class AudioOutput implements Runnable {
 					!host.isDeafened()) {
 				// Mix all the frames into one array.
 				mix(out, mix);
-				
-				// Trim the mix, removing unused samples by selecting the longest frame size.
-				int mixSize = 0;
-				for(AudioUser user : mix)
-					mixSize = Math.max(mixSize, user.bufferSize);
-				
-				short[] clippedOut = new short[mixSize];
-				System.arraycopy(out, 0, clippedOut, 0, mixSize);
-				
-				at.write(out, 0, mixSize);
+
+				at.write(out, 0, out.length);
 
 				// Make sure we are playing when there are enough samples
 				// buffered.
@@ -205,7 +197,7 @@ public class AudioOutput implements Runnable {
 			final Iterator<AudioUser> i = userPackets.values().iterator();
 			while (i.hasNext()) {
 				final AudioUser user = i.next();
-				if (user.hasBuffer()) {
+				if (user.needSamples(minBufferSize)) {
 					if(!user.getUser().localMuted) {
 						mix.add(user);
 						if(user.getUser().talkingState != AudioOutputHost.STATE_TALKING) {
@@ -232,8 +224,8 @@ public class AudioOutput implements Runnable {
 
 		// Sum the buffers.
 		for (final AudioUser user : mix) {
-			for (int i = 0; i < user.bufferSize; i++) {
-				tempMix[i] += user.buffer[i];
+			for (int i = 0; i < MumbleProtocol.FRAME_SIZE*12; i++) {
+				tempMix[i] += user.getBuffer()[i];
 			}
 		}
 

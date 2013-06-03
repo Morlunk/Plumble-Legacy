@@ -1,5 +1,6 @@
 package com.morlunk.mumbleclient.service.audio;
 
+import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -23,41 +24,46 @@ public class AudioUser {
 	public interface PacketReadyHandler {
 		public void packetReady(AudioUser user);
 	}
+	
+	private long mCeltMode;
+	private long mCeltDecoder;
+	private long mOpusDecoder;
 
-	private final Queue<Native.JitterBufferPacket> normalBuffer;
-	
-	private long celtMode;
-	private long celtDecoder;
-	
-	private long opusDecoder;
-	
-	private final Queue<byte[]> dataArrayPool = new ConcurrentLinkedQueue<byte[]>();
-	final int codec;
-	float[] buffer;
-	int frameSize = MumbleProtocol.FRAME_SIZE; // The size of the last parsed frame
-	int bufferSize = MumbleProtocol.FRAME_SIZE; // The size of the buffer required before 
-	int bufferIndex = 0; // The position of the latest frame in the buffer. For opus.
-	private final User user;
+    private long mJitterBuffer;
 
-	private int missedFrames = 0;
+    private final Queue<byte[]> mFrames = new ConcurrentLinkedQueue<byte[]>();
+	private final int mCodec;
+    private int mFrameSize = MumbleProtocol.FRAME_SIZE;
+    private int mAudioBufferSize;
+    private int mConsumedSamples;
+    private int mBufferFilled;
+    private int mMissedFrames;
+    private boolean mHasTerminator = false;
+    private boolean mLastAlive = true;
+
+    private float[] mBuffer = null;
+
+	private final User mUser;
 
 	public AudioUser(final User user, final int codec) {
-		this.user = user;
-		this.codec = codec;
+		mUser = user;
+		mCodec = codec;
 
 		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
-			celtMode = Native.celt_mode_create(
+            mAudioBufferSize = mFrameSize;
+			mCeltMode = Native.celt_mode_create(
 					MumbleProtocol.SAMPLE_RATE,
 					MumbleProtocol.FRAME_SIZE);
-			celtDecoder = Native.celt_decoder_create(celtMode, 1);
+			mCeltDecoder = Native.celt_decoder_create(mCeltMode, 1);
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
-			bufferSize *= 12; // With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
-			opusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
+			// With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
+            mAudioBufferSize = mFrameSize*12;
+			mOpusDecoder = NativeAudio.opusDecoderCreate(mAudioBufferSize, 1);
 		}
-		
-		buffer = new float[bufferSize];
-		
-		normalBuffer = new ConcurrentLinkedQueue<Native.JitterBufferPacket>();
+
+        mJitterBuffer = Native.jitter_buffer_init(mFrameSize);
+        int margin = 10 * mFrameSize;
+        Native.jitter_buffer_ctl(mJitterBuffer, Native.JITTER_BUFFER_SET_MARGIN, new int[] { margin });
 
 		Log.i(Globals.LOG_TAG, "AudioUser created");
 	}
@@ -65,10 +71,6 @@ public class AudioUser {
 	public boolean addFrameToBuffer(
 		final PacketDataStream pds,
 		final PacketReadyHandler readyHandler) {
-		
-		if(pds.capacity() < 2) {
-			return false;
-		}
 
 		final int packetHeader = pds.next();
 
@@ -85,156 +87,205 @@ public class AudioUser {
 			return false;
 		}
 
-		/* long session = */pds.readLong();
-		/* final long sequence = */ pds.readLong();
+		long session = pds.readLong();
+		long sequence = pds.readLong();
 		
 		int samples = 0;
 
-		byte[] data = null;
-
-		if(codec == MumbleProtocol.CODEC_OPUS) {
+		if(mCodec == MumbleProtocol.CODEC_OPUS) {
 			long header = pds.readLong();
 			int size = (int) (header & ((1 << 13) - 1));
 			if(size > 0) {
-				data = new byte[size];
+				byte[] data = new byte[size];
 				pds.dataBlock(data, size);
 				int frames = NativeAudio.opusPacketGetFrames(data, size);
 				samples = frames * NativeAudio.opusPacketGetSamplesPerFrame(data, MumbleProtocol.SAMPLE_RATE);
 				
 				if(samples % MumbleProtocol.FRAME_SIZE != 0)
 					return false; // All samples must be divisible by the frame size.
-				
-				//Log.i(Globals.LOG_TAG, "DEBUG: "+samples+" samples, "+frames+" frames");
-				
-				if(pds.isValid()) {
-					JitterBufferPacket jbp = new JitterBufferPacket();
-					jbp.data = data;
-					jbp.len = size;
-					jbp.span = samples;
-					
-					normalBuffer.add(jbp);
-					readyHandler.packetReady(this);
-				}
 			}
 		} else {
-			int dataHeader = 0;
+			int header = 0;
 			do {			
-				dataHeader = pds.next();
-				int dataLength = dataHeader & 0x7f;
-				if (dataLength > 0) {
-					data = acquireDataArray();
-					pds.dataBlock(data, dataLength);
-
-					final Native.JitterBufferPacket jbp = new Native.JitterBufferPacket();
-					jbp.data = data;
-					jbp.len = dataLength;
-					jbp.span = 480;
-					
-					normalBuffer.add(jbp);
-
-					readyHandler.packetReady(this);
-					//frameCount++;
-
-				}
-			} while ((dataHeader & 0x80) > 0 && pds.isValid());
+				header = pds.next();
+                samples += mFrameSize;
+                pds.skip(header & 0x7f);
+			} while ((header & 0x80) > 0 && pds.isValid());
 		}
+
+        if(!pds.isValid()) {
+            Log.e(Globals.LOG_TAG, "Invalid packet data stream used when adding frame to buffer!");
+            return false;
+        }
+
+        // Rewind and get all data
+        pds.rewind();
+        byte[] data = new byte[pds.capacity()];
+        pds.dataBlock(data, pds.capacity());
+
+        final JitterBufferPacket jbp = new JitterBufferPacket();
+        jbp.data = data;
+        jbp.len = data.length;
+        jbp.span = samples;
+        jbp.timestamp = sequence * mFrameSize;
+
+        Native.jitter_buffer_put(mJitterBuffer, jbp);
+        readyHandler.packetReady(this);
 		
 		return true;
 	}
 
-	public void freeDataArray(final byte[] data) {
-		dataArrayPool.add(data);
+	public boolean needSamples(int bufferSize) {
+        for(int i = mConsumedSamples; i < mBufferFilled;i++) {
+            mBuffer[i-mConsumedSamples] = mBuffer[i]; // Shift samples left after consumption of buffer
+        }
+
+        mBufferFilled -= mConsumedSamples;
+
+        mConsumedSamples = bufferSize;
+
+        if(mBufferFilled >= bufferSize)
+            return mLastAlive;
+
+        boolean nextAlive = mLastAlive;
+        float[] output = new float[mAudioBufferSize];
+
+        while(mBufferFilled < bufferSize) {
+            int decodedSamples = mFrameSize;
+            resizeBuffer(mBufferFilled + mAudioBufferSize);
+
+            // Shift buffer to current frame
+            System.arraycopy(mBuffer, mBufferFilled, output, 0, mAudioBufferSize);
+
+            if(!mLastAlive) {
+                // If this is a new frame, clear the buffer
+                Arrays.fill(mBuffer, 0);
+            } else {
+                if(mFrames.size() == 0) {
+                    byte[] data = new byte[4096];
+
+                    JitterBufferPacket jbp = new JitterBufferPacket();
+                    jbp.data = data;
+                    jbp.len = 4096;
+
+                    int startOffset = 0;
+
+                    if(Native.jitter_buffer_get(mJitterBuffer, jbp, new int[] { startOffset }) == Native.JITTER_BUFFER_OK) {
+                        PacketDataStream pds = new PacketDataStream(jbp.data);
+
+                        mMissedFrames = 0;
+                        pds.next(); // Skip flags
+                        mHasTerminator = false;
+
+                        /* long session = */ pds.readLong();
+                        /* long sequence = */ pds.readLong();
+
+                        if(mCodec == MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS) {
+                            long header = pds.readLong();
+                            int size = (int) (header & ((1 << 13) - 1));
+                            mHasTerminator = (header & (1 << 13)) == 1;
+                            if(size > 0) {
+                                byte[] frameData = new byte[size];
+                                pds.dataBlock(frameData, size);
+                                mFrames.add(frameData);
+                            }
+                        } else {
+                            int header = 0;
+                            do {
+                                header = pds.next();
+                                if(header != 0) {
+                                    int size = header & 0x7f;
+                                    byte[] frameData = new byte[size];
+                                    pds.dataBlock(frameData, size);
+                                    mFrames.add(frameData);
+                                } else {
+                                    mHasTerminator = true;
+                                }
+                            } while((header & 0x80) == 1 && pds.isValid());
+                        }
+                    } else {
+                        Native.jitter_buffer_update_delay(mJitterBuffer, jbp, new int[] { startOffset });
+
+                        mMissedFrames++;
+                        if(mMissedFrames > 10)
+                            nextAlive = false;
+                    }
+                }
+
+                if(mFrames.size() > 0) {
+                    byte[] frameData = mFrames.poll();
+
+                    if(mCodec == MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS)  {
+                        decodedSamples = NativeAudio.opusDecodeFloat(mOpusDecoder, frameData, frameData.length, output, mAudioBufferSize, 0);
+                    } else {
+                        if(frameData.length != 0)
+                            Native.celt_decode_float(mCeltDecoder, frameData, frameData.length, output);
+                    }
+                } else {
+                    if(mCodec == MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS)  {
+                        decodedSamples = NativeAudio.opusDecodeFloat(mOpusDecoder, null, 0, output, mFrameSize, 0);
+                    } else {
+                        Native.celt_decode_float(mCeltDecoder, null, 0, output);
+                    }
+                }
+
+                Log.d(Globals.LOG_TAG, "Decoded: " + decodedSamples);
+
+                for(int i=0; i < decodedSamples/mFrameSize; i++) {
+                    Native.jitter_buffer_tick(mJitterBuffer); // Tick for each sample decoded
+                }
+            }
+
+            mBufferFilled += decodedSamples;
+        }
+
+        boolean lastAlive = mLastAlive;
+        mLastAlive = nextAlive;
+        return lastAlive;
 	}
 
-	public User getUser() {
-		return this.user;
-	}
-
-	/**
-	 * Checks if this user has frames and sets lastFrame.
-	 *
-	 * @return
-	 */
-	public boolean hasBuffer() {
-		byte[] data = null;
-		int dataLength = 0;
-
-		Native.JitterBufferPacket jbp = normalBuffer.poll();
-		if (jbp != null) {
-			data = jbp.data;
-			dataLength = jbp.len;
-			
-			if(jbp.span != frameSize) {
-				// Reset buffer if frame size is changed
-				Log.d(Globals.LOG_TAG, "AudioUser's frame size changed, resetting buffer...");
-				bufferIndex = 0;
-				frameSize = jbp.span;
-			}
-			
-			missedFrames = 0;
-		} else {
-			missedFrames++;
-		}
-
-		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
-			Native.celt_decode_float(celtDecoder, data, dataLength, buffer);
-			
-			if (data != null) {
-				freeDataArray(data);
-			}
-			
-			// We only hold one frame in the buffer. Return true if we have less than 10 missed frames.
-			return (missedFrames < 10);
-		} else if(codec == MumbleProtocol.CODEC_OPUS) {
-			// TODO add exception handling and discard frame if opus fails
-			float[] frame = new float[frameSize];
-			NativeAudio.opusDecodeFloat(opusDecoder,
-									data == null ? null : data,
-									data == null ? 0 : dataLength, 
-									frame, 
-									frameSize, 0);
-			
-			System.arraycopy(frame, 0, buffer, bufferIndex, frameSize);
-			bufferIndex += frameSize;
-						
-			// Return true if the buffer is full (120ms).
-			if(bufferIndex == bufferSize) {
-				bufferIndex = 0;
-				return true;
-			} else {
-				return false;
-			}
-		}
-		return false; // Never play a frame without a codec.
-	}
+    /**
+     * Resizes the buffer to the new size specified.
+     * Will create the buffer if necessary.
+     * @param newSize The size to set the buffer to (in samples).
+     */
+    public void resizeBuffer(int newSize) {
+        float[] newBuffer = new float[newSize];
+        if(mBuffer != null)
+            System.arraycopy(mBuffer, 0, newBuffer, 0, mBuffer.length);
+        mBuffer = newBuffer;
+    }
 	
 	boolean isStreaming() {
-		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
-			return missedFrames < 10;
-		} else if(codec == MumbleProtocol.CODEC_OPUS) {
+		if(mCodec == MumbleProtocol.CODEC_ALPHA || mCodec == MumbleProtocol.CODEC_BETA) {
+			return mMissedFrames < 10;
+		} else if(mCodec == MumbleProtocol.CODEC_OPUS) {
 			// Make sure our buffer isn't entirely missed frames. (buffer holds 12 480 sample frames max)
-			return missedFrames < (bufferSize/frameSize);
+			return mMissedFrames < (mAudioBufferSize/mFrameSize);
 		}
 		return false;
 	}
 
-	private byte[] acquireDataArray() {
-		byte[] data = dataArrayPool.poll();
-
-		if (data == null) {
-			data = new byte[128];
-		}
-
-		return data;
-	}
-
 	@Override
 	protected final void finalize() {
-		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
-			Native.celt_decoder_destroy(celtDecoder);
-			Native.celt_mode_destroy(celtMode);
-		} else if(codec == MumbleProtocol.CODEC_OPUS) {
-			NativeAudio.opusDecoderDestroy(opusDecoder);
+		if(mCodec == MumbleProtocol.CODEC_ALPHA || mCodec == MumbleProtocol.CODEC_BETA) {
+			Native.celt_decoder_destroy(mCeltDecoder);
+			Native.celt_mode_destroy(mCeltMode);
+		} else if(mCodec == MumbleProtocol.CODEC_OPUS) {
+			NativeAudio.opusDecoderDestroy(mOpusDecoder);
 		}
+        Native.jitter_buffer_destroy(mJitterBuffer);
 	}
+
+    public User getUser() {
+        return mUser;
+    }
+
+    public float[] getBuffer() {
+        return mBuffer;
+    }
+
+    public int getCodec() {
+        return mCodec;
+    }
 }
