@@ -564,8 +564,6 @@ public class MumbleProtocol {
 			return;
 		}
 
-        Log.v(Globals.LOG_TAG, "Packet data: "+ Arrays.toString(buffer));
-
 		final PacketDataStream pds = new PacketDataStream(buffer);
 		// skip type / flags
 		pds.skip(1);

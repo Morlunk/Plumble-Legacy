@@ -8,7 +8,6 @@
 #define __EMX__ 1
 
 %{
-#include <speex/speex.h>
 #include <speex/speex_types.h>
 #include <speex/speex_jitter.h>
 #include <speex/speex_echo.h>
@@ -18,7 +17,6 @@
 /* Remove underscore */
 %rename(JitterBufferPacket) _JitterBufferPacket;
 
-%include "speex/include/speex/speex.h"
 %include "speex/include/speex/speex_types.h"
 %include "speex/include/speex/speex_jitter.h"
 %include "speex/include/speex/speex_echo.h"

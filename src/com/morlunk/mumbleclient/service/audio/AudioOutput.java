@@ -197,19 +197,10 @@ public class AudioOutput implements Runnable {
 				if (user.needSamples(minBufferSize)) {
 					if(!user.getUser().localMuted) {
 						mix.add(user);
-						if(user.getUser().talkingState != AudioOutputHost.STATE_TALKING) {
-							host.setTalkState(
-									user.getUser(),
-									AudioOutputHost.STATE_TALKING);
-						}
 					}
-				} else if(!user.isStreaming()) {
+				} else {
+                    Log.i(Globals.LOG_TAG, "Dude, whatever yo "+user.getUser().name);
 					i.remove();
-					if(user.getUser().talkingState != AudioOutputHost.STATE_PASSIVE) {
-						host.setTalkState(
-								user.getUser(),
-								AudioOutputHost.STATE_PASSIVE);
-					}
 				}
 			}
 		}

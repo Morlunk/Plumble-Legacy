@@ -1,15 +1,9 @@
 /* File: audio_types.i */
-/* Boilerplate pointer and array management for audio libs */
 
-/* Create methods to make arrays in java */
-%include carrays.i
-%array_functions(short, shortArray)
-%array_functions(int, intArray)
-%array_functions(float, floatArray)
+/* Boilerplate pointer and array management for audio libs */
 
 /* use Java byte[] instead of String for char* */
 %import various.i
-
 %apply char *BYTE { char * }
 
 /* Wrap to pointers */
@@ -21,7 +15,7 @@
 
 %{
 
-void *intToVoidPointer(int *intValue) {ndk
+void *intToVoidPointer(int *intValue) {
     return (void *)intValue;
 }
 

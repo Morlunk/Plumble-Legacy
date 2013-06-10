@@ -46,6 +46,8 @@ public class AudioUser {
     private int mConsumedSamples;
     private int mBufferFilled;
     private int mMissedFrames;
+
+    private int mFlags = 0xFF;
     private boolean mHasTerminator = false;
     private boolean mLastAlive = true;
 
@@ -80,6 +82,7 @@ public class AudioUser {
 		final byte[] audioData,
         final long sequence,
 		final PacketReadyHandler readyHandler) {
+
         if (audioData.length < 2)
             return false;
 
@@ -131,25 +134,20 @@ public class AudioUser {
         jbp.setSpan(samples);
         jbp.setTimestamp(sequence * mFrameSize);
 
-        //Log.v(Globals.LOG_TAG, "Packet received.\nLength: "+jbp.len+"\nSamples: "+jbp.span+"\nTimestamp: "+jbp.timestamp+"\nPacket: "+Arrays.toString(jbp.data));
-
         Speex.jitter_buffer_put(mJitterBuffer, jbp);
-
-        Log.v(Globals.LOG_TAG, "Packet put.");
 
         readyHandler.packetReady(this);
 
         freeAudioDataArray(jitterAudioData);
 
         mJitterLock.unlock();
-		
+
 		return true;
 	}
 
 	public boolean needSamples(int bufferSize) {
-        for(int i = mConsumedSamples; i < mBufferFilled;i++) {
+        for(int i = mConsumedSamples; i < mBufferFilled;i++)
             mBuffer[i-mConsumedSamples] = mBuffer[i]; // Shift samples left after consumption of buffer
-        }
 
         mBufferFilled -= mConsumedSamples;
 
@@ -161,7 +159,7 @@ public class AudioUser {
         boolean nextAlive = mLastAlive;
         float[] output = new float[mAudioBufferSize];
 
-        while(mBufferFilled < bufferSize) {
+        while(mBufferFilled < 480) {
             int decodedSamples = mFrameSize;
             resizeBuffer(mBufferFilled + mAudioBufferSize);
 
@@ -205,7 +203,7 @@ public class AudioUser {
                         PacketDataStream pds = new PacketDataStream(jbp.getData());
 
                         mMissedFrames = 0;
-                        pds.next(); // Skip flags
+                        mFlags = pds.next(); // Skip flags
                         mHasTerminator = false;
 
                         if(mCodec == MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS) {
@@ -252,6 +250,11 @@ public class AudioUser {
                         if(frameData.length != 0)
                             Native.celt_decode_float(mCeltDecoder, frameData, frameData.length, output);
                     }
+
+                    if(mFrames.size() == 0 && mHasTerminator) {
+                        nextAlive = false;
+                    }
+
                 } else {
                     if(mCodec == MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS)  {
                         decodedSamples = NativeAudio.opusDecodeFloat(mOpusDecoder, null, 0, output, mFrameSize, 0);
@@ -269,7 +272,31 @@ public class AudioUser {
                 mJitterLock.unlock();
             }
 
+
             mBufferFilled += decodedSamples;
+            Log.i(Globals.LOG_TAG, "Buffer filled: "+mBufferFilled+"/"+bufferSize);
+        }
+
+        // Update talk state
+        if(mUser != null) {
+            int talkState;
+            if(!nextAlive)
+                mFlags = 0xFF;
+            switch (mFlags) {
+                case 0:
+                    talkState = User.TALKINGSTATE_TALKING;
+                    break;
+                case 1:
+                    talkState = User.TALKINGSTATE_SHOUTING;
+                    break;
+                case 0xFF:
+                    talkState = User.TALKINGSTATE_PASSIVE;
+                    break;
+                default:
+                    talkState = User.TALKINGSTATE_WHISPERING;
+                    break;
+            }
+            mUser.talkingState = talkState;
         }
 
         boolean lastAlive = mLastAlive;
@@ -301,16 +328,6 @@ public class AudioUser {
             System.arraycopy(mBuffer, 0, newBuffer, 0, mBuffer.length);
         mBuffer = newBuffer;
     }
-	
-	boolean isStreaming() {
-		if(mCodec == MumbleProtocol.CODEC_ALPHA || mCodec == MumbleProtocol.CODEC_BETA) {
-			return mMissedFrames < 10;
-		} else if(mCodec == MumbleProtocol.CODEC_OPUS) {
-			// Make sure our buffer isn't entirely missed frames. (buffer holds 12 480 sample frames max)
-			return mMissedFrames < (mAudioBufferSize/mFrameSize);
-		}
-		return false;
-	}
 
 	@Override
 	protected final void finalize() {
