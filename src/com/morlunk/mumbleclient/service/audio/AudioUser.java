@@ -17,14 +17,15 @@ import android.util.Log;
 
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.jni.Native;
-import com.morlunk.mumbleclient.jni.Native.JitterBufferPacket;
 import com.morlunk.mumbleclient.jni.NativeAudio;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.PacketDataStream;
 import com.morlunk.mumbleclient.service.model.User;
+import com.morlunk.mumbleclient.swig.speex.*;
 
 
 public class AudioUser {
+
 	public interface PacketReadyHandler {
 		public void packetReady(AudioUser user);
 	}
@@ -33,7 +34,7 @@ public class AudioUser {
 	private long mCeltDecoder;
 	private long mOpusDecoder;
 
-    private final long mJitterBuffer;
+    private final SWIGTYPE_p_JitterBuffer_ mJitterBuffer;
     private final Lock mJitterLock = new ReentrantLock(true);
 
     private final Queue<byte[]> mFrames = new ConcurrentLinkedQueue<byte[]>();
@@ -68,9 +69,11 @@ public class AudioUser {
 			mOpusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
 		}
 
-        mJitterBuffer = Native.jitter_buffer_init(mFrameSize);
-        int margin = 10 * mFrameSize;
-        Native.jitter_buffer_ctl(mJitterBuffer, Native.JITTER_BUFFER_SET_MARGIN, new int[] { margin });
+        mJitterBuffer = Speex.jitter_buffer_init(mFrameSize);
+        int margin[] = new int[] { 10 * mFrameSize };
+        SWIGTYPE_p_void marginPtr = Speex.intToVoidPointer(margin);
+
+        Speex.jitter_buffer_ctl(mJitterBuffer, Speex.JITTER_BUFFER_SET_MARGIN, marginPtr);
 	}
 
 	public boolean addFrameToBuffer(
@@ -123,17 +126,14 @@ public class AudioUser {
         System.arraycopy(audioData, 0, jitterAudioData, 0, audioData.length);
 
         final JitterBufferPacket jbp = new JitterBufferPacket();
-        jbp.data = jitterAudioData;
-        jbp.len = jitterAudioData.length;
-        jbp.span = samples;
-        jbp.timestamp = (int)sequence * mFrameSize;
+        jbp.setData(jitterAudioData);
+        jbp.setLen(jitterAudioData.length);
+        jbp.setSpan(samples);
+        jbp.setTimestamp(sequence * mFrameSize);
 
-        //mDataPool.add(audioData);
-        //mJitterPool.add(jbp);
+        //Log.v(Globals.LOG_TAG, "Packet received.\nLength: "+jbp.len+"\nSamples: "+jbp.span+"\nTimestamp: "+jbp.timestamp+"\nPacket: "+Arrays.toString(jbp.data));
 
-        Log.v(Globals.LOG_TAG, "Packet received.\nLength: "+jbp.len+"\nSamples: "+jbp.span+"\nTimestamp: "+jbp.timestamp+"\nPacket: "+Arrays.toString(jbp.data));
-
-        Native.jitter_buffer_put(mJitterBuffer, jbp);
+        Speex.jitter_buffer_put(mJitterBuffer, jbp);
 
         Log.v(Globals.LOG_TAG, "Packet put.");
 
@@ -178,11 +178,12 @@ public class AudioUser {
                 int avail = 0;
 
                 mJitterLock.lock();
-                int ts = Native.jitter_buffer_get_pointer_timestamp(mJitterBuffer);
-                Native.jitter_buffer_ctl(mJitterBuffer, Native.JITTER_BUFFER_GET_AVAILABLE_COUNT, new int[] { avail });
+                int ts[] = new int[] { Speex.jitter_buffer_get_pointer_timestamp(mJitterBuffer) };
+                SWIGTYPE_p_void tsPtr = Speex.intToVoidPointer(ts);
+                Speex.jitter_buffer_ctl(mJitterBuffer, Speex.JITTER_BUFFER_GET_AVAILABLE_COUNT, tsPtr);
                 mJitterLock.unlock();
 
-                if(ts == 0) {
+                if(ts[0] == 0) {
                     if(mMissedFrames < 20) {
                         Arrays.fill(output, 0);
                         mBufferFilled += decodedSamples;
@@ -195,13 +196,13 @@ public class AudioUser {
                     byte[] data = new byte[4096];
 
                     JitterBufferPacket jbp = new JitterBufferPacket();
-                    jbp.data = data;
-                    jbp.len = 4096;
+                    jbp.setData(data);
+                    jbp.setLen(4096);
 
-                    int startOffset = 0;
+                    int startOffset[] = new int[] { 0 };
 
-                    if(Native.jitter_buffer_get(mJitterBuffer, jbp, mFrameSize, new int[] { startOffset }) == Native.JITTER_BUFFER_OK) {
-                        PacketDataStream pds = new PacketDataStream(jbp.data);
+                    if(Speex.jitter_buffer_get(mJitterBuffer, jbp, mFrameSize, startOffset) == Speex.JITTER_BUFFER_OK) {
+                        PacketDataStream pds = new PacketDataStream(jbp.getData());
 
                         mMissedFrames = 0;
                         pds.next(); // Skip flags
@@ -231,7 +232,7 @@ public class AudioUser {
                             } while((header & 0x80) == 1 && pds.isValid());
                         }
                     } else {
-                        Native.jitter_buffer_update_delay(mJitterBuffer, jbp, new int[] { startOffset });
+                        Speex.jitter_buffer_update_delay(mJitterBuffer, jbp, startOffset);
 
                         mMissedFrames++;
                         if(mMissedFrames > 10)
@@ -263,7 +264,7 @@ public class AudioUser {
 
                 mJitterLock.lock();
                 for(int i=0; i < decodedSamples/mFrameSize; i++) {
-                    Native.jitter_buffer_tick(mJitterBuffer); // Tick for each sample decoded
+                    Speex.jitter_buffer_tick(mJitterBuffer); // Tick for each sample decoded
                 }
                 mJitterLock.unlock();
             }
@@ -319,7 +320,7 @@ public class AudioUser {
 		} else if(mCodec == MumbleProtocol.CODEC_OPUS) {
 			NativeAudio.opusDecoderDestroy(mOpusDecoder);
 		}
-        Native.jitter_buffer_destroy(mJitterBuffer);
+        Speex.jitter_buffer_destroy(mJitterBuffer);
 	}
 
     public User getUser() {

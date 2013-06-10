@@ -19,6 +19,8 @@ import com.morlunk.mumbleclient.jni.celtConstants;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.PacketDataStream;
+import com.morlunk.mumbleclient.swig.speex.SWIGTYPE_p_SpeexResamplerState_;
+import com.morlunk.mumbleclient.swig.speex.Speex;
 
 /**
  * Thread responsible for recording voice and sending it over to server.
@@ -57,7 +59,7 @@ public class AudioInput implements Runnable, Observer {
 	private final LinkedList<byte[]> outputQueue = new LinkedList<byte[]>();
 	private final short[] resampleBuffer = new short[MumbleProtocol.FRAME_SIZE];
 	private int seq;
-	private final long speexResamplerState;
+	private final SWIGTYPE_p_SpeexResamplerState_ speexResamplerState;
 	private long lastDetection = 0;
 	private int talkState = AudioOutputHost.STATE_PASSIVE;
 
@@ -120,10 +122,10 @@ public class AudioInput implements Runnable, Observer {
 
 		if (recordingSampleRate != TARGET_SAMPLE_RATE) {
 			Log.d(Globals.LOG_TAG, "Initializing Speex resampler.");
-			speexResamplerState = Native.speex_resampler_init(1,
-					recordingSampleRate, TARGET_SAMPLE_RATE, 3);
+			speexResamplerState = Speex.speex_resampler_init(1,
+                    recordingSampleRate, TARGET_SAMPLE_RATE, 3, null);
 		} else {
-			speexResamplerState = 0;
+			speexResamplerState = null;
 		}
 
 		audioRecord = new AudioRecord(AudioSource.MIC, recordingSampleRate,
@@ -156,12 +158,11 @@ public class AudioInput implements Runnable, Observer {
 			}
 
 			short[] out;
-			if (speexResamplerState != 0) {
+			if (speexResamplerState != null) {
 				out = resampleBuffer;
 				final int[] in_len = new int[] { buffer.length };
 				final int[] out_len = new int[] { out.length };
-				Native.speex_resampler_process_int(speexResamplerState, 0,
-						buffer, in_len, out, out_len);
+				Speex.speex_resampler_process_int(speexResamplerState, 0, buffer, in_len, out, out_len);
 			} else {
 				out = buffer;
 			}
@@ -327,8 +328,8 @@ public class AudioInput implements Runnable, Observer {
 	 * resources. The AudioInput object cannot be reused after destruction.
 	 */
 	public void shutdown() {
-		if (speexResamplerState != 0)
-			Native.speex_resampler_destroy(speexResamplerState);
+		if (speexResamplerState != null)
+			Speex.speex_resampler_destroy(speexResamplerState);
 
 		if (opusEncoder != 0)
 			NativeAudio.opusEncoderDestroy(opusEncoder);
