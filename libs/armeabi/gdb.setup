@@ -1,0 +1,2 @@
+set solib-search-path ./obj/local/armeabi
+directory /media/Shared/Development/adt-bundle-linux/android-ndk-r8e/platforms/android-14/arch-arm/usr/include jni/speex/include/ jni/new /media/Shared/Development/adt-bundle-linux/android-ndk-r8e/sources/cxx-stl/system/include jni/celt/libcelt jni/opus/include jni/opus/celt jni/opus/silk jni/opus/silk/fixed jni/speex/libspeex

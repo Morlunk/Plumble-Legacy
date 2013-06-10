@@ -6,9 +6,13 @@
  * library.
  *
  */
-
 #ifndef INC_HAWTJNI_H
 #define INC_HAWTJNI_H
+#define _MULTI_THREADED
+
+#ifdef HAVE_CONFIG_H
+  #include "config.h"
+#endif
 
 #include "jni.h"
 #include <stdint.h>
@@ -119,6 +123,12 @@ extern int IS_JNI_1_2;
 			if (handle) var = dlsym(handle, #name); \
 			initialized = 1; \
 		}
+#endif
+
+#ifdef JNI_VERSION_1_2
+extern JavaVM *JVM;
+jint hawtjni_attach_thread(JNIEnv **env, const char *thread_name);
+jint hawtjni_detach_thread();
 #endif
 
 void throwOutOfMemory(JNIEnv *env);

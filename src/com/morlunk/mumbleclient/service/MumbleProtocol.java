@@ -1,13 +1,8 @@
 package com.morlunk.mumbleclient.service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 import net.sf.mumble.MumbleProto.Authenticate;
 import net.sf.mumble.MumbleProto.ChannelRemove;
@@ -569,14 +564,18 @@ public class MumbleProtocol {
 			return;
 		}
 
+        Log.v(Globals.LOG_TAG, "Packet data: "+ Arrays.toString(buffer));
+
 		final PacketDataStream pds = new PacketDataStream(buffer);
 		// skip type / flags
 		pds.skip(1);
-		final long uiSession = pds.readLong();
 
-		final User u = findUser((int) uiSession);
+		final long session = pds.readLong();
+        final long sequence = pds.readLong();
+
+		final User u = findUser((int) session);
 		if (u == null) {
-			Log.e(Globals.LOG_TAG, "User session " + uiSession + " not found!");
+			Log.e(Globals.LOG_TAG, "User session " + session + " not found!");
 
 			// This might happen if user leaves while there are still UDP packets
 			// en route to the clients. In this case we should just ignore these
@@ -584,11 +583,17 @@ public class MumbleProtocol {
 			return;
 		}
 
-		// Rewind the packet. Otherwise consumers are confusing to implement.
-		pds.rewind();
-		
+        byte[] audioData = new byte[pds.left()+1];
+        audioData[0] = (byte)flags;
+        pds.dataBlock(audioData, 1, pds.left());
+
+        if(!pds.isValid()) {
+            Log.e(Globals.LOG_TAG, "Invalid PacketDataStream when processing voice packet!");
+            return;
+        }
+
 		if(ao != null)
-			ao.addFrameToBuffer(u, pds, flags);
+			ao.addFrameToBuffer(u, audioData, sequence, type);
 	}
 
 	private void stopThreads() {

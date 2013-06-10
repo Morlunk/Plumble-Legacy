@@ -101,15 +101,12 @@ public class AudioOutput implements Runnable {
 
 	public void addFrameToBuffer(
 		final User u,
-		final PacketDataStream pds,
-		final int flags) {
-		// Get codec type for user
-		int header = pds.next();
-		int codecVersion = header >> 5 & 0x7;
-		pds.rewind();
+		final byte[] audioData,
+		final long sequence,
+        final int codec) {
 		AudioUser user = users.get(u);
-		if (user == null || user.getCodec() != codecVersion) {
-			user = new AudioUser(u, codecVersion);
+		if (user == null || user.getCodec() != codec) {
+			user = new AudioUser(u, codec);
 			users.put(u, user);
 			// Don't add the user to userPackets yet. The collection should
 			// have only users with ready frames. Since this method is
@@ -117,7 +114,7 @@ public class AudioOutput implements Runnable {
 			// create a new AudioUser while a previous one is still decoding.
 		}
 
-		user.addFrameToBuffer(pds, packetReadyHandler);
+		user.addFrameToBuffer(audioData, sequence, packetReadyHandler);
 	}
 
 	public void run() {

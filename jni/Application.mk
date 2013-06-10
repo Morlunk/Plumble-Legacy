@@ -1,2 +1,2 @@
 #APP_OPTIM := debug
-APP_ABI := x86 armeabi
+APP_ABI := armeabi #x86

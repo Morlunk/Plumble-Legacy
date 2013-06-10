@@ -3,7 +3,7 @@
     package="com.morlunk.mumbleclient"
     android:installLocation="auto"
     android:versionCode="45"
-    android:versionName="2.0.1" >
+    android:versionName="2.0.1">
 
     <uses-sdk
         android:minSdkVersion="7"

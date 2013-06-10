@@ -15,7 +15,7 @@ JNIEXPORT jint JNICALL Native_NATIVE(celt_1decode)
 	Native_NATIVE_ENTER(env, that, Native_celt_1decode_FUNC);
 	if (arg1) if ((lparg1 = (*env)->GetByteArrayElements(env, arg1, NULL)) == NULL) goto fail;
 	if (arg3) if ((lparg3 = (*env)->GetShortArrayElements(env, arg3, NULL)) == NULL) goto fail;
-	rc = wrap_celt_decode((CELTDecoder *)(intptr_t)arg0, (unsigned char *)lparg1, arg2, lparg3);
+	rc = (jint)wrap_celt_decode((CELTDecoder *)(intptr_t)arg0, (unsigned char *)lparg1, arg2, lparg3);
 fail:
 	if (arg3 && lparg3) (*env)->ReleaseShortArrayElements(env, arg3, lparg3, 0);
 	if (arg1 && lparg1) (*env)->ReleaseByteArrayElements(env, arg1, lparg1, JNI_ABORT);
@@ -32,7 +32,7 @@ JNIEXPORT jint JNICALL Native_NATIVE(celt_1decode_1float)
 	Native_NATIVE_ENTER(env, that, Native_celt_1decode_1float_FUNC);
 	if (arg1) if ((lparg1 = (*env)->GetByteArrayElements(env, arg1, NULL)) == NULL) goto fail;
 	if (arg3) if ((lparg3 = (*env)->GetFloatArrayElements(env, arg3, NULL)) == NULL) goto fail;
-	rc = wrap_celt_decode_float((CELTDecoder *)(intptr_t)arg0, (unsigned char *)lparg1, arg2, lparg3);
+	rc = (jint)wrap_celt_decode_float((CELTDecoder *)(intptr_t)arg0, (unsigned char *)lparg1, arg2, lparg3);
 fail:
 	if (arg3 && lparg3) (*env)->ReleaseFloatArrayElements(env, arg3, lparg3, 0);
 	if (arg1 && lparg1) (*env)->ReleaseByteArrayElements(env, arg1, lparg1, JNI_ABORT);
@@ -67,7 +67,7 @@ JNIEXPORT jint JNICALL Native_NATIVE(celt_1encode)
 	Native_NATIVE_ENTER(env, that, Native_celt_1encode_FUNC);
 	if (arg1) if ((lparg1 = (*env)->GetShortArrayElements(env, arg1, NULL)) == NULL) goto fail;
 	if (arg2) if ((lparg2 = (*env)->GetByteArrayElements(env, arg2, NULL)) == NULL) goto fail;
-	rc = wrap_celt_encode((CELTEncoder *)(intptr_t)arg0, lparg1, (unsigned char *)lparg2, arg3);
+	rc = (jint)wrap_celt_encode((CELTEncoder *)(intptr_t)arg0, lparg1, (unsigned char *)lparg2, arg3);
 fail:
 	if (arg2 && lparg2) (*env)->ReleaseByteArrayElements(env, arg2, lparg2, 0);
 	if (arg1 && lparg1) (*env)->ReleaseShortArrayElements(env, arg1, lparg1, JNI_ABORT);
@@ -140,17 +140,17 @@ JNIEXPORT void JNICALL Native_NATIVE(jitter_1buffer_1destroy)
 }
 
 JNIEXPORT jint JNICALL Native_NATIVE(jitter_1buffer_1get)
-	(JNIEnv *env, jclass that, jlong arg0, jobject arg1, jintArray arg2)
+	(JNIEnv *env, jclass that, jlong arg0, jobject arg1, jint arg2, jintArray arg3)
 {
 	JitterBufferPacket _arg1, *lparg1=NULL;
-	jint *lparg2=NULL;
+	jint *lparg3=NULL;
 	jint rc = 0;
 	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1get_FUNC);
 	if (arg1) if ((lparg1 = getJitterBufferPacketFields(env, arg1, &_arg1)) == NULL) goto fail;
-	if (arg2) if ((lparg2 = (*env)->GetIntArrayElements(env, arg2, NULL)) == NULL) goto fail;
-	rc = jitter_buffer_get((JitterBuffer *)(intptr_t)arg0, lparg1, lparg2);
+	if (arg3) if ((lparg3 = (*env)->GetIntArrayElements(env, arg3, NULL)) == NULL) goto fail;
+	rc = (jint)jitter_buffer_get((JitterBuffer *)(intptr_t)arg0, lparg1, arg2, lparg3);
 fail:
-	if (arg2 && lparg2) (*env)->ReleaseIntArrayElements(env, arg2, lparg2, 0);
+	if (arg3 && lparg3) (*env)->ReleaseIntArrayElements(env, arg3, lparg3, 0);
 	if (arg1 && lparg1) setJitterBufferPacketFields(env, arg1, lparg1);
 	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1get_FUNC);
 	return rc;
@@ -161,7 +161,7 @@ JNIEXPORT jint JNICALL Native_NATIVE(jitter_1buffer_1get_1pointer_1timestamp)
 {
 	jint rc = 0;
 	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1get_1pointer_1timestamp_FUNC);
-	rc = jitter_buffer_get_pointer_timestamp((JitterBuffer *)(intptr_t)arg0);
+	rc = (jint)jitter_buffer_get_pointer_timestamp((JitterBuffer *)(intptr_t)arg0);
 	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1get_1pointer_1timestamp_FUNC);
 	return rc;
 }
@@ -184,7 +184,6 @@ JNIEXPORT void JNICALL Native_NATIVE(jitter_1buffer_1put)
 	if (arg1) if ((lparg1 = getJitterBufferPacketFields(env, arg1, &_arg1)) == NULL) goto fail;
 	jitter_buffer_put((JitterBuffer *)(intptr_t)arg0, lparg1);
 fail:
-	if (arg1 && lparg1) setJitterBufferPacketFields(env, arg1, lparg1);
 	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1put_FUNC);
 }
 
@@ -213,10 +212,9 @@ JNIEXPORT jint JNICALL Native_NATIVE(jitter_1buffer_1update_1delay)
 	Native_NATIVE_ENTER(env, that, Native_jitter_1buffer_1update_1delay_FUNC);
 	if (arg1) if ((lparg1 = getJitterBufferPacketFields(env, arg1, &_arg1)) == NULL) goto fail;
 	if (arg2) if ((lparg2 = (*env)->GetIntArrayElements(env, arg2, NULL)) == NULL) goto fail;
-	rc = jitter_buffer_update_delay((JitterBuffer *)(intptr_t)arg0, lparg1, lparg2);
+	rc = (jint)jitter_buffer_update_delay((JitterBuffer *)(intptr_t)arg0, lparg1, lparg2);
 fail:
 	if (arg2 && lparg2) (*env)->ReleaseIntArrayElements(env, arg2, lparg2, 0);
-	if (arg1 && lparg1) setJitterBufferPacketFields(env, arg1, lparg1);
 	Native_NATIVE_EXIT(env, that, Native_jitter_1buffer_1update_1delay_FUNC);
 	return rc;
 }
@@ -323,7 +321,7 @@ JNIEXPORT jint JNICALL Native_NATIVE(speex_1resampler_1process_1int)
 	if (arg3) if ((lparg3 = (*env)->GetIntArrayElements(env, arg3, NULL)) == NULL) goto fail;
 	if (arg4) if ((lparg4 = (*env)->GetShortArrayElements(env, arg4, NULL)) == NULL) goto fail;
 	if (arg5) if ((lparg5 = (*env)->GetIntArrayElements(env, arg5, NULL)) == NULL) goto fail;
-	rc = speex_resampler_process_int((SpeexResamplerState *)(intptr_t)arg0, arg1, lparg2, lparg3, lparg4, lparg5);
+	rc = (jint)speex_resampler_process_int((SpeexResamplerState *)(intptr_t)arg0, arg1, lparg2, lparg3, lparg4, lparg5);
 fail:
 	if (arg5 && lparg5) (*env)->ReleaseIntArrayElements(env, arg5, lparg5, 0);
 	if (arg4 && lparg4) (*env)->ReleaseShortArrayElements(env, arg4, lparg4, 0);

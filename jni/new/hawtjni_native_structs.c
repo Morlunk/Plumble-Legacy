@@ -17,7 +17,7 @@ void cacheJitterBufferPacketFields(JNIEnv *env, jobject lpObject)
 	JitterBufferPacketFc.clazz = (*env)->GetObjectClass(env, lpObject);
 	JitterBufferPacketFc.data = (*env)->GetFieldID(env, JitterBufferPacketFc.clazz, "data", "[B");
 	JitterBufferPacketFc.len = (*env)->GetFieldID(env, JitterBufferPacketFc.clazz, "len", "I");
-	JitterBufferPacketFc.timestamp = (*env)->GetFieldID(env, JitterBufferPacketFc.clazz, "timestamp", "J");
+	JitterBufferPacketFc.timestamp = (*env)->GetFieldID(env, JitterBufferPacketFc.clazz, "timestamp", "I");
 	JitterBufferPacketFc.span = (*env)->GetFieldID(env, JitterBufferPacketFc.clazz, "span", "I");
 	JitterBufferPacketFc.sequence = (*env)->GetFieldID(env, JitterBufferPacketFc.clazz, "sequence", "S");
 	JitterBufferPacketFc.user_data = (*env)->GetFieldID(env, JitterBufferPacketFc.clazz, "user_data", "I");
@@ -32,7 +32,7 @@ JitterBufferPacket *getJitterBufferPacketFields(JNIEnv *env, jobject lpObject, J
 	(*env)->GetByteArrayRegion(env, lpObject1, 0, sizeof(lpStruct->data), (jbyte *)lpStruct->data);
 	}
 	lpStruct->len = (*env)->GetIntField(env, lpObject, JitterBufferPacketFc.len);
-	lpStruct->timestamp = (*env)->GetLongField(env, lpObject, JitterBufferPacketFc.timestamp);
+	lpStruct->timestamp = (*env)->GetIntField(env, lpObject, JitterBufferPacketFc.timestamp);
 	lpStruct->span = (*env)->GetIntField(env, lpObject, JitterBufferPacketFc.span);
 	lpStruct->sequence = (*env)->GetShortField(env, lpObject, JitterBufferPacketFc.sequence);
 	lpStruct->user_data = (*env)->GetIntField(env, lpObject, JitterBufferPacketFc.user_data);
@@ -47,7 +47,7 @@ void setJitterBufferPacketFields(JNIEnv *env, jobject lpObject, JitterBufferPack
 	(*env)->SetByteArrayRegion(env, lpObject1, 0, sizeof(lpStruct->data), (jbyte *)lpStruct->data);
 	}
 	(*env)->SetIntField(env, lpObject, JitterBufferPacketFc.len, (jint)lpStruct->len);
-	(*env)->SetLongField(env, lpObject, JitterBufferPacketFc.timestamp, (jlong)lpStruct->timestamp);
+	(*env)->SetIntField(env, lpObject, JitterBufferPacketFc.timestamp, (jint)lpStruct->timestamp);
 	(*env)->SetIntField(env, lpObject, JitterBufferPacketFc.span, (jint)lpStruct->span);
 	(*env)->SetShortField(env, lpObject, JitterBufferPacketFc.sequence, (jshort)lpStruct->sequence);
 	(*env)->SetIntField(env, lpObject, JitterBufferPacketFc.user_data, (jint)lpStruct->user_data);

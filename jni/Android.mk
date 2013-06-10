@@ -191,6 +191,7 @@ include $(CLEAR_VARS)
 LOCAL_PATH				:= $(ROOT)/new
 LOCAL_MODULE			:= libNativeAudio
 LOCAL_SRC_FILES			:= hawtjni.c hawtjni_native.c hawtjni_native_stats.c hawtjni_native_structs.c
+LOCAL_C_INCLUDES        := $(ROOT)/speex/include/
 LOCAL_CFLAGS			:= -I$(ROOT)/celt/libcelt -fvisibility=hidden
 LOCAL_STATIC_LIBRARIES	:= libcelt libspeex
 

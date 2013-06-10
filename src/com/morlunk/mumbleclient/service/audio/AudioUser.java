@@ -33,11 +33,12 @@ public class AudioUser {
 	private long mCeltDecoder;
 	private long mOpusDecoder;
 
-    private long mJitterBuffer;
+    private final long mJitterBuffer;
     private final Lock mJitterLock = new ReentrantLock(true);
 
     private final Queue<byte[]> mFrames = new ConcurrentLinkedQueue<byte[]>();
-	private final Queue<byte[]> mDataArrayPool = new ConcurrentLinkedQueue<byte[]>(); // Use this queue to keep frames in memory (no gc)
+    private final Queue<byte[]> mAudioDataPool = new ConcurrentLinkedQueue<byte[]>();
+
     private final int mCodec;
     private int mFrameSize = MumbleProtocol.FRAME_SIZE;
     private int mAudioBufferSize;
@@ -64,7 +65,7 @@ public class AudioUser {
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
 			// With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
             mAudioBufferSize = mFrameSize*12;
-			mOpusDecoder = NativeAudio.opusDecoderCreate(mAudioBufferSize, 1);
+			mOpusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
 		}
 
         mJitterBuffer = Native.jitter_buffer_init(mFrameSize);
@@ -73,45 +74,39 @@ public class AudioUser {
 	}
 
 	public boolean addFrameToBuffer(
-		final PacketDataStream pds,
+		final byte[] audioData,
+        final long sequence,
 		final PacketReadyHandler readyHandler) {
+        if (audioData.length < 2)
+            return false;
+
         mJitterLock.lock();
 
-		final int packetHeader = pds.next();
+        PacketDataStream pds = new PacketDataStream(audioData);
+        pds.next(); // Skip flags
 
-		// Make sure this is supported voice packet.
-		//
-		// (Yes this check is included in MumbleConnection as well but I believe
-		// it should be made here since the decoding support is built into this
-		// class anyway. In theory only this class needs to know what packets
-		// can be decoded.)
-		final int type = (packetHeader >> 5) & 0x7;
-		if (type != MumbleProtocol.UDPMESSAGETYPE_UDPVOICECELTALPHA &&
-			type != MumbleProtocol.UDPMESSAGETYPE_UDPVOICECELTBETA &&
-			type != MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS) {
-			return false;
-		}
-
-		long session = pds.readLong();
-		long sequence = pds.readLong();
-		
+        int dataSize;
 		int samples = 0;
 
 		if(mCodec == MumbleProtocol.CODEC_OPUS) {
 			long header = pds.readLong();
-			int size = (int) (header & ((1 << 13) - 1));
-			if(size > 0) {
-				byte[] data = new byte[size];
-				pds.dataBlock(data, size);
-				int frames = NativeAudio.opusPacketGetFrames(data, size);
+			dataSize = (int) (header & ((1 << 13) - 1));
+			if(dataSize > 0) {
+				byte[] data = new byte[dataSize];
+				pds.dataBlock(data, dataSize);
+				int frames = NativeAudio.opusPacketGetFrames(data, dataSize);
 				samples = frames * NativeAudio.opusPacketGetSamplesPerFrame(data, MumbleProtocol.SAMPLE_RATE);
-				
-				if(samples % MumbleProtocol.FRAME_SIZE != 0)
-					return false; // All samples must be divisible by the frame size.
-			}
+
+				if(samples % MumbleProtocol.FRAME_SIZE != 0) {
+					mJitterLock.unlock();
+                    return false; // All samples must be divisible by the frame size.
+                }
+			} else {
+                samples = mFrameSize; // Terminator packet
+            }
 		} else {
 			int header = 0;
-			do {			
+			do {
 				header = pds.next();
                 samples += mFrameSize;
                 pds.skip(header & 0x7f);
@@ -124,21 +119,27 @@ public class AudioUser {
             return false;
         }
 
-        // Rewind and get all data
-        pds.rewind();
-        byte[] data = new byte[pds.capacity()];
-        pds.dataBlock(data, pds.capacity());
-
-        mDataArrayPool.add(data);
+        byte[] jitterAudioData = createAudioDataArray();
+        System.arraycopy(audioData, 0, jitterAudioData, 0, audioData.length);
 
         final JitterBufferPacket jbp = new JitterBufferPacket();
-        jbp.data = data;
-        jbp.len = data.length;
+        jbp.data = jitterAudioData;
+        jbp.len = jitterAudioData.length;
         jbp.span = samples;
-        jbp.timestamp = sequence * mFrameSize;
+        jbp.timestamp = (int)sequence * mFrameSize;
+
+        //mDataPool.add(audioData);
+        //mJitterPool.add(jbp);
+
+        Log.v(Globals.LOG_TAG, "Packet received.\nLength: "+jbp.len+"\nSamples: "+jbp.span+"\nTimestamp: "+jbp.timestamp+"\nPacket: "+Arrays.toString(jbp.data));
 
         Native.jitter_buffer_put(mJitterBuffer, jbp);
+
+        Log.v(Globals.LOG_TAG, "Packet put.");
+
         readyHandler.packetReady(this);
+
+        freeAudioDataArray(jitterAudioData);
 
         mJitterLock.unlock();
 		
@@ -163,6 +164,8 @@ public class AudioUser {
         while(mBufferFilled < bufferSize) {
             int decodedSamples = mFrameSize;
             resizeBuffer(mBufferFilled + mAudioBufferSize);
+
+            Log.i(Globals.LOG_TAG, "Audio buffer: "+mAudioBufferSize+" buffer size: "+mBuffer.length+" filled: "+mBufferFilled);
 
             // Shift buffer to current frame
             System.arraycopy(mBuffer, mBufferFilled, output, 0, mAudioBufferSize);
@@ -197,15 +200,12 @@ public class AudioUser {
 
                     int startOffset = 0;
 
-                    if(Native.jitter_buffer_get(mJitterBuffer, jbp, new int[] { startOffset }) == Native.JITTER_BUFFER_OK) {
+                    if(Native.jitter_buffer_get(mJitterBuffer, jbp, mFrameSize, new int[] { startOffset }) == Native.JITTER_BUFFER_OK) {
                         PacketDataStream pds = new PacketDataStream(jbp.data);
 
                         mMissedFrames = 0;
                         pds.next(); // Skip flags
                         mHasTerminator = false;
-
-                        /* long session = */ pds.readLong();
-                        /* long sequence = */ pds.readLong();
 
                         if(mCodec == MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS) {
                             long header = pds.readLong();
@@ -276,12 +276,25 @@ public class AudioUser {
         return lastAlive;
 	}
 
+    private byte[] createAudioDataArray() {
+        byte[] audioData = mAudioDataPool.poll();
+
+        if(audioData == null)
+            audioData = new byte[128];
+
+        return audioData;
+    }
+
+    private void freeAudioDataArray(final byte[] audioData) {
+        mAudioDataPool.add(audioData);
+    }
+
     /**
      * Resizes the buffer to the new size specified.
      * Will create the buffer if necessary.
      * @param newSize The size to set the buffer to (in samples).
      */
-    public void resizeBuffer(int newSize) {
+    private void resizeBuffer(int newSize) {
         float[] newBuffer = new float[newSize];
         if(mBuffer != null)
             System.arraycopy(mBuffer, 0, newBuffer, 0, mBuffer.length);
