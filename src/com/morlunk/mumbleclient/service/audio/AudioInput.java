@@ -13,12 +13,14 @@ import android.util.Log;
 
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.Settings;
-import com.morlunk.mumbleclient.jni.Native;
-import com.morlunk.mumbleclient.jni.NativeAudio;
-import com.morlunk.mumbleclient.jni.celtConstants;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.MumbleService;
 import com.morlunk.mumbleclient.service.PacketDataStream;
+import com.morlunk.mumbleclient.swig.celt.CELT;
+import com.morlunk.mumbleclient.swig.celt.SWIGTYPE_p_CELTEncoder;
+import com.morlunk.mumbleclient.swig.celt.SWIGTYPE_p_CELTMode;
+import com.morlunk.mumbleclient.swig.opus.Opus;
+import com.morlunk.mumbleclient.swig.opus.SWIGTYPE_p_OpusEncoder;
 import com.morlunk.mumbleclient.swig.speex.SWIGTYPE_p_SpeexResamplerState_;
 import com.morlunk.mumbleclient.swig.speex.Speex;
 
@@ -49,10 +51,10 @@ public class AudioInput implements Runnable, Observer {
 	private int codec;
 
 	// CELT native instances
-	private long celtEncoder;
-	private long celtMode;
+	private SWIGTYPE_p_CELTEncoder celtEncoder;
+	private SWIGTYPE_p_CELTMode celtMode;
 	// Opus native instances
-	private long opusEncoder;
+	private SWIGTYPE_p_OpusEncoder opusEncoder;
 
 	private final MumbleService mService;
 	private final int framesPerPacket = 6;
@@ -102,28 +104,27 @@ public class AudioInput implements Runnable, Observer {
 
 		buffer = new short[frameSize];
 
+        int[] error = new int[] { 0 };
+
 		if (codec == MumbleProtocol.CODEC_OPUS) {
-			opusEncoder = NativeAudio.opusEncoderCreate(
-					MumbleProtocol.SAMPLE_RATE, 1,
-					NativeAudio.OPUS_APPLICATION_VOIP);
-			NativeAudio.opusEncoderCtl(opusEncoder,
-					NativeAudio.OPUS_SET_VBR_REQUEST, 0);
+			opusEncoder = Opus.opus_encoder_create(
+                    MumbleProtocol.SAMPLE_RATE, 1,
+                    Opus.OPUS_APPLICATION_VOIP,
+                    error);
+			Opus.opus_encoder_ctl(opusEncoder, Opus.OPUS_SET_VBR_REQUEST, new int[] { 0 });
 		} else if (codec == MumbleProtocol.CODEC_BETA
 				|| codec == MumbleProtocol.CODEC_ALPHA) {
-			celtMode = Native.celt_mode_create(MumbleProtocol.SAMPLE_RATE,
-					MumbleProtocol.FRAME_SIZE);
-			celtEncoder = Native.celt_encoder_create(celtMode, 1);
-			Native.celt_encoder_ctl(celtEncoder,
-					celtConstants.CELT_SET_PREDICTION_REQUEST, 0);
-			Native.celt_encoder_ctl(celtEncoder,
-					celtConstants.CELT_SET_VBR_RATE_REQUEST, audioQuality);
+			celtMode = CELT.celt_mode_create(MumbleProtocol.SAMPLE_RATE, MumbleProtocol.FRAME_SIZE, error);
+			celtEncoder = CELT.celt_encoder_create(celtMode, 1, error);
+			CELT.celt_encoder_ctl(celtEncoder, CELT.CELT_SET_PREDICTION_REQUEST, new int[] { 0 });
+			CELT.celt_encoder_ctl(celtEncoder, CELT.CELT_SET_VBR_RATE_REQUEST, new int[] { audioQuality });
 		}
 
 
 		if (recordingSampleRate != TARGET_SAMPLE_RATE) {
 			Log.d(Globals.LOG_TAG, "Initializing Speex resampler.");
 			speexResamplerState = Speex.speex_resampler_init(1,
-                    recordingSampleRate, TARGET_SAMPLE_RATE, 3, null);
+                    recordingSampleRate, TARGET_SAMPLE_RATE, 3, error);
 		} else {
 			speexResamplerState = null;
 		}
@@ -201,18 +202,14 @@ public class AudioInput implements Runnable, Observer {
 
 			final int compressedSize = Math.min(audioQuality / (100 * 8), 127);
 			final byte[] compressed = new byte[compressedSize];
-			synchronized (Native.class) {
+			//synchronized (Native.class) {
 				if (codec == MumbleProtocol.CODEC_OPUS) {
-					NativeAudio.opusEncoderCtl(opusEncoder,
-							NativeAudio.OPUS_SET_BITRATE_REQUEST, audioQuality);
-					NativeAudio.opusEncode(opusEncoder, out, frameSize,
-							compressed, compressedSize);
-				} else if (codec == MumbleProtocol.CODEC_BETA
-						|| codec == MumbleProtocol.CODEC_ALPHA) {
-					Native.celt_encode(celtEncoder, out, compressed,
-							compressedSize);
+					Opus.opus_encoder_ctl(opusEncoder, Opus.OPUS_SET_BITRATE_REQUEST, new int[] { audioQuality });
+					Opus.opus_encode(opusEncoder, out, frameSize, compressed, compressedSize);
+				} else if (codec == MumbleProtocol.CODEC_BETA || codec == MumbleProtocol.CODEC_ALPHA) {
+					CELT.celt_encode(celtEncoder, out, null, compressed, compressedSize);
 				}
-			}
+			//}
 			outputQueue.add(compressed);
 
 			if (outputQueue.size() < framesPerPacket) {
@@ -331,14 +328,14 @@ public class AudioInput implements Runnable, Observer {
 		if (speexResamplerState != null)
 			Speex.speex_resampler_destroy(speexResamplerState);
 
-		if (opusEncoder != 0)
-			NativeAudio.opusEncoderDestroy(opusEncoder);
+		if (opusEncoder != null)
+			Opus.opus_encoder_destroy(opusEncoder);
 
-		if (celtEncoder != 0)
-			Native.celt_encoder_destroy(celtEncoder);
+		if (celtEncoder != null)
+			CELT.celt_encoder_destroy(celtEncoder);
 
-		if (celtMode != 0)
-			Native.celt_mode_destroy(celtMode);
+		if (celtMode != null)
+			CELT.celt_mode_destroy(celtMode);
 
 		Settings.getInstance(mService).deleteObserver(this);
 

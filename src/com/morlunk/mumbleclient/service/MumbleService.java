@@ -75,13 +75,6 @@ import com.morlunk.mumbleclient.service.model.User;
  */
 public class MumbleService extends Service implements OnInitListener, Observer {
 
-    /**
-     * TODO find a better place to put this now that we let SWIG manage the interface.
-     */
-    static {
-        System.loadLibrary("speex");
-    }
-
 	public class LocalBinder extends Binder {
 		public MumbleService getService() {
 			return MumbleService.this;

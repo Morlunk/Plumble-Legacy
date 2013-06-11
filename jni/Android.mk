@@ -31,7 +31,19 @@ LOCAL_SRC_FILES		:= cb_search.c		exc_10_32_table.c 	exc_8_128_table.c 	filters.c
 					   filterbank.c     scal.c \
 					   ../../speex_wrap.c
 LOCAL_CFLAGS		:= -D__EMX__ -DUSE_KISS_FFT -DFIXED_POINT -DEXPORT=''
+include $(BUILD_SHARED_LIBRARY)
 
+include $(CLEAR_VARS)
+LOCAL_PATH			:= $(ROOT)/celt/libcelt
+LOCAL_MODULE		:= libcelt
+LOCAL_SRC_FILES		:= bands.c			celt.c				cwrs.c				dump_modes.c \
+					   entcode.c		entdec.c			entenc.c			header.c \
+					   kiss_fft.c		laplace.c			mdct.c				modes.c \
+					   pitch.c			quant_bands.c		rangedec.c			rangeenc.c \
+					   rate.c			vq.c \
+					   ../../celt_wrap.c
+LOCAL_C_INCLUDES    := $(ROOT)/celt/libcelt/
+LOCAL_CFLAGS		:= -I$(ROOT)/celt_wrapper -DHAVE_CONFIG_H -fvisibility=hidden
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -163,39 +175,7 @@ silk/fixed/pitch_analysis_core_FIX.c \
 silk/fixed/vector_ops_FIX.c \
 silk/fixed/schur64_FIX.c \
 silk/fixed/schur_FIX.c \
-src/repacketizer.c
-LOCAL_CFLAGS		:= -I$(LOCAL_PATH) -DOPUS_BUILD -DVAR_ARRAYS -Wno-traditional -DFIXED_POINT
-include $(BUILD_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE			:= libPlumble
-LOCAL_PATH				:= $(ROOT)
-LOCAL_SRC_FILES			:= Plumble.cpp
-LOCAL_STATIC_LIBRARIES	:= libopus
-
-include $(BUILD_SHARED_LIBRARY)
-
-# END NEW OPUS/PLUMBLE LIBRARY
-
-# BEGIN SPEEX/CELT LIBRARY
-
-include $(CLEAR_VARS)
-LOCAL_PATH			:= $(ROOT)/celt/libcelt
-LOCAL_MODULE		:= libcelt
-LOCAL_SRC_FILES		:= bands.c			celt.c				cwrs.c				dump_modes.c \
-					   entcode.c		entdec.c			entenc.c			header.c \
-					   kiss_fft.c		laplace.c			mdct.c				modes.c \
-					   pitch.c			quant_bands.c		rangedec.c			rangeenc.c \
-					   rate.c			testcelt.c			vq.c
-LOCAL_CFLAGS		:= -I$(LOCAL_PATH) -I$(ROOT)/celt_wrapper -DHAVE_CONFIG_H -fvisibility=hidden
-include $(BUILD_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
-LOCAL_PATH				:= $(ROOT)/new
-LOCAL_MODULE			:= libNativeAudio
-LOCAL_SRC_FILES			:= hawtjni.c hawtjni_native.c hawtjni_native_stats.c hawtjni_native_structs.c
-LOCAL_C_INCLUDES        := $(ROOT)/speex/include/
-LOCAL_CFLAGS			:= -I$(ROOT)/celt/libcelt -fvisibility=hidden
-LOCAL_STATIC_LIBRARIES	:= libcelt libspeex
-
+src/repacketizer.c \
+../opus_wrap.c
+LOCAL_CFLAGS		:= -DOPUS_BUILD -DVAR_ARRAYS -Wno-traditional -DFIXED_POINT
 include $(BUILD_SHARED_LIBRARY)

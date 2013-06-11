@@ -16,11 +16,14 @@ import java.util.concurrent.locks.ReentrantLock;
 import android.util.Log;
 
 import com.morlunk.mumbleclient.Globals;
-import com.morlunk.mumbleclient.jni.Native;
-import com.morlunk.mumbleclient.jni.NativeAudio;
 import com.morlunk.mumbleclient.service.MumbleProtocol;
 import com.morlunk.mumbleclient.service.PacketDataStream;
 import com.morlunk.mumbleclient.service.model.User;
+import com.morlunk.mumbleclient.swig.celt.CELT;
+import com.morlunk.mumbleclient.swig.celt.SWIGTYPE_p_CELTDecoder;
+import com.morlunk.mumbleclient.swig.celt.SWIGTYPE_p_CELTMode;
+import com.morlunk.mumbleclient.swig.opus.Opus;
+import com.morlunk.mumbleclient.swig.opus.SWIGTYPE_p_OpusDecoder;
 import com.morlunk.mumbleclient.swig.speex.*;
 
 
@@ -30,9 +33,9 @@ public class AudioUser {
 		public void packetReady(AudioUser user);
 	}
 	
-	private long mCeltMode;
-	private long mCeltDecoder;
-	private long mOpusDecoder;
+	private SWIGTYPE_p_CELTMode mCeltMode;
+	private SWIGTYPE_p_CELTDecoder mCeltDecoder;
+	private SWIGTYPE_p_OpusDecoder mOpusDecoder;
 
     private final SWIGTYPE_p_JitterBuffer_ mJitterBuffer;
     private final Lock mJitterLock = new ReentrantLock(true);
@@ -61,14 +64,15 @@ public class AudioUser {
 
 		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
             mAudioBufferSize = mFrameSize;
-			mCeltMode = Native.celt_mode_create(
-					MumbleProtocol.SAMPLE_RATE,
-					MumbleProtocol.FRAME_SIZE);
-			mCeltDecoder = Native.celt_decoder_create(mCeltMode, 1);
+			mCeltMode = CELT.celt_mode_create(
+                    MumbleProtocol.SAMPLE_RATE,
+                    MumbleProtocol.FRAME_SIZE,
+                    null);
+			mCeltDecoder = CELT.celt_decoder_create(mCeltMode, 1, null);
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
 			// With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
             mAudioBufferSize = mFrameSize*12;
-			mOpusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
+			mOpusDecoder = Opus.opus_decoder_create(MumbleProtocol.SAMPLE_RATE, 1, null);
 		}
 
         mJitterBuffer = Speex.jitter_buffer_init(mFrameSize);
@@ -100,8 +104,8 @@ public class AudioUser {
 			if(dataSize > 0) {
 				byte[] data = new byte[dataSize];
 				pds.dataBlock(data, dataSize);
-				int frames = NativeAudio.opusPacketGetFrames(data, dataSize);
-				samples = frames * NativeAudio.opusPacketGetSamplesPerFrame(data, MumbleProtocol.SAMPLE_RATE);
+				int frames = Opus.opus_packet_get_nb_frames(data, dataSize);
+				samples = frames * Opus.opus_packet_get_samples_per_frame(data, MumbleProtocol.SAMPLE_RATE);
 
 				if(samples % MumbleProtocol.FRAME_SIZE != 0) {
 					mJitterLock.unlock();
@@ -245,10 +249,10 @@ public class AudioUser {
                     Log.i(Globals.LOG_TAG, "Frame data from JBP: "+Arrays.toString(frameData));
 
                     if(mCodec == MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS)  {
-                        decodedSamples = NativeAudio.opusDecodeFloat(mOpusDecoder, frameData, frameData.length, output, mAudioBufferSize, 0);
+                        decodedSamples = Opus.opus_decode_float(mOpusDecoder, frameData, frameData.length, output, mAudioBufferSize, 0);
                     } else {
                         if(frameData.length != 0)
-                            Native.celt_decode_float(mCeltDecoder, frameData, frameData.length, output);
+                            CELT.celt_decode_float(mCeltDecoder, frameData, frameData.length, output);
                     }
 
                     if(mFrames.size() == 0 && mHasTerminator) {
@@ -257,9 +261,9 @@ public class AudioUser {
 
                 } else {
                     if(mCodec == MumbleProtocol.UDPMESSAGETYPE_UDPVOICEOPUS)  {
-                        decodedSamples = NativeAudio.opusDecodeFloat(mOpusDecoder, null, 0, output, mFrameSize, 0);
+                        decodedSamples = Opus.opus_decode_float(mOpusDecoder, null, 0, output, mFrameSize, 0);
                     } else {
-                        Native.celt_decode_float(mCeltDecoder, null, 0, output);
+                        CELT.celt_decode_float(mCeltDecoder, null, 0, output);
                     }
                 }
 
@@ -332,10 +336,10 @@ public class AudioUser {
 	@Override
 	protected final void finalize() {
 		if(mCodec == MumbleProtocol.CODEC_ALPHA || mCodec == MumbleProtocol.CODEC_BETA) {
-			Native.celt_decoder_destroy(mCeltDecoder);
-			Native.celt_mode_destroy(mCeltMode);
+			CELT.celt_decoder_destroy(mCeltDecoder);
+            CELT.celt_mode_destroy(mCeltMode);
 		} else if(mCodec == MumbleProtocol.CODEC_OPUS) {
-			NativeAudio.opusDecoderDestroy(mOpusDecoder);
+			Opus.opus_decoder_destroy(mOpusDecoder);
 		}
         Speex.jitter_buffer_destroy(mJitterBuffer);
 	}

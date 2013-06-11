@@ -2,10 +2,14 @@
 
 %module Speex
 
-%include audio_types.i
+/* JNI load library, inserted in module java class */
+%pragma(java) jniclasscode=%{
+  static {
+      System.loadLibrary("speex");
+  }
+%}
 
-/* Use this to resolve speex types to primitives */
-#define __EMX__ 1
+%import audio_types.i
 
 %{
 #include <speex/speex_types.h>
@@ -21,3 +25,13 @@
 %include "speex/include/speex/speex_jitter.h"
 %include "speex/include/speex/speex_echo.h"
 %include "speex/include/speex/speex_resampler.h"
+
+%{
+
+void *intToVoidPointer(int *intValue) {
+    return (void *)intValue;
+}
+
+%}
+
+extern void *intToVoidPointer(int *intValue);

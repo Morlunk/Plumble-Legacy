@@ -6,20 +6,20 @@
  * the SWIG interface file instead.
  * ----------------------------------------------------------------------------- */
 
-package com.morlunk.mumbleclient.swig.speex;
+package com.morlunk.mumbleclient.swig.opus;
 
-public class SWIGTYPE_p_SpeexEchoState_ {
+public class SWIGTYPE_p_p_unsigned_char {
   private long swigCPtr;
 
-  protected SWIGTYPE_p_SpeexEchoState_(long cPtr, boolean futureUse) {
+  protected SWIGTYPE_p_p_unsigned_char(long cPtr, boolean futureUse) {
     swigCPtr = cPtr;
   }
 
-  protected SWIGTYPE_p_SpeexEchoState_() {
+  protected SWIGTYPE_p_p_unsigned_char() {
     swigCPtr = 0;
   }
 
-  protected static long getCPtr(SWIGTYPE_p_SpeexEchoState_ obj) {
+  protected static long getCPtr(SWIGTYPE_p_p_unsigned_char obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }
