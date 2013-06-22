@@ -199,7 +199,6 @@ public class AudioOutput implements Runnable {
 						mix.add(user);
 					}
 				} else {
-                    Log.i(Globals.LOG_TAG, "Dude, whatever yo "+user.getUser().name);
 					i.remove();
 				}
 			}

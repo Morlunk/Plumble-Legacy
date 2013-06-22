@@ -56,7 +56,7 @@ public class SpeexJNI {
   public final static native int jitter_buffer_get_pointer_timestamp(long jarg1);
   public final static native void jitter_buffer_tick(long jarg1);
   public final static native void jitter_buffer_remaining_span(long jarg1, long jarg2);
-  public final static native int jitter_buffer_ctl(long jarg1, int jarg2, long jarg3);
+  public final static native int jitter_buffer_ctl(long jarg1, int jarg2, int[] jarg3);
   public final static native int jitter_buffer_update_delay(long jarg1, long jarg2, JitterBufferPacket jarg2_, int[] jarg3);
   public final static native int SPEEX_ECHO_GET_FRAME_SIZE_get();
   public final static native int SPEEX_ECHO_SET_SAMPLING_RATE_get();
@@ -71,7 +71,7 @@ public class SpeexJNI {
   public final static native void speex_echo_capture(long jarg1, short[] jarg2, short[] jarg3);
   public final static native void speex_echo_playback(long jarg1, short[] jarg2);
   public final static native void speex_echo_state_reset(long jarg1);
-  public final static native int speex_echo_ctl(long jarg1, int jarg2, long jarg3);
+  public final static native int speex_echo_ctl(long jarg1, int jarg2, int[] jarg3);
   public final static native long speex_decorrelate_new(int jarg1, int jarg2, int jarg3);
   public final static native void speex_decorrelate(long jarg1, short[] jarg2, short[] jarg3, int jarg4);
   public final static native void speex_decorrelate_destroy(long jarg1);
@@ -108,5 +108,4 @@ public class SpeexJNI {
   public final static native int speex_resampler_skip_zeros(long jarg1);
   public final static native int speex_resampler_reset_mem(long jarg1);
   public final static native byte[] speex_resampler_strerror(int jarg1);
-  public final static native long intToVoidPointer(int[] jarg1);
 }

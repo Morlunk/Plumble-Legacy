@@ -193,13 +193,6 @@ static void SWIGUNUSED SWIG_JavaThrowException(JNIEnv *jenv, SWIG_JavaExceptionC
 #include <speex/speex_resampler.h>
 
 
-
-void *intToVoidPointer(int *intValue) {
-    return (void *)intValue;
-}
-
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -771,7 +764,7 @@ SWIGEXPORT void JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_jitter
 }
 
 
-SWIGEXPORT jint JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_jitter_1buffer_1ctl(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jlong jarg3) {
+SWIGEXPORT jint JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_jitter_1buffer_1ctl(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jintArray jarg3) {
   jint jresult = 0 ;
   JitterBuffer *arg1 = (JitterBuffer *) 0 ;
   int arg2 ;
@@ -782,9 +775,23 @@ SWIGEXPORT jint JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_jitter
   (void)jcls;
   arg1 = *(JitterBuffer **)&jarg1; 
   arg2 = (int)jarg2; 
-  arg3 = *(void **)&jarg3; 
+  {
+    if (!jarg3) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
+      return 0;
+    }
+    if ((*jenv)->GetArrayLength(jenv, jarg3) == 0) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
+      return 0;
+    }
+    arg3 = (void *) (*jenv)->GetIntArrayElements(jenv, jarg3, 0); 
+  }
   result = (int)jitter_buffer_ctl(arg1,arg2,arg3);
   jresult = (jint)result; 
+  {
+    (*jenv)->ReleaseIntArrayElements(jenv, jarg3, (jint *)arg3, 0); 
+  }
+  
   return jresult;
 }
 
@@ -1138,7 +1145,7 @@ SWIGEXPORT void JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_speex_
 }
 
 
-SWIGEXPORT jint JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_speex_1echo_1ctl(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jlong jarg3) {
+SWIGEXPORT jint JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_speex_1echo_1ctl(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jintArray jarg3) {
   jint jresult = 0 ;
   SpeexEchoState *arg1 = (SpeexEchoState *) 0 ;
   int arg2 ;
@@ -1149,9 +1156,23 @@ SWIGEXPORT jint JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_speex_
   (void)jcls;
   arg1 = *(SpeexEchoState **)&jarg1; 
   arg2 = (int)jarg2; 
-  arg3 = *(void **)&jarg3; 
+  {
+    if (!jarg3) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
+      return 0;
+    }
+    if ((*jenv)->GetArrayLength(jenv, jarg3) == 0) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
+      return 0;
+    }
+    arg3 = (void *) (*jenv)->GetIntArrayElements(jenv, jarg3, 0); 
+  }
   result = (int)speex_echo_ctl(arg1,arg2,arg3);
   jresult = (jint)result; 
+  {
+    (*jenv)->ReleaseIntArrayElements(jenv, jarg3, (jint *)arg3, 0); 
+  }
+  
   return jresult;
 }
 
@@ -2070,34 +2091,6 @@ SWIGEXPORT jbyteArray JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_
   arg1 = (int)jarg1; 
   result = (char *)speex_resampler_strerror(arg1);
   if (result) jresult = (*jenv)->NewStringUTF(jenv, (const char *)result);
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_com_morlunk_mumbleclient_swig_speex_SpeexJNI_intToVoidPointer(JNIEnv *jenv, jclass jcls, jintArray jarg1) {
-  jlong jresult = 0 ;
-  int *arg1 = (int *) 0 ;
-  void *result = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  {
-    if (!jarg1) {
-      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
-      return 0;
-    }
-    if ((*jenv)->GetArrayLength(jenv, jarg1) == 0) {
-      SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
-      return 0;
-    }
-    arg1 = (int *) (*jenv)->GetIntArrayElements(jenv, jarg1, 0); 
-  }
-  result = (void *)intToVoidPointer(arg1);
-  *(void **)&jresult = result; 
-  {
-    (*jenv)->ReleaseIntArrayElements(jenv, jarg1, (jint *)arg1, 0); 
-  }
-  
   return jresult;
 }
 

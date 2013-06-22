@@ -46,8 +46,8 @@ public class Speex implements SpeexConstants {
     SpeexJNI.jitter_buffer_remaining_span(SWIGTYPE_p_JitterBuffer_.getCPtr(jitter), rem);
   }
 
-  public static int jitter_buffer_ctl(SWIGTYPE_p_JitterBuffer_ jitter, int request, SWIGTYPE_p_void ptr) {
-    return SpeexJNI.jitter_buffer_ctl(SWIGTYPE_p_JitterBuffer_.getCPtr(jitter), request, SWIGTYPE_p_void.getCPtr(ptr));
+  public static int jitter_buffer_ctl(SWIGTYPE_p_JitterBuffer_ jitter, int request, int[] ptr) {
+    return SpeexJNI.jitter_buffer_ctl(SWIGTYPE_p_JitterBuffer_.getCPtr(jitter), request, ptr);
   }
 
   public static int jitter_buffer_update_delay(SWIGTYPE_p_JitterBuffer_ jitter, JitterBufferPacket packet, int[] start_offset) {
@@ -88,8 +88,8 @@ public class Speex implements SpeexConstants {
     SpeexJNI.speex_echo_state_reset(SWIGTYPE_p_SpeexEchoState_.getCPtr(st));
   }
 
-  public static int speex_echo_ctl(SWIGTYPE_p_SpeexEchoState_ st, int request, SWIGTYPE_p_void ptr) {
-    return SpeexJNI.speex_echo_ctl(SWIGTYPE_p_SpeexEchoState_.getCPtr(st), request, SWIGTYPE_p_void.getCPtr(ptr));
+  public static int speex_echo_ctl(SWIGTYPE_p_SpeexEchoState_ st, int request, int[] ptr) {
+    return SpeexJNI.speex_echo_ctl(SWIGTYPE_p_SpeexEchoState_.getCPtr(st), request, ptr);
   }
 
   public static SWIGTYPE_p_SpeexDecorrState_ speex_decorrelate_new(int rate, int channels, int frame_size) {
@@ -193,11 +193,6 @@ public class Speex implements SpeexConstants {
 
   public static byte[] speex_resampler_strerror(int err) {
     return SpeexJNI.speex_resampler_strerror(err);
-  }
-
-  public static SWIGTYPE_p_void intToVoidPointer(int[] intValue) {
-    long cPtr = SpeexJNI.intToVoidPointer(intValue);
-    return (cPtr == 0) ? null : new SWIGTYPE_p_void(cPtr, false);
   }
 
 }

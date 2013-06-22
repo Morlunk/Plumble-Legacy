@@ -41,7 +41,6 @@ public class AudioUser {
     private final Lock mJitterLock = new ReentrantLock(true);
 
     private final Queue<byte[]> mFrames = new ConcurrentLinkedQueue<byte[]>();
-    private final Queue<byte[]> mAudioDataPool = new ConcurrentLinkedQueue<byte[]>();
 
     private final int mCodec;
     private int mFrameSize = MumbleProtocol.FRAME_SIZE;
@@ -62,24 +61,24 @@ public class AudioUser {
 		mUser = user;
 		mCodec = codec;
 
+        int[] error = new int[] { 0 };
+
 		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
             mAudioBufferSize = mFrameSize;
 			mCeltMode = CELT.celt_mode_create(
                     MumbleProtocol.SAMPLE_RATE,
                     MumbleProtocol.FRAME_SIZE,
-                    null);
-			mCeltDecoder = CELT.celt_decoder_create(mCeltMode, 1, null);
+                    error);
+			mCeltDecoder = CELT.celt_decoder_create(mCeltMode, 1, error);
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
 			// With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
             mAudioBufferSize = mFrameSize*12;
-			mOpusDecoder = Opus.opus_decoder_create(MumbleProtocol.SAMPLE_RATE, 1, null);
+			mOpusDecoder = Opus.opus_decoder_create(MumbleProtocol.SAMPLE_RATE, 1, error);
 		}
 
         mJitterBuffer = Speex.jitter_buffer_init(mFrameSize);
         int margin[] = new int[] { 10 * mFrameSize };
-        SWIGTYPE_p_void marginPtr = Speex.intToVoidPointer(margin);
-
-        Speex.jitter_buffer_ctl(mJitterBuffer, Speex.JITTER_BUFFER_SET_MARGIN, marginPtr);
+        Speex.jitter_buffer_ctl(mJitterBuffer, Speex.JITTER_BUFFER_SET_MARGIN, margin);
 	}
 
 	public boolean addFrameToBuffer(
@@ -129,12 +128,9 @@ public class AudioUser {
             return false;
         }
 
-        byte[] jitterAudioData = createAudioDataArray();
-        System.arraycopy(audioData, 0, jitterAudioData, 0, audioData.length);
-
         final JitterBufferPacket jbp = new JitterBufferPacket();
-        jbp.setData(jitterAudioData);
-        jbp.setLen(jitterAudioData.length);
+        jbp.setData(audioData);
+        jbp.setLen(audioData.length);
         jbp.setSpan(samples);
         jbp.setTimestamp(sequence * mFrameSize);
 
@@ -142,16 +138,15 @@ public class AudioUser {
 
         readyHandler.packetReady(this);
 
-        freeAudioDataArray(jitterAudioData);
-
         mJitterLock.unlock();
 
 		return true;
 	}
 
 	public boolean needSamples(int bufferSize) {
-        for(int i = mConsumedSamples; i < mBufferFilled;i++)
+        for(int i = mConsumedSamples; i < mBufferFilled;i++) {
             mBuffer[i-mConsumedSamples] = mBuffer[i]; // Shift samples left after consumption of buffer
+        }
 
         mBufferFilled -= mConsumedSamples;
 
@@ -163,14 +158,17 @@ public class AudioUser {
         boolean nextAlive = mLastAlive;
         float[] output = new float[mAudioBufferSize];
 
-        while(mBufferFilled < 480) {
+        while(mBufferFilled < bufferSize) {
             int decodedSamples = mFrameSize;
             resizeBuffer(mBufferFilled + mAudioBufferSize);
 
-            Log.i(Globals.LOG_TAG, "Audio buffer: "+mAudioBufferSize+" buffer size: "+mBuffer.length+" filled: "+mBufferFilled);
+            Log.v(Globals.LOG_TAG, "Audio buffer size: "+mAudioBufferSize+" buffer array size: "+mBuffer.length+" filled: "+mBufferFilled);
 
             // Shift buffer to current frame
             System.arraycopy(mBuffer, mBufferFilled, output, 0, mAudioBufferSize);
+
+            Log.i(Globals.LOG_TAG, "Audio buffer: "+Arrays.toString(mBuffer));
+            Log.i(Globals.LOG_TAG, "Audio output: "+Arrays.toString(output));
 
             if(!mLastAlive) {
                 // If this is a new frame, clear the buffer
@@ -181,8 +179,7 @@ public class AudioUser {
 
                 mJitterLock.lock();
                 int ts[] = new int[] { Speex.jitter_buffer_get_pointer_timestamp(mJitterBuffer) };
-                SWIGTYPE_p_void tsPtr = Speex.intToVoidPointer(ts);
-                Speex.jitter_buffer_ctl(mJitterBuffer, Speex.JITTER_BUFFER_GET_AVAILABLE_COUNT, tsPtr);
+                Speex.jitter_buffer_ctl(mJitterBuffer, Speex.JITTER_BUFFER_GET_AVAILABLE_COUNT, ts);
                 mJitterLock.unlock();
 
                 if(ts[0] == 0) {
@@ -307,19 +304,6 @@ public class AudioUser {
         mLastAlive = nextAlive;
         return lastAlive;
 	}
-
-    private byte[] createAudioDataArray() {
-        byte[] audioData = mAudioDataPool.poll();
-
-        if(audioData == null)
-            audioData = new byte[128];
-
-        return audioData;
-    }
-
-    private void freeAudioDataArray(final byte[] audioData) {
-        mAudioDataPool.add(audioData);
-    }
 
     /**
      * Resizes the buffer to the new size specified.

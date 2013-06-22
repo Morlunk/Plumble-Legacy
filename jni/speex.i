@@ -25,13 +25,3 @@
 %include "speex/include/speex/speex_jitter.h"
 %include "speex/include/speex/speex_echo.h"
 %include "speex/include/speex/speex_resampler.h"
-
-%{
-
-void *intToVoidPointer(int *intValue) {
-    return (void *)intValue;
-}
-
-%}
-
-extern void *intToVoidPointer(int *intValue);
