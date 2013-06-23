@@ -206,7 +206,7 @@ public class AudioOutput implements Runnable {
 									AudioOutputHost.STATE_TALKING);
 						}
 					}
-				} else if(!user.isStreaming()) {
+				} else {
 					i.remove();
 					if(user.getUser().talkingState != AudioOutputHost.STATE_PASSIVE) {
 						host.setTalkState(

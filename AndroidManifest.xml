@@ -6,7 +6,7 @@
     android:versionName="2.0.0b" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="7"
         android:targetSdkVersion="18" />
     <uses-feature android:name="android.hardware.microphone" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />

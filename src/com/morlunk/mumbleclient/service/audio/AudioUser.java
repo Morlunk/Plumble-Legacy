@@ -1,5 +1,6 @@
 package com.morlunk.mumbleclient.service.audio;
 
+import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -152,6 +153,7 @@ public class AudioUser {
 	 * @return
 	 */
 	public boolean hasBuffer(int bufferSize) {
+        Arrays.fill(buffer, 0);
         int offset = 0;
 
         while(offset < bufferSize) {
@@ -196,10 +198,6 @@ public class AudioUser {
 
         // We only hold one frame in the buffer. Return true if we have less than 10 missed frames.
         return (missedFrames < 10);
-	}
-	
-	boolean isStreaming() {
-		return missedFrames < 10;
 	}
 
 	private byte[] acquireDataArray() {
