@@ -155,16 +155,8 @@ public class AudioOutput implements Runnable {
 					!host.isDeafened()) {
 				// Mix all the frames into one array.
 				mix(out, mix);
-				
-				// Trim the mix, removing unused samples by selecting the longest frame size.
-				int mixSize = 0;
-				for(AudioUser user : mix)
-					mixSize = Math.max(mixSize, user.bufferSize);
-				
-				short[] clippedOut = new short[mixSize];
-				System.arraycopy(out, 0, clippedOut, 0, mixSize);
-				
-				at.write(out, 0, mixSize);
+
+				at.write(out, 0, out.length);
 
 				// Make sure we are playing when there are enough samples
 				// buffered.
@@ -205,7 +197,7 @@ public class AudioOutput implements Runnable {
 			final Iterator<AudioUser> i = userPackets.values().iterator();
 			while (i.hasNext()) {
 				final AudioUser user = i.next();
-				if (user.hasBuffer()) {
+				if (user.hasBuffer(MumbleProtocol.FRAME_SIZE*12)) {
 					if(!user.getUser().localMuted) {
 						mix.add(user);
 						if(user.getUser().talkingState != AudioOutputHost.STATE_TALKING) {

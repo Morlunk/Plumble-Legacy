@@ -33,10 +33,9 @@ public class AudioUser {
 	
 	private final Queue<byte[]> dataArrayPool = new ConcurrentLinkedQueue<byte[]>();
 	final int codec;
-	float[] buffer;
-	int frameSize = MumbleProtocol.FRAME_SIZE; // The size of the last parsed frame
-	int bufferSize = MumbleProtocol.FRAME_SIZE; // The size of the buffer required before 
-	int bufferIndex = 0; // The position of the latest frame in the buffer. For opus.
+
+    int bufferSize = MumbleProtocol.FRAME_SIZE*12; // With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
+	float[] buffer = new float[bufferSize];
 	private final User user;
 
 	private int missedFrames = 0;
@@ -51,11 +50,8 @@ public class AudioUser {
 					MumbleProtocol.FRAME_SIZE);
 			celtDecoder = Native.celt_decoder_create(celtMode, 1);
 		} else if(codec == MumbleProtocol.CODEC_OPUS) {
-			bufferSize *= 12; // With opus, we have to make sure we can hold the largest frame size- 120ms, or 5760 samples.
 			opusDecoder = NativeAudio.opusDecoderCreate(MumbleProtocol.SAMPLE_RATE, 1);
 		}
-		
-		buffer = new float[bufferSize];
 		
 		normalBuffer = new ConcurrentLinkedQueue<Native.JitterBufferPacket>();
 
@@ -155,67 +151,55 @@ public class AudioUser {
 	 *
 	 * @return
 	 */
-	public boolean hasBuffer() {
-		byte[] data = null;
-		int dataLength = 0;
+	public boolean hasBuffer(int bufferSize) {
+        int offset = 0;
 
-		Native.JitterBufferPacket jbp = normalBuffer.poll();
-		if (jbp != null) {
-			data = jbp.data;
-			dataLength = jbp.len;
-			
-			if(jbp.span != frameSize) {
-				// Reset buffer if frame size is changed
-				Log.d(Globals.LOG_TAG, "AudioUser's frame size changed, resetting buffer...");
-				bufferIndex = 0;
-				frameSize = jbp.span;
-			}
-			
-			missedFrames = 0;
-		} else {
-			missedFrames++;
-		}
+        while(offset < bufferSize) {
+            byte[] data = null;
+            int frameSize = MumbleProtocol.FRAME_SIZE;
+            int dataLength = 0;
 
-		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
-			Native.celt_decode_float(celtDecoder, data, dataLength, buffer);
-			
-			if (data != null) {
-				freeDataArray(data);
-			}
-			
-			// We only hold one frame in the buffer. Return true if we have less than 10 missed frames.
-			return (missedFrames < 10);
-		} else if(codec == MumbleProtocol.CODEC_OPUS) {
-			// TODO add exception handling and discard frame if opus fails
-			float[] frame = new float[frameSize];
-			NativeAudio.opusDecodeFloat(opusDecoder,
-									data == null ? null : data,
-									data == null ? 0 : dataLength, 
-									frame, 
-									frameSize, 0);
-			
-			System.arraycopy(frame, 0, buffer, bufferIndex, frameSize);
-			bufferIndex += frameSize;
-						
-			// Return true if the buffer is full (120ms).
-			if(bufferIndex == bufferSize) {
-				bufferIndex = 0;
-				return true;
-			} else {
-				return false;
-			}
-		}
-		return false; // Never play a frame without a codec.
+            Native.JitterBufferPacket jbp = normalBuffer.poll();
+            if (jbp != null) {
+                data = jbp.data;
+                dataLength = jbp.len;
+                frameSize = jbp.span;
+
+                missedFrames = 0;
+            } else {
+                missedFrames++;
+            }
+
+            float[] frame = new float[frameSize];
+
+            if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
+                Native.celt_decode_float(celtDecoder, data, dataLength, buffer);
+
+                if (data != null) {
+                    freeDataArray(data);
+                }
+            } else if(codec == MumbleProtocol.CODEC_OPUS) {
+                // TODO add exception handling and discard frame if opus fails
+                frame = new float[frameSize];
+                NativeAudio.opusDecodeFloat(opusDecoder,
+                        data == null ? null : data,
+                        data == null ? 0 : dataLength,
+                        frame,
+                        frameSize, 0);
+            } else {
+                return false; // No speex support. FIXME
+            }
+
+            System.arraycopy(frame, 0, buffer, offset, Math.min(frameSize, bufferSize-offset)); // This is an ugly workaround to compensate for frame size shifts! FIXME
+            offset += frame.length;
+        }
+
+        // We only hold one frame in the buffer. Return true if we have less than 10 missed frames.
+        return (missedFrames < 10);
 	}
 	
 	boolean isStreaming() {
-		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
-			return missedFrames < 10;
-		} else if(codec == MumbleProtocol.CODEC_OPUS) {
-			// Make sure our buffer isn't entirely missed frames. (buffer holds 12 480 sample frames max)
-			return missedFrames < (bufferSize/frameSize);
-		}
-		return false;
+		return missedFrames < 10;
 	}
 
 	private byte[] acquireDataArray() {
