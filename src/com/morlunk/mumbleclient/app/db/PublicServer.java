@@ -43,4 +43,8 @@ public class PublicServer extends Server {
 	public String getUrl() {
 		return url;
 	}
+
+    public String toString() {
+        return "CA: "+ca+"\nContinent Code: "+continentCode+"\nCountry: "+country+"\nCountry Code: "+countryCode+"\nRegion: "+region+"\nURL: "+url;
+    }
 }

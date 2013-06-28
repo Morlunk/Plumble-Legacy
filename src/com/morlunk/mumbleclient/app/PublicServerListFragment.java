@@ -1,11 +1,6 @@
 package com.morlunk.mumbleclient.app;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -200,12 +195,17 @@ public class PublicServerListFragment extends SherlockFragment implements OnItem
 		
 		public void filter(String queryName, String queryCountry) {
 			clear();
-			
+
 			for(PublicServer server : originalServers) {
-				String serverName = server.getName().toUpperCase(Locale.US);
-				String serverCountry = server.getCountry().toUpperCase(Locale.US);
-				
-				if(serverName.contains(queryName) && serverCountry.contains(queryCountry))
+                /*
+                 * It'll include a server in the results if...
+                 * - There is a blank query string specified for the category (name or country)
+                 * - The category value is not null and the search string contains it
+                 */
+                boolean nameFound = "".equals(queryName) || (server.getName() != null && server.getName().toUpperCase(Locale.getDefault()).contains(queryName));
+                boolean countryFound = "".equals(queryCountry) || (server.getCountry() != null && server.getCountry().toUpperCase().contains(queryCountry));
+
+				if(nameFound && countryFound)
 					add(server);
 			}
 		}
@@ -340,6 +340,11 @@ public class PublicServerListFragment extends SherlockFragment implements OnItem
 		private Comparator<PublicServer> nameComparator = new Comparator<PublicServer>() {
 			@Override
 			public int compare(PublicServer lhs, PublicServer rhs) {
+                // Handle null values and put them at the bottom (this is a real possibility!)
+                if (rhs.getName() == null)
+                    return (lhs.getName() == null) ? 0 : -1;
+                if (lhs.getName() == null)
+                    return 1;
 				return lhs.getName().compareTo(rhs.getName());
 			}
 		};
@@ -347,6 +352,11 @@ public class PublicServerListFragment extends SherlockFragment implements OnItem
 		private Comparator<PublicServer> countryComparator = new Comparator<PublicServer>() {
 			@Override
 			public int compare(PublicServer lhs, PublicServer rhs) {
+                // Handle null values and put them at the bottom (this is a real possibility!)
+                if (rhs.getCountry() == null)
+                    return (lhs.getCountry() == null) ? 0 : -1;
+                if (lhs.getCountry() == null)
+                    return 1;
 				return lhs.getCountry().compareTo(rhs.getCountry());
 			}
 		};
