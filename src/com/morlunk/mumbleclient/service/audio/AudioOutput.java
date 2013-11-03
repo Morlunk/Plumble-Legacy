@@ -192,29 +192,27 @@ public class AudioOutput implements Runnable {
 		at.stop();
 	}
 
-	private void fillMixFrames(final List<AudioUser> mix) {
-		synchronized (userPackets) {
-			final Iterator<AudioUser> i = userPackets.values().iterator();
-			while (i.hasNext()) {
-				final AudioUser user = i.next();
-				if (user.hasBuffer(MumbleProtocol.FRAME_SIZE*12)) {
-					if(!user.getUser().localMuted) {
-						mix.add(user);
-						if(user.getUser().talkingState != AudioOutputHost.STATE_TALKING) {
-							host.setTalkState(
-									user.getUser(),
-									AudioOutputHost.STATE_TALKING);
-						}
-					}
-				} else {
-					i.remove();
-					if(user.getUser().talkingState != AudioOutputHost.STATE_PASSIVE) {
-						host.setTalkState(
-								user.getUser(),
-								AudioOutputHost.STATE_PASSIVE);
-					}
-				}
-			}
+    private void fillMixFrames(final List<AudioUser> mix) {
+        synchronized (userPackets) {
+            final Iterator<AudioUser> i = userPackets.values().iterator();
+            while (i.hasNext()) {
+                final AudioUser user = i.next();
+                if (user.hasBuffer(MumbleProtocol.FRAME_SIZE*12) && !user.getUser().localMuted) {
+                    mix.add(user);
+                    if(user.getUser().talkingState != AudioOutputHost.STATE_TALKING) {
+                        host.setTalkState(
+                                user.getUser(),
+                                AudioOutputHost.STATE_TALKING);
+                    }
+                } else {
+                    i.remove();
+                    if(user.getUser().talkingState != AudioOutputHost.STATE_PASSIVE) {
+                        host.setTalkState(
+                                user.getUser(),
+                                AudioOutputHost.STATE_PASSIVE);
+                    }
+                }
+            }
 		}
 	}
 

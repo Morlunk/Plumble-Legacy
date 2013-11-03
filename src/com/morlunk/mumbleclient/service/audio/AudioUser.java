@@ -175,14 +175,12 @@ public class AudioUser {
             float[] frame = new float[frameSize];
 
             if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
-                Native.celt_decode_float(celtDecoder, data, dataLength, buffer);
+                Native.celt_decode_float(celtDecoder, data, dataLength, frame);
 
                 if (data != null) {
                     freeDataArray(data);
                 }
             } else if(codec == MumbleProtocol.CODEC_OPUS) {
-                // TODO add exception handling and discard frame if opus fails
-                frame = new float[frameSize];
                 NativeAudio.opusDecodeFloat(opusDecoder,
                         data == null ? null : data,
                         data == null ? 0 : dataLength,
