@@ -1,6 +1,8 @@
 # Android Studio
 .idea/
 *.iml
+build/
+.gradle/
 
 # Eclipse
 .classpath

@@ -3,12 +3,4 @@
         <item name="android:background">@drawable/selectable_background</item>
     </style>
     <style name="Plumble.HorizontalProgressBar" parent="@android:style/Widget.ProgressBar.Horizontal"></style>
-    
-    <style name="PlumbleShowcaseView" parent="@style/ShowcaseView">
-        <item name="backgroundColor">#cc000000</item>
-    </style>
-    
-    <style name="PlumbleTheme" parent="@style/Theme.Sherlock.Light.DarkActionBar">
-        <item name="showcaseViewStyle">@style/PlumbleShowcaseView</item>
-    </style>
 </resources>

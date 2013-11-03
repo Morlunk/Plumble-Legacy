@@ -30,9 +30,6 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
-import com.github.espiandev.showcaseview.ShowcaseView;
-import com.github.espiandev.showcaseview.ShowcaseView.ConfigOptions;
-import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.app.db.DbAdapter;
 import com.morlunk.mumbleclient.app.db.Server;
@@ -48,10 +45,7 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 	private GridView serverGrid;
 	private ServerAdapter serverAdapter;
 	private Map<Server, ServerInfoResponse> infoResponses = new HashMap<Server, ServerInfoResponse>();
-	
-	// Showcases
-	private ShowcaseView serverAddShowcaseView;
-	
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -84,14 +78,6 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		super.onCreateOptionsMenu(menu, inflater);
 		inflater.inflate(R.menu.fragment_server_list, menu);
-		
-		// Hint to add server
-		if(serverAddShowcaseView == null) {
-			ConfigOptions serverAddConfig = new ConfigOptions();
-			serverAddConfig.shotType = ShowcaseView.TYPE_ONE_SHOT;
-			serverAddConfig.showcaseId = Globals.SHOWCASE_SERVER_ADD;
-			serverAddShowcaseView = ShowcaseView.insertShowcaseViewWithType(ShowcaseView.ITEM_ACTION_ITEM, R.id.menu_add_server_item, getActivity(), R.string.hint_server_add, R.string.hint_server_add_summary, serverAddConfig);
-		}
 	}
 
     @Override
@@ -104,8 +90,6 @@ public class ServerListFragment extends SherlockFragment implements OnItemClickL
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if(item.getItemId() == R.id.menu_add_server_item) {
 			addServer();
-			if(serverAddShowcaseView != null)
-				serverAddShowcaseView.hide(); // Hide showcase when pressed.
 			return true;
 		}
 		return super.onOptionsItemSelected(item);

@@ -41,8 +41,6 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.widget.SearchView;
-import com.github.espiandev.showcaseview.ShowcaseView;
-import com.github.espiandev.showcaseview.ShowcaseView.ConfigOptions;
 import com.morlunk.mumbleclient.Globals;
 import com.morlunk.mumbleclient.R;
 import com.morlunk.mumbleclient.Settings;
@@ -736,25 +734,6 @@ public class ChannelActivity extends SherlockFragmentActivity implements Plumble
 			listFragment.setChatTarget(chatTarget);
 			chatFragment.setChatTarget(chatTarget);
 		}
-		
-		// Showcase hints
-		List<ShowcaseView> showcaseViews = new ArrayList<ShowcaseView>();
-		if(settings.isPushToTalk() && settings.isPushToTalkButtonShown()) {
-			ConfigOptions pttConfig = new ConfigOptions();
-			pttConfig.shotType = ShowcaseView.TYPE_ONE_SHOT;
-			pttConfig.showcaseId = Globals.SHOWCASE_PUSH_TO_TALK;
-			showcaseViews.add(ShowcaseView.insertShowcaseView(pttView, this, R.string.hint_ptt, R.string.hint_ptt_summary, pttConfig));
-		}
-		
-		if(mViewPager != null) {
-			ConfigOptions switcherConfig = new ConfigOptions();
-			switcherConfig.shotType = ShowcaseView.TYPE_ONE_SHOT;
-			switcherConfig.showcaseId = Globals.SHOWCASE_SWITCHER;
-			showcaseViews.add(ShowcaseView.insertShowcaseView(ShowcaseView.ITEM_ACTION_HOME, 0, this, R.string.hint_switching, R.string.hint_switching_summary, switcherConfig));
-		}
-		
-		ShowcaseViewQueue queue = new ShowcaseViewQueue(showcaseViews);
-		queue.queueNext();
 	}
 	
 	protected void disconnect() {
