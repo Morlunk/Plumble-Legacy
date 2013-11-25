@@ -1065,12 +1065,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
     private void setupAudioInput() {
         // Disable old thread, if exists
         if(mAudioInput != null) {
-            try {
-                mAudioInput.stopRecordingAndBlock();
-                mAudioInput.shutdown();
-            } catch(InterruptedException e) {
-                e.printStackTrace();
-            }
+            mAudioInput.stopRecording();
+            mAudioInput.shutdown();
         }
         // Initialize audio input
         mAudioInput = new AudioInput(this, mProtocol.codec);
@@ -1128,14 +1124,8 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		}
 
 		if (mAudioInput != null) {
-			try {
-				mAudioInput.stopRecordingAndBlock();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} finally {
-				mAudioInput.shutdown();
-				mAudioInput = null;
-			}
+            mAudioInput.stopRecording();
+            mAudioInput.shutdown();
 		}
 
         // Disable bluetooth, if active

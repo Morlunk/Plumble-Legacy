@@ -53,6 +53,7 @@ public class AudioInput implements Runnable, Observer {
 	private long opusEncoder;
 
 	private final MumbleService mService;
+    private Object mRecordingLock = new Object();
 	private final int framesPerPacket = 6;
 	private final LinkedList<byte[]> outputQueue = new LinkedList<byte[]>();
 	private final short[] resampleBuffer = new short[MumbleProtocol.FRAME_SIZE];
@@ -64,7 +65,8 @@ public class AudioInput implements Runnable, Observer {
 	// Recording state
 	private AudioRecord audioRecord;
 	private Thread recordThread;
-	private boolean recordThreadEnabled;
+	private boolean mRecording;
+    private boolean mRecordThreadActive;
 
 	@SuppressLint({ "InlinedApi", "NewApi" })
 	public AudioInput(final MumbleService service, final int codec) {
@@ -143,11 +145,10 @@ public class AudioInput implements Runnable, Observer {
 		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 		
 		Arrays.fill(buffer, (short) 0);
-		
-		recordThreadEnabled = true;
 
-		while (recordThreadEnabled &&
-				mService.isConnected()) {
+        audioRecord.startRecording();
+
+		while (mRecording && mService.isConnected()) {
 			final int read = audioRecord.read(buffer, 0, frameSize);
 
 			if (read == AudioRecord.ERROR_BAD_VALUE
@@ -262,13 +263,16 @@ public class AudioInput implements Runnable, Observer {
 				}
 			}
 		}
+
+        audioRecord.stop();
+        mRecordThreadActive = false;
 	}
 
 	/**
 	 * Returns whether or not the AudioRecord object that this class manages is currently recording.
 	 */
 	public boolean isRecording() {
-		return audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING;
+		return mRecordThreadActive;
 	}
 
 	/**
@@ -276,15 +280,18 @@ public class AudioInput implements Runnable, Observer {
 	 * thread is already active, do nothing.
 	 */
 	public void startRecording() {
-		if (isRecording()) {
-			Log.w(Globals.LOG_TAG,
-					"Attempted to start recording while an AudioRecord was still running!");
-			return;
-		}
+        synchronized (mRecordingLock) {
+            if (isRecording()) {
+                Log.w(Globals.LOG_TAG,
+                        "Attempted to start recording while an AudioRecord was still running!");
+                return;
+            }
 
-        audioRecord.startRecording();
-		recordThread = new Thread(this);
-		recordThread.start();
+            mRecordThreadActive = true;
+            mRecording = true;
+            recordThread = new Thread(this);
+            recordThread.start();
+        }
 	}
 
 	/**
@@ -292,34 +299,20 @@ public class AudioInput implements Runnable, Observer {
 	 * active, do nothing.
 	 */
 	public void stopRecording() {
-		if (recordThread == null) {
-			Log.w(Globals.LOG_TAG,
-					"Attempted to stop recording when a RecordThread was not running!");
-			return;
-		}
-		
-		recordThreadEnabled = false;
-        audioRecord.stop();
-		recordThread = null;
-	}
-	
-	/**
-	 * Kills the active audio recording thread, and blocks the thread until we know it has stopped recording.
-	 */
-	public void stopRecordingAndBlock() throws InterruptedException {
-		if (recordThread == null) {
-			Log.w(Globals.LOG_TAG,
-					"Attempted to stop recording when a RecordThread was not running!");
-			return;
-		}
-		recordThreadEnabled = false;
-        try {
-            recordThread.join();
-        } catch (InterruptedException e) {
+        synchronized (mRecordingLock) {
+            if (!isRecording()) {
+                Log.w(Globals.LOG_TAG,
+                        "Attempted to stop recording when a RecordThread was not running!");
+                return;
+            }
 
+            mRecording = false;
+            try {
+                recordThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-        audioRecord.stop();
-		recordThread = null;
 	}
 
 	/**
