@@ -208,13 +208,12 @@ public class AudioUser {
 		return data;
 	}
 
-	@Override
-	protected final void finalize() {
-		if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
-			Native.celt_decoder_destroy(celtDecoder);
-			Native.celt_mode_destroy(celtMode);
-		} else if(codec == MumbleProtocol.CODEC_OPUS) {
-			NativeAudio.opusDecoderDestroy(opusDecoder);
-		}
-	}
+    public void destroy() {
+        if(codec == MumbleProtocol.CODEC_ALPHA || codec == MumbleProtocol.CODEC_BETA) {
+            Native.celt_decoder_destroy(celtDecoder);
+            Native.celt_mode_destroy(celtMode);
+        } else if(codec == MumbleProtocol.CODEC_OPUS) {
+            NativeAudio.opusDecoderDestroy(opusDecoder);
+        }
+    }
 }

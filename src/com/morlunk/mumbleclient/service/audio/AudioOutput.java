@@ -108,7 +108,14 @@ public class AudioOutput implements Runnable {
 		int codecVersion = header >> 5 & 0x7;
 		pds.rewind();
 		AudioUser user = users.get(u);
-		if (user == null || user.codec != codecVersion) {
+
+        // Recreate AudioUser if the codec version changes.
+        if(user != null && user.codec != codecVersion) {
+            user.destroy();
+            user = null;
+        }
+
+		if (user == null) {
 			user = new AudioUser(u, codecVersion);
 			users.put(u, user);
 			// Don't add the user to userPackets yet. The collection should
@@ -135,6 +142,9 @@ public class AudioOutput implements Runnable {
 		synchronized (userPackets) {
 			userPackets.notify();
 		}
+        for(Map.Entry<User, AudioUser> user : users.entrySet())
+            user.getValue().destroy();
+        users.clear();
 	}
 
 	private void audioLoop() throws InterruptedException {

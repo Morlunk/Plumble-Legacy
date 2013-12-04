@@ -1126,6 +1126,7 @@ public class MumbleService extends Service implements OnInitListener, Observer {
 		if (mAudioInput != null) {
             mAudioInput.stopRecording();
             mAudioInput.shutdown();
+            mAudioInput = null;
 		}
 
         // Disable bluetooth, if active

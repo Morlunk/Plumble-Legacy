@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.morlunk.mumbleclient"
     android:installLocation="auto"
-    android:versionCode="48"
-    android:versionName="2.0.1b" >
+    android:versionCode="49"
+    android:versionName="2.0.1c" >
 
     <uses-sdk
         android:minSdkVersion="7"
