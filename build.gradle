@@ -20,27 +20,27 @@ dependencies {
 }
 
 android {
-    compileSdkVersion 19
+    compileSdkVersion 18
     buildToolsVersion "18.0.1"
 
-//    signingConfigs {
-//        release {
-//            storeFile file(System.console().readLine("\n\$ Enter keystore path: "))
-//            storePassword System.console().readLine("\n\$ Enter keystore password: ")
-//            keyAlias System.console().readLine("\n\$ Enter key alias: ")
-//            keyPassword System.console().readLine("\n\$ Enter key password: ")
-//        }
-//    }
-//
-//    buildTypes {
-//        release {
-//            signingConfig signingConfigs.release
-//        }
-//    }
+    signingConfigs {
+        release {
+            storeFile file(System.console().readLine("\n\$ Enter keystore path: "))
+            storePassword System.console().readLine("\n\$ Enter keystore password: ")
+            keyAlias System.console().readLine("\n\$ Enter key alias: ")
+            keyPassword System.console().readLine("\n\$ Enter key password: ")
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
 
     defaultConfig {
         minSdkVersion 7
-        targetSdkVersion 19
+        targetSdkVersion 18
     }
     sourceSets {
         main {
